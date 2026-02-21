@@ -60,12 +60,10 @@ const registerUser = async (req, res) => {
       return res.status(400).json({ message: "User already exists with this email" });
     }
 
-    // Handle file uploads for proof images
+    // Handle file uploads for proof images (now optional)
     let proofImageUrl = "";
     if (req.file) {
       proofImageUrl = await uploadToCloudinary(req.file.path);
-    } else if (role !== "student") {
-      return res.status(400).json({ message: "Proof image is required for this role" });
     }
 
     // Create user object
@@ -80,15 +78,21 @@ const registerUser = async (req, res) => {
     if (role === "shop-owner") {
       userData.shopName = shopName;
       userData.location = location;
-      userData.proofImage = proofImageUrl;
+      if (proofImageUrl) {
+        userData.proofImage = proofImageUrl;
+      }
     } else if (role === "house-owner") {
       userData.address = address;
-      userData.roomProofImage = proofImageUrl;
+      if (proofImageUrl) {
+        userData.roomProofImage = proofImageUrl;
+      }
     } else if (role === "education-path") {
       userData.organizationName = organizationName;
       userData.organizationType = organizationType;
       userData.organizationEmail = organizationEmail;
-      userData.roleProofImage = proofImageUrl;
+      if (proofImageUrl) {
+        userData.roleProofImage = proofImageUrl;
+      }
     }
 
     // Create user
