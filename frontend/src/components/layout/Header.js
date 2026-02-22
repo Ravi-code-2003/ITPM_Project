@@ -15,7 +15,8 @@ import {
   Info,
   ChevronDown,
   UtensilsCrossed,
-  Building2
+  Building2,
+  MessageSquare
 } from 'lucide-react';
 
 const Header = () => {
@@ -146,6 +147,14 @@ const Header = () => {
                         <Settings className="h-4 w-4 mr-3 text-primary dark:text-accent" />
                         Dashboard
                       </Link>
+                      <Link
+                        to="/ai-chat"
+                        className="flex items-center px-4 py-3 text-sm text-secondary dark:text-gray-300 hover:bg-accent/10 hover:text-primary dark:hover:text-accent transition-colors duration-200"
+                        onClick={() => setIsUserMenuOpen(false)}
+                      >
+                        <MessageSquare className="h-4 w-4 mr-3 text-primary dark:text-accent" />
+                        AI Assistant
+                      </Link>
                       <button
                         onClick={() => {
                           handleLogout();
@@ -228,7 +237,7 @@ const Header = () => {
                   </div>
                   
                   {/* Quick Access Buttons for Mobile */}
-                  <div className="grid grid-cols-2 gap-2 mb-3 px-2">
+                  <div className="grid grid-cols-3 gap-2 mb-3 px-2">
                     <Link
                       to={getDashboardLink()}
                       className="flex items-center justify-center space-x-1 bg-accent/20 text-primary dark:text-accent py-2 rounded-md hover:bg-accent/30 transition-colors duration-200"
@@ -236,6 +245,14 @@ const Header = () => {
                     >
                       <Settings className="h-4 w-4" />
                       <span className="text-sm font-medium">Dashboard</span>
+                    </Link>
+                    <Link
+                      to="/ai-chat"
+                      className="flex items-center justify-center space-x-1 bg-accent/20 text-primary dark:text-accent py-2 rounded-md hover:bg-accent/30 transition-colors duration-200"
+                      onClick={() => setIsMenuOpen(false)}
+                    >
+                      <MessageSquare className="h-4 w-4" />
+                      <span className="text-sm font-medium">AI</span>
                     </Link>
                     <button
                       onClick={handleLogout}
