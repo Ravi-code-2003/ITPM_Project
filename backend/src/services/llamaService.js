@@ -111,44 +111,68 @@ const buildLlamaPrompt = ({ user, contextMessages, userMessage }) => {
 };
 
 const generateLlamaResponse = async (prompt) => {
-  const ollamaUrl = process.env.OLLAMA_URL || "http://localhost:11434/api/generate";
+  const configuredUrl = process.env.OLLAMA_URL;
+  const ollamaUrl = configuredUrl || "http://127.0.0.1:11434/api/generate";
+  const fallbackUrl =
+    !configuredUrl && ollamaUrl.includes("127.0.0.1")
+      ? "http://localhost:11434/api/generate"
+      : !configuredUrl
+        ? "http://127.0.0.1:11434/api/generate"
+        : null;
   const model = process.env.OLLAMA_MODEL || "llama3";
 
+  const requestOptions = {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      model,
+      prompt,
+      stream: false,
+    }),
+  };
+
   let response;
+  let lastError = null;
+  const candidateUrls = fallbackUrl ? [ollamaUrl, fallbackUrl] : [ollamaUrl];
+  for (const url of candidateUrls) {
+    try {
+      response = await fetchWithFallback(url, requestOptions);
+      break;
+    } catch (error) {
+      lastError = error;
+    }
+  }
+
+  if (!response) {
+    const details = lastError?.cause?.message || lastError?.message || "Unknown network error";
+    throw new Error(
+      `Failed to connect to Ollama at ${candidateUrls.join(" or ")}: ${details}`
+    );
+  }
+
   try {
-    response = await fetchWithFallback(ollamaUrl, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        model,
-        prompt,
-        stream: false,
-      }),
-    });
+    const data = await response.json();
+
+    if (!response.ok) {
+      const errorMessage = data?.error || `Ollama request failed with status ${response.status}`;
+      throw new Error(errorMessage);
+    }
+
+    const aiContent = data?.response?.trim();
+    if (!aiContent) {
+      throw new Error("Llama response was empty");
+    }
+
+    return aiContent;
   } catch (error) {
-    throw new Error(`Failed to connect to Ollama: ${error.message}`);
-  }
+    if (error instanceof SyntaxError) {
+      throw new Error("Invalid JSON response from Ollama");
+    }
 
-  let data;
-  try {
-    data = await response.json();
-  } catch (error) {
-    throw new Error("Invalid JSON response from Ollama");
+    throw error;
   }
-
-  if (!response.ok) {
-    const errorMessage = data?.error || `Ollama request failed with status ${response.status}`;
-    throw new Error(errorMessage);
-  }
-
-  const aiContent = data?.response?.trim();
-  if (!aiContent) {
-    throw new Error("Llama response was empty");
-  }
-
-  return aiContent;
 };
 
 module.exports = {
