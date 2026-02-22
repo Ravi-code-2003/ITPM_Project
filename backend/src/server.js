@@ -7,6 +7,7 @@ const connectDB = require("./config/db");
 // Import routes
 const authRoutes = require("./routes/authRoutes");
 const adminRoutes = require("./routes/adminRoutes");
+const aiRoutes = require("./routes/aiRoutes");
 
 // Load environment variables
 dotenv.config();
@@ -55,6 +56,7 @@ app.get("/", (req, res) => {
     endpoints: {
       auth: "/api/auth",
       admin: "/api/admin",
+      ai: "/api/ai",
     },
   });
 });
@@ -62,6 +64,7 @@ app.get("/", (req, res) => {
 // API Routes
 app.use("/api/auth", authRoutes);
 app.use("/api/admin", adminRoutes);
+app.use("/api/ai", aiRoutes);
 
 // Health check endpoint
 app.get("/api/health", (req, res) => {
