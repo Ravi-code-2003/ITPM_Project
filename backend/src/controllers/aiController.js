@@ -2,10 +2,10 @@ const joi = require("joi");
 const Chat = require("../models/Chat");
 const { buildLlamaPrompt, generateLlamaResponse } = require("../services/llamaService");
 
-const CONTEXT_MESSAGE_LIMIT = 20;
-const RETURN_HISTORY_LIMIT = 100;
-const STORED_MESSAGE_LIMIT = 500;
-const MAX_CHAT_CHARACTERS = parseInt(process.env.AI_MAX_CHAT_CHARACTERS, 10) || 150000;
+const parsedMaxChatCharacters = parseInt(process.env.AI_MAX_CHAT_CHARACTERS, 10);
+const MAX_CHAT_CHARACTERS = Number.isFinite(parsedMaxChatCharacters)
+  ? parsedMaxChatCharacters
+  : Number.MAX_SAFE_INTEGER;
 
 const chatSchema = joi.object({
   message: joi.string().min(1).max(2000).required(),
@@ -51,7 +51,7 @@ const getChatHistory = async (req, res) => {
 
     return res.json({
       role: chat.role,
-      messages: chat.messages.slice(-RETURN_HISTORY_LIMIT),
+      messages: chat.messages,
       updatedAt: chat.updatedAt,
       createdAt: chat.createdAt,
     });
@@ -94,7 +94,7 @@ const chatWithAI = async (req, res) => {
       chat.role = req.user.role;
     }
 
-    const contextMessages = chat.messages.slice(-CONTEXT_MESSAGE_LIMIT);
+    const contextMessages = chat.messages;
 
     const projectedMessages = [
       ...chat.messages,
@@ -132,17 +132,13 @@ const chatWithAI = async (req, res) => {
       }
     );
 
-    if (chat.messages.length > STORED_MESSAGE_LIMIT) {
-      chat.messages = chat.messages.slice(-STORED_MESSAGE_LIMIT);
-    }
-
     await chat.save();
 
     return res.json({
       reply,
       role: chat.role,
       usage: null,
-      messages: chat.messages.slice(-RETURN_HISTORY_LIMIT),
+      messages: chat.messages,
     });
   } catch (error) {
     console.error("AI chat error:", error);

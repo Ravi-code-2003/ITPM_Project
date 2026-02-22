@@ -5,6 +5,7 @@ import { AuthProvider } from './contexts/AuthContext';
 import { ThemeProvider } from './contexts/ThemeContext';
 import { ProtectedRoute, PublicRoute, AdminRoute, RoleRoute } from './components/ProtectedRoute';
 import Layout from './components/layout/Layout';
+import FloatingAIChat from './components/chat/FloatingAIChat';
 
 // Public Pages
 import LandingPage from './pages/LandingPage';
@@ -293,6 +294,7 @@ function App() {
               },
             }}
           />
+          <FloatingAIChat />
           </div>
         </Router>
       </AuthProvider>

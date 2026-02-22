@@ -3,7 +3,7 @@ import { aiAPI } from "../../services/api";
 import Card, { CardContent, CardHeader, CardTitle } from "../ui/Card";
 import Button from "../ui/Button";
 
-const AIChat = () => {
+const AIChat = ({ isFloating = false, onClose }) => {
   const [messages, setMessages] = useState([]);
   const [input, setInput] = useState("");
   const [isLoading, setIsLoading] = useState(true);
@@ -65,11 +65,27 @@ const AIChat = () => {
       handleSendMessage();
     }
   };
+  
+  const containerClassName = isFloating
+    ? "h-[70vh] max-h-[640px] flex flex-col shadow-2xl border border-secondary/30 dark:border-secondary/20"
+    : "h-[75vh] flex flex-col";
 
   return (
-    <Card className="h-[75vh] flex flex-col">
+    <Card className={containerClassName}>
       <CardHeader className="border-b border-secondary/20 dark:border-secondary/10">
-        <CardTitle>AI Campus Assistant</CardTitle>
+        <div className="flex items-center justify-between gap-4">
+          <CardTitle>AI Campus Assistant</CardTitle>
+          {isFloating && (
+            <button
+              type="button"
+              onClick={onClose}
+              className="rounded-md px-2 py-1 text-sm font-semibold text-secondary transition-colors hover:bg-secondary/10 dark:text-gray-300 dark:hover:bg-secondary/20"
+              aria-label="Close chatbot"
+            >
+              Close
+            </button>
+          )}
+        </div>
       </CardHeader>
 
       <CardContent className="flex-1 flex flex-col p-0 overflow-hidden">
