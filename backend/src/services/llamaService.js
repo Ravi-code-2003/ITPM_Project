@@ -124,6 +124,11 @@ const generateLlamaResponse = async (prompt) => {
         ? "http://127.0.0.1:11434/api/generate"
         : null;
   const model = process.env.OLLAMA_MODEL || "llama3";
+  const parsedNumPredict = parseInt(process.env.OLLAMA_NUM_PREDICT, 10);
+  const numPredict = Number.isFinite(parsedNumPredict) ? parsedNumPredict : 320;
+  const parsedNumCtx = parseInt(process.env.OLLAMA_NUM_CTX, 10);
+  const numCtx = Number.isFinite(parsedNumCtx) ? parsedNumCtx : 4096;
+  const keepAlive = process.env.OLLAMA_KEEP_ALIVE || "15m";
 
   const requestOptions = {
     method: "POST",
@@ -134,6 +139,12 @@ const generateLlamaResponse = async (prompt) => {
       model,
       prompt,
       stream: false,
+      keep_alive: keepAlive,
+      options: {
+        num_predict: numPredict,
+        num_ctx: numCtx,
+        temperature: 0.3,
+      },
     }),
   };
 

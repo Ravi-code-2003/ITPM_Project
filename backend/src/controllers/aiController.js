@@ -6,6 +6,12 @@ const parsedMaxChatCharacters = parseInt(process.env.AI_MAX_CHAT_CHARACTERS, 10)
 const MAX_CHAT_CHARACTERS = Number.isFinite(parsedMaxChatCharacters)
   ? parsedMaxChatCharacters
   : Number.MAX_SAFE_INTEGER;
+const parsedContextMessageLimit = parseInt(process.env.AI_CONTEXT_MESSAGE_LIMIT, 10);
+const CONTEXT_MESSAGE_LIMIT = Number.isFinite(parsedContextMessageLimit)
+  ? parsedContextMessageLimit
+  : 30;
+const parsedContextCharBudget = parseInt(process.env.AI_CONTEXT_CHAR_BUDGET, 10);
+const CONTEXT_CHAR_BUDGET = Number.isFinite(parsedContextCharBudget) ? parsedContextCharBudget : 12000;
 
 const chatSchema = joi.object({
   message: joi.string().min(1).max(2000).required(),
@@ -36,6 +42,32 @@ const hasBlockedPrompt = (value) => {
 
 const estimateCharUsage = (messages) => {
   return messages.reduce((total, msg) => total + (msg.content?.length || 0), 0);
+};
+
+const selectContextMessages = (messages) => {
+  if (!Array.isArray(messages) || messages.length === 0) {
+    return [];
+  }
+
+  const selected = [];
+  let runningChars = 0;
+
+  for (let i = messages.length - 1; i >= 0; i -= 1) {
+    if (selected.length >= CONTEXT_MESSAGE_LIMIT) {
+      break;
+    }
+
+    const current = messages[i];
+    const contentLength = current?.content?.length || 0;
+    if (selected.length > 0 && runningChars + contentLength > CONTEXT_CHAR_BUDGET) {
+      break;
+    }
+
+    selected.unshift(current);
+    runningChars += contentLength;
+  }
+
+  return selected;
 };
 
 const getChatHistory = async (req, res) => {
@@ -94,7 +126,7 @@ const chatWithAI = async (req, res) => {
       chat.role = req.user.role;
     }
 
-    const contextMessages = chat.messages;
+    const contextMessages = selectContextMessages(chat.messages);
 
     const projectedMessages = [
       ...chat.messages,
