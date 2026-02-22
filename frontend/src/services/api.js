@@ -13,6 +13,8 @@ const api = axios.create({
   timeout: 10000, // 10 second timeout
 });
 
+const AI_REQUEST_TIMEOUT_MS = parseInt(process.env.REACT_APP_AI_TIMEOUT_MS, 10) || 120000;
+
 // Debug logging
 if (DEBUG) {
   console.log('🔧 API Service Initialized');
@@ -232,7 +234,7 @@ export const aiAPI = {
   },
 
   sendMessage: async (message) => {
-    const response = await api.post("/ai/chat", { message });
+    const response = await api.post("/ai/chat", { message }, { timeout: AI_REQUEST_TIMEOUT_MS });
     return response.data;
   },
 };

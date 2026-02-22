@@ -3,6 +3,60 @@ import { aiAPI } from "../../services/api";
 import Card, { CardContent, CardHeader, CardTitle } from "../ui/Card";
 import Button from "../ui/Button";
 
+const renderInlineFormattedText = (text) => {
+  const parts = text.split(/(\*\*[^*]+\*\*)/g);
+
+  return parts.map((part, index) => {
+    const boldMatch = part.match(/^\*\*([^*]+)\*\*$/);
+    if (boldMatch) {
+      return (
+        <strong key={`${part}-${index}`} className="font-semibold">
+          {boldMatch[1]}
+        </strong>
+      );
+    }
+
+    return <React.Fragment key={`${part}-${index}`}>{part}</React.Fragment>;
+  });
+};
+
+const renderMessageBody = (content) => {
+  const lines = String(content || "").split("\n");
+
+  return (
+    <div className="space-y-1.5 text-sm leading-relaxed">
+      {lines.map((line, index) => {
+        const trimmed = line.trim();
+
+        if (!trimmed) {
+          return <div key={`line-${index}`} className="h-1" />;
+        }
+
+        const headingMatch = trimmed.match(/^\*\*([^*]+)\*\*$/);
+        if (headingMatch) {
+          return (
+            <p key={`line-${index}`} className="text-base font-semibold">
+              {headingMatch[1]}
+            </p>
+          );
+        }
+
+        const bulletMatch = trimmed.match(/^[-*]\s+(.+)/);
+        if (bulletMatch) {
+          return (
+            <p key={`line-${index}`} className="pl-4 relative">
+              <span className="absolute left-0">•</span>
+              {renderInlineFormattedText(bulletMatch[1])}
+            </p>
+          );
+        }
+
+        return <p key={`line-${index}`}>{renderInlineFormattedText(trimmed)}</p>;
+      })}
+    </div>
+  );
+};
+
 const AIChat = ({ isFloating = false, onClose }) => {
   const [messages, setMessages] = useState([]);
   const [input, setInput] = useState("");
@@ -89,7 +143,7 @@ const AIChat = ({ isFloating = false, onClose }) => {
       </CardHeader>
 
       <CardContent className="flex-1 flex flex-col p-0 overflow-hidden">
-        <div ref={scrollRef} className="flex-1 overflow-y-auto p-4 space-y-4">
+        <div ref={scrollRef} className="flex-1 overflow-y-auto overflow-x-hidden p-4 space-y-4">
           {isLoading ? (
             <p className="text-secondary dark:text-gray-400">Loading chat history...</p>
           ) : messages.length === 0 ? (
@@ -107,12 +161,9 @@ const AIChat = ({ isFloating = false, onClose }) => {
                     message.sender === "user"
                       ? "bg-primary text-white"
                       : "bg-accent/20 text-primary dark:text-gray-100"
-                  }`}
+                  } overflow-hidden break-words`}
                 >
-                  <p className="text-xs font-semibold mb-1">
-                    {message.sender === "user" ? "User" : "AI"}
-                  </p>
-                  <p className="whitespace-pre-wrap text-sm leading-relaxed">{message.content}</p>
+                  {renderMessageBody(message.content)}
                 </div>
               </div>
             ))
