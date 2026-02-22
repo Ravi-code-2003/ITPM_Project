@@ -33,6 +33,7 @@ import StudentDashboard from './pages/dashboards/StudentDashboard';
 import ShopOwnerDashboard from './pages/dashboards/ShopOwnerDashboard';
 import HouseOwnerDashboard from './pages/dashboards/HouseOwnerDashboard';
 import EducationProviderDashboard from './pages/dashboards/EducationProviderDashboard';
+import AIChatPage from './pages/AIChatPage';
 
 // Status Pages
 import PendingApproval from './pages/status/PendingApproval';
@@ -224,6 +225,16 @@ function App() {
                   </Layout>
                 </RoleRoute>
               } 
+            />
+            <Route
+              path="/ai-chat"
+              element={
+                <ProtectedRoute>
+                  <Layout showFooter={false}>
+                    <AIChatPage />
+                  </Layout>
+                </ProtectedRoute>
+              }
             />
 
             {/* Status Pages */}
