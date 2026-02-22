@@ -1,17 +1,12 @@
 const joi = require("joi");
 const Chat = require("../models/Chat");
-const { buildLlamaPrompt, generateLlamaResponse } = require("../services/llamaService");
+const {
+  LlamaServiceError,
+  buildLlamaPrompt,
+  streamLlamaResponse,
+} = require("../services/llamaService");
 
-const parsedMaxChatCharacters = parseInt(process.env.AI_MAX_CHAT_CHARACTERS, 10);
-const MAX_CHAT_CHARACTERS = Number.isFinite(parsedMaxChatCharacters)
-  ? parsedMaxChatCharacters
-  : Number.MAX_SAFE_INTEGER;
-const parsedContextMessageLimit = parseInt(process.env.AI_CONTEXT_MESSAGE_LIMIT, 10);
-const CONTEXT_MESSAGE_LIMIT = Number.isFinite(parsedContextMessageLimit)
-  ? parsedContextMessageLimit
-  : 30;
-const parsedContextCharBudget = parseInt(process.env.AI_CONTEXT_CHAR_BUDGET, 10);
-const CONTEXT_CHAR_BUDGET = Number.isFinite(parsedContextCharBudget) ? parsedContextCharBudget : 12000;
+const CONTEXT_MESSAGE_LIMIT = 5;
 
 const chatSchema = joi.object({
   message: joi.string().min(1).max(2000).required(),
@@ -40,34 +35,8 @@ const hasBlockedPrompt = (value) => {
   return blockedPatterns.some((pattern) => pattern.test(value));
 };
 
-const estimateCharUsage = (messages) => {
-  return messages.reduce((total, msg) => total + (msg.content?.length || 0), 0);
-};
-
-const selectContextMessages = (messages) => {
-  if (!Array.isArray(messages) || messages.length === 0) {
-    return [];
-  }
-
-  const selected = [];
-  let runningChars = 0;
-
-  for (let i = messages.length - 1; i >= 0; i -= 1) {
-    if (selected.length >= CONTEXT_MESSAGE_LIMIT) {
-      break;
-    }
-
-    const current = messages[i];
-    const contentLength = current?.content?.length || 0;
-    if (selected.length > 0 && runningChars + contentLength > CONTEXT_CHAR_BUDGET) {
-      break;
-    }
-
-    selected.unshift(current);
-    runningChars += contentLength;
-  }
-
-  return selected;
+const sendSSE = (res, payload) => {
+  res.write(`data: ${JSON.stringify(payload)}\n\n`);
 };
 
 const getChatHistory = async (req, res) => {
@@ -114,6 +83,11 @@ const chatWithAI = async (req, res) => {
       });
     }
 
+    res.setHeader("Content-Type", "text/event-stream");
+    res.setHeader("Cache-Control", "no-cache");
+    res.setHeader("Connection", "keep-alive");
+    res.setHeader("X-Accel-Buffering", "no");
+
     let chat = await Chat.findOne({ userId: req.user._id });
 
     if (!chat) {
@@ -126,57 +100,70 @@ const chatWithAI = async (req, res) => {
       chat.role = req.user.role;
     }
 
-    const contextMessages = selectContextMessages(chat.messages);
-
-    const projectedMessages = [
-      ...chat.messages,
-      {
-        sender: "user",
-        content: sanitizedMessage,
-        timestamp: new Date(),
-      },
-    ];
-
-    if (estimateCharUsage(projectedMessages) > MAX_CHAT_CHARACTERS) {
-      return res.status(400).json({
-        message: "Chat history is too long. Please start a new topic with shorter context.",
-      });
-    }
+    const contextMessages = chat.messages.slice(-CONTEXT_MESSAGE_LIMIT);
 
     const prompt = buildLlamaPrompt({
       user: req.user,
       contextMessages,
       userMessage: sanitizedMessage,
     });
-    const reply = await generateLlamaResponse(prompt);
+
+    const streamResult = await streamLlamaResponse({
+      prompt,
+      onToken: async (token) => {
+        sendSSE(res, { type: "token", token });
+      },
+    });
+
+    if (!streamResult.text) {
+      throw new LlamaServiceError("Model returned empty response", "EMPTY_RESPONSE", 502);
+    }
 
     const now = new Date();
-    chat.messages.push(
-      {
-        sender: "user",
-        content: sanitizedMessage,
-        timestamp: now,
-      },
-      {
-        sender: "ai",
-        content: reply,
-        timestamp: new Date(),
-      }
-    );
-
+    chat.messages.push({
+      sender: "user",
+      content: sanitizedMessage,
+      timestamp: now,
+    });
+    chat.messages.push({
+      sender: "ai",
+      content: streamResult.text,
+      timestamp: new Date(),
+    });
     await chat.save();
 
-    return res.json({
-      reply,
+    console.log(`[AI] Response time: ${streamResult.metrics.durationMs}ms`);
+    console.log(`[AI] Approx tokens/sec: ${streamResult.metrics.tokensPerSecond.toFixed(1)}`);
+
+    sendSSE(res, {
+      type: "done",
+      reply: streamResult.text,
       role: chat.role,
-      usage: null,
-      messages: chat.messages,
+      metrics: {
+        durationMs: streamResult.metrics.durationMs,
+        tokensPerSecond: Number(streamResult.metrics.tokensPerSecond.toFixed(1)),
+      },
     });
+
+    return res.end();
   } catch (error) {
     console.error("AI chat error:", error);
-    return res.status(500).json({
-      message: error.message || "Server error while generating AI response",
-    });
+
+    const status = error.status || 500;
+    const payload = {
+      error: {
+        code: error.code || "AI_CHAT_ERROR",
+        message: error.message || "Server error while generating AI response",
+        details: error.details || null,
+      },
+    };
+
+    if (res.headersSent) {
+      sendSSE(res, { type: "error", ...payload });
+      return res.end();
+    }
+
+    return res.status(status).json(payload);
   }
 };
 
