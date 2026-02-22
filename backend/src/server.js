@@ -1,7 +1,11 @@
-const express = require("express");
+﻿const express = require("express");
 const cors = require("cors");
 const dotenv = require("dotenv");
 const path = require("path");
+
+// Load environment variables before importing modules that read process.env
+dotenv.config();
+
 const connectDB = require("./config/db");
 
 // Import routes
@@ -9,8 +13,7 @@ const authRoutes = require("./routes/authRoutes");
 const adminRoutes = require("./routes/adminRoutes");
 const aiRoutes = require("./routes/aiRoutes");
 
-// Load environment variables
-dotenv.config();
+
 
 const app = express();
 
@@ -31,7 +34,7 @@ if (process.env.FRONTEND_URL) {
   allowedOrigins.push(process.env.FRONTEND_URL);
 }
 
-console.log('🌐 CORS: Allowed origins:', allowedOrigins);
+console.log('ðŸŒ CORS: Allowed origins:', allowedOrigins);
 
 app.use(cors({
   origin: allowedOrigins,
@@ -50,7 +53,7 @@ app.use("/uploads", express.static(path.join(__dirname, "../uploads")));
 // Routes
 app.get("/", (req, res) => {
   res.json({
-    message: "🚀 Student Connect API is running!",
+    message: "ðŸš€ Student Connect API is running!",
     version: "1.0.0",
     environment: process.env.NODE_ENV || "development",
     endpoints: {
@@ -126,11 +129,11 @@ app.use((req, res) => {
 // Start server
 const PORT = process.env.PORT || 5000;
 const server = app.listen(PORT, () => {
-  console.log(`🚀 Server running on port ${PORT}`);
-  console.log(`📱 Environment: ${process.env.NODE_ENV || "development"}`);
-  console.log(`🌐 Frontend URL: ${process.env.FRONTEND_URL || "http://localhost:3000"}`);
-  console.log(`📧 Email configured: ${process.env.EMAIL_USER ? "✅" : "❌"}`);
-  console.log(`☁️  Cloudinary configured: ${process.env.CLOUDINARY_CLOUD_NAME ? "✅" : "❌"}`);
+  console.log(`ðŸš€ Server running on port ${PORT}`);
+  console.log(`ðŸ“± Environment: ${process.env.NODE_ENV || "development"}`);
+  console.log(`ðŸŒ Frontend URL: ${process.env.FRONTEND_URL || "http://localhost:3000"}`);
+  console.log(`ðŸ“§ Email configured: ${process.env.EMAIL_USER ? "âœ…" : "âŒ"}`);
+  console.log(`â˜ï¸  Cloudinary configured: ${process.env.CLOUDINARY_CLOUD_NAME ? "âœ…" : "âŒ"}`);
 });
 
 // Handle unhandled promise rejections

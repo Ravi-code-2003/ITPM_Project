@@ -1,4 +1,4 @@
-const MODEL = process.env.OLLAMA_MODEL || "llama3:8b-instruct-q4_0";
+const MODEL = process.env.OLLAMA_MODEL || "llama3:latest";
 const OLLAMA_URL = process.env.OLLAMA_URL || "http://localhost:11434/api/generate";
 const OLLAMA_TIMEOUT_MS = parseInt(process.env.OLLAMA_TIMEOUT_MS, 10) || 120000;
 const NUM_PREDICT = parseInt(process.env.OLLAMA_NUM_PREDICT, 10) || 150;
