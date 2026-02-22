@@ -224,4 +224,17 @@ export const adminAPI = {
   },
 };
 
+// AI Chat API calls
+export const aiAPI = {
+  getChatHistory: async () => {
+    const response = await api.get("/ai/chat");
+    return response.data;
+  },
+
+  sendMessage: async (message) => {
+    const response = await api.post("/ai/chat", { message });
+    return response.data;
+  },
+};
+
 export default api;
