@@ -1,6 +1,6 @@
 const joi = require("joi");
 const Chat = require("../models/Chat");
-const { callOpenAIChat } = require("../services/openaiService");
+const { buildLlamaPrompt, generateLlamaResponse } = require("../services/llamaService");
 
 const CONTEXT_MESSAGE_LIMIT = 20;
 const RETURN_HISTORY_LIMIT = 100;
@@ -111,11 +111,12 @@ const chatWithAI = async (req, res) => {
       });
     }
 
-    const { reply, usage } = await callOpenAIChat({
+    const prompt = buildLlamaPrompt({
       user: req.user,
       contextMessages,
       userMessage: sanitizedMessage,
     });
+    const reply = await generateLlamaResponse(prompt);
 
     const now = new Date();
     chat.messages.push(
@@ -140,7 +141,7 @@ const chatWithAI = async (req, res) => {
     return res.json({
       reply,
       role: chat.role,
-      usage,
+      usage: null,
       messages: chat.messages.slice(-RETURN_HISTORY_LIMIT),
     });
   } catch (error) {

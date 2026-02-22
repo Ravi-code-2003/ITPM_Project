@@ -54,7 +54,13 @@ const ROLE_NAME_MAP = {
   admin: "Admin",
 };
 
-const OPENAI_URL = "https://api.openai.com/v1/chat/completions";
+const fetchWithFallback = (...args) => {
+  if (typeof fetch === "function") {
+    return fetch(...args);
+  }
+
+  return import("node-fetch").then(({ default: nodeFetch }) => nodeFetch(...args));
+};
 
 const buildInternalContext = (user) => {
   const roleName = ROLE_NAME_MAP[user.role] || user.role;
@@ -86,64 +92,66 @@ const buildInternalContext = (user) => {
   return internalContext;
 };
 
-const callOpenAIChat = async ({ user, contextMessages, userMessage }) => {
-  if (!process.env.OPENAI_API_KEY) {
-    throw new Error("OPENAI_API_KEY is not configured");
+const buildLlamaPrompt = ({ user, contextMessages, userMessage }) => {
+  const internalContext = buildInternalContext(user);
+
+  const historyText = contextMessages
+    .map((msg) => `${msg.sender === "user" ? "User" : "Assistant"}: ${msg.content}`)
+    .join("\n");
+
+  return [
+    SYSTEM_PROMPT,
+    `Current role: ${internalContext.role}. Use this role for access-aware guidance.`,
+    `Internal data from backend (priority source): ${JSON.stringify(internalContext)}`,
+    "Conversation history:",
+    historyText || "(No prior messages)",
+    `User: ${userMessage}`,
+    "Assistant:",
+  ].join("\n\n");
+};
+
+const generateLlamaResponse = async (prompt) => {
+  const ollamaUrl = process.env.OLLAMA_URL || "http://localhost:11434/api/generate";
+  const model = process.env.OLLAMA_MODEL || "llama3";
+
+  let response;
+  try {
+    response = await fetchWithFallback(ollamaUrl, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        model,
+        prompt,
+        stream: false,
+      }),
+    });
+  } catch (error) {
+    throw new Error(`Failed to connect to Ollama: ${error.message}`);
   }
 
-  const internalContext = buildInternalContext(user);
-  const model = process.env.OPENAI_MODEL || "gpt-4o-mini";
-
-  const messages = [
-    { role: "system", content: SYSTEM_PROMPT },
-    {
-      role: "system",
-      content: `Current role: ${internalContext.role}. Use this role for access-aware guidance.`,
-    },
-    {
-      role: "system",
-      content: `Internal data from backend (priority source): ${JSON.stringify(internalContext)}`,
-    },
-    ...contextMessages.map((msg) => ({
-      role: msg.sender === "user" ? "user" : "assistant",
-      content: msg.content,
-    })),
-    { role: "user", content: userMessage },
-  ];
-
-  const response = await fetch(OPENAI_URL, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${process.env.OPENAI_API_KEY}`,
-    },
-    body: JSON.stringify({
-      model,
-      messages,
-      temperature: 0.3,
-      max_tokens: parseInt(process.env.OPENAI_MAX_TOKENS, 10) || 700,
-    }),
-  });
-
-  const data = await response.json();
+  let data;
+  try {
+    data = await response.json();
+  } catch (error) {
+    throw new Error("Invalid JSON response from Ollama");
+  }
 
   if (!response.ok) {
-    const errorMessage = data?.error?.message || "OpenAI API request failed";
+    const errorMessage = data?.error || `Ollama request failed with status ${response.status}`;
     throw new Error(errorMessage);
   }
 
-  const aiContent = data?.choices?.[0]?.message?.content?.trim();
-
+  const aiContent = data?.response?.trim();
   if (!aiContent) {
-    throw new Error("AI response was empty");
+    throw new Error("Llama response was empty");
   }
 
-  return {
-    reply: aiContent,
-    usage: data.usage || null,
-  };
+  return aiContent;
 };
 
 module.exports = {
-  callOpenAIChat,
+  buildLlamaPrompt,
+  generateLlamaResponse,
 };
