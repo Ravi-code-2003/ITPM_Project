@@ -54,7 +54,7 @@ const userSchema = new mongoose.Schema({
   },
   proofImage: {
     type: String, // Cloudinary URL
-    required: function() { return this.role === "shop-owner"; }
+    required: false
   },
 
   // House Owner specific fields
@@ -64,7 +64,7 @@ const userSchema = new mongoose.Schema({
   },
   roomProofImage: {
     type: String, // Cloudinary URL
-    required: function() { return this.role === "house-owner"; }
+    required: false
   },
 
   // Education Path specific fields
@@ -83,7 +83,7 @@ const userSchema = new mongoose.Schema({
   },
   roleProofImage: {
     type: String, // Cloudinary URL
-    required: function() { return this.role === "education-path"; }
+    required: false
   },
 
   createdAt: {

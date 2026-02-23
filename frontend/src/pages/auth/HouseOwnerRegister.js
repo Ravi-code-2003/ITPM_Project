@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
-import { Home, Upload, ArrowLeft, Eye, EyeOff } from 'lucide-react';
+import { Home, Upload, ArrowLeft, Eye, EyeOff, Building2, Key, MapPin } from 'lucide-react';
 import toast from 'react-hot-toast';
 import authService from '../../services/authService';
 import Button from '../../components/ui/Button';
@@ -17,12 +17,7 @@ const HouseOwnerRegister = () => {
     confirmPassword: '',
     phone: '',
     propertyTitle: '',
-    propertyAddress: '',
-    propertyDescription: '',
-    rent: '',
-    amenities: '',
-    propertyOwnership: null,
-    propertyImages: []
+    propertyAddress: ''
   });
 
   const handleInputChange = (e) => {
@@ -33,20 +28,7 @@ const HouseOwnerRegister = () => {
     }));
   };
 
-  const handleFileChange = (e) => {
-    const { name, files } = e.target;
-    if (name === 'propertyOwnership') {
-      setFormData(prev => ({
-        ...prev,
-        propertyOwnership: files[0]
-      }));
-    } else if (name === 'propertyImages') {
-      setFormData(prev => ({
-        ...prev,
-        propertyImages: Array.from(files).slice(0, 10) // Max 10 images
-      }));
-    }
-  };
+
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -61,21 +43,16 @@ const HouseOwnerRegister = () => {
       return;
     }
 
-    if (!formData.propertyOwnership) {
-      toast.error('Property ownership document is required');
-      return;
-    }
-
     setIsLoading(true);
 
     try {
-      const submitData = new FormData();
-      submitData.append('fullName', formData.name);
-      submitData.append('email', formData.email);
-      submitData.append('password', formData.password);
-      submitData.append('role', 'house-owner');
-      submitData.append('address', formData.propertyAddress);
-      submitData.append('proofImage', formData.propertyOwnership);
+      const submitData = {
+        fullName: formData.name,
+        email: formData.email,
+        password: formData.password,
+        role: 'house-owner',
+        address: formData.propertyAddress
+      };
 
       await authService.register(submitData);
       toast.success('Registration successful! Your application is being reviewed.');
@@ -88,33 +65,50 @@ const HouseOwnerRegister = () => {
   };
 
   return (
-    <div className="min-h-screen bg-background dark:bg-background-dark py-8">
-      <div className="max-w-2xl mx-auto px-4 sm:px-6 lg:px-8">
+    <div className="min-h-screen bg-background dark:bg-background-dark py-12 relative overflow-hidden">
+      {/* Decorative Background Elements - Housing Theme */}
+      <div className="absolute inset-0 overflow-hidden pointer-events-none opacity-5 dark:opacity-10">
+        <Home className="absolute top-24 left-16 w-36 h-36 text-primary transform rotate-12" />
+        <Building2 className="absolute top-32 right-24 w-40 h-40 text-accent transform -rotate-6" />
+        <Key className="absolute bottom-32 left-24 w-32 h-32 text-primary transform -rotate-12" />
+        <MapPin className="absolute bottom-24 right-32 w-28 h-28 text-accent" />
+        <div className="absolute top-1/3 left-1/3 w-72 h-72 bg-primary/10 dark:bg-primary/20 rounded-full blur-3xl opacity-20"></div>
+        <div className="absolute bottom-1/3 right-1/3 w-64 h-64 bg-accent/10 dark:bg-accent/20 rounded-full blur-3xl opacity-20"></div>
+      </div>
+
+      {/* Back Button - Top Left */}
+      <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 mb-6 relative z-10">
+        <button
+          onClick={() => navigate(-1)}
+          className="inline-flex items-center px-4 py-2 text-sm font-medium text-primary dark:text-gray-300 bg-surface dark:bg-surface-dark border border-secondary/30 dark:border-secondary/20 rounded-lg hover:bg-background dark:hover:bg-background-dark transition-all duration-200 shadow-sm hover:shadow-md"
+        >
+          <ArrowLeft className="h-4 w-4 mr-2" />
+          Back
+        </button>
+      </div>
+
+      <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
         {/* Header */}
         <div className="text-center mb-8">
-          <button
-            onClick={() => navigate(-1)}
-            className="inline-flex items-center text-primary dark:text-accent hover:text-primary-hover dark:hover:text-accent-hover mb-4"
-          >
-            <ArrowLeft className="h-5 w-5 mr-2" />
-            Back
-          </button>
-          <div className="bg-green-100 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
-            <Home className="h-8 w-8 text-green-600" />
+          <div className="bg-gradient-to-br from-primary to-primary-600 w-16 h-16 rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-lg transform hover:scale-105 transition-transform duration-200">
+            <Home className="h-9 w-9 text-white" />
           </div>
-          <h1 className="text-3xl font-bold text-primary dark:text-gray-100 mb-2">House Owner Registration</h1>
-          <p className="text-gray-600 dark:text-gray-400">List your property for student accommodation</p>
+          <h1 className="text-3xl font-bold text-primary dark:text-gray-100 mb-2 tracking-tight">House Owner Registration</h1>
+          <p className="text-base text-secondary dark:text-gray-400">List your property for student accommodation</p>
         </div>
 
         {/* Registration Form */}
-        <div className="bg-surface dark:bg-surface-dark rounded-xl shadow-soft-lg p-8">
+        <div className="bg-surface dark:bg-surface-dark rounded-2xl shadow-soft-lg border border-secondary/20 dark:border-secondary/10 p-6 md:p-8">
           <form onSubmit={handleSubmit} className="space-y-6">
             {/* Personal Information */}
-            <div className="border-b border-secondary/20 dark:border-secondary/10 pb-6">
-              <h3 className="text-lg font-semibold text-primary dark:text-gray-100 mb-4">Personal Information</h3>
+            <div>
+              <div className="flex items-center mb-4">
+                <div className="flex-shrink-0 w-1 h-5 bg-gradient-to-b from-primary to-primary-600 rounded-full mr-3"></div>
+                <h3 className="text-lg font-bold text-primary dark:text-gray-100">Personal Information</h3>
+              </div>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
-                  <label htmlFor="name" className="block text-sm font-medium text-primary dark:text-gray-200 mb-2">
+                  <label htmlFor="name" className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-1.5">
                     Full Name *
                   </label>
                   <input
@@ -124,12 +118,12 @@ const HouseOwnerRegister = () => {
                     value={formData.name}
                     onChange={handleInputChange}
                     required
-                    className="w-full px-4 py-3 border border-secondary/30 dark:border-secondary/20 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent bg-white dark:bg-[#1E2233] text-primary dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-500 transition-colors duration-200"
-                    placeholder="Your full name"
+                    className="w-full px-3 py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 dark:focus:ring-emerald-500 dark:focus:border-emerald-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500 transition-all duration-200"
+                    placeholder="Enter your full name"
                   />
                 </div>
                 <div>
-                  <label htmlFor="email" className="block text-sm font-medium text-primary dark:text-gray-200 mb-2">
+                  <label htmlFor="email" className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-1.5">
                     Email Address *
                   </label>
                   <input
@@ -138,15 +132,14 @@ const HouseOwnerRegister = () => {
                     name="email"
                     value={formData.email}
                     onChange={handleInputChange}
-                    required
-                    className="w-full px-4 py-3 border border-secondary/30 dark:border-secondary/20 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent bg-white dark:bg-[#1E2233] text-primary dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-500 transition-colors duration-200"
+                    required    className="w-full px-3 py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 dark:focus:ring-emerald-500 dark:focus:border-emerald-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500 transition-all duration-200"
                     placeholder="your@email.com"
                   />
                 </div>
               </div>
               
               <div className="mt-4">
-                <label htmlFor="phone" className="block text-sm font-medium text-primary dark:text-gray-200 mb-2">
+                <label htmlFor="phone" className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-1.5">
                   Phone Number *
                 </label>
                 <input
@@ -156,14 +149,14 @@ const HouseOwnerRegister = () => {
                   value={formData.phone}
                   onChange={handleInputChange}
                   required
-                  className="w-full px-4 py-3 border border-secondary/30 dark:border-secondary/20 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent bg-white dark:bg-[#1E2233] text-primary dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-500 transition-colors duration-200"
+                  className="w-full px-3 py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 dark:focus:ring-emerald-500 dark:focus:border-emerald-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500 transition-all duration-200"
                   placeholder="+1 (555) 123-4567"
                 />
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
                 <div>
-                  <label htmlFor="password" className="block text-sm font-medium text-primary dark:text-gray-200 mb-2">
+                  <label htmlFor="password" className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-1.5">
                     Password *
                   </label>
                   <div className="relative">
@@ -175,20 +168,20 @@ const HouseOwnerRegister = () => {
                       onChange={handleInputChange}
                       required
                       minLength="6"
-                      className="w-full px-4 py-3 border border-secondary/30 dark:border-secondary/20 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent bg-white dark:bg-[#1E2233] text-primary dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-500 transition-colors duration-200 pr-12"
+                      className="w-full px-3 py-2.5 pr-10 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 dark:focus:ring-emerald-500 dark:focus:border-emerald-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500 transition-all duration-200"
                       placeholder="Min. 6 characters"
                     />
                     <button
                       type="button"
                       onClick={() => setShowPassword(!showPassword)}
-                      className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 dark:text-gray-400"
+                      className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 transition-colors"
                     >
                       {showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
                     </button>
                   </div>
                 </div>
                 <div>
-                  <label htmlFor="confirmPassword" className="block text-sm font-medium text-primary dark:text-gray-200 mb-2">
+                  <label htmlFor="confirmPassword" className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-1.5">
                     Confirm Password *
                   </label>
                   <div className="relative">
@@ -199,13 +192,13 @@ const HouseOwnerRegister = () => {
                       value={formData.confirmPassword}
                       onChange={handleInputChange}
                       required
-                      className="w-full px-4 py-3 border border-secondary/30 dark:border-secondary/20 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent bg-white dark:bg-[#1E2233] text-primary dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-500 transition-colors duration-200 pr-12"
+                      className="w-full px-3 py-2.5 pr-10 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 dark:focus:ring-emerald-500 dark:focus:border-emerald-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500 transition-all duration-200"
                       placeholder="Confirm your password"
                     />
                     <button
                       type="button"
                       onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                      className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 dark:text-gray-400"
+                      className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 transition-colors"
                     >
                       {showConfirmPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
                     </button>
@@ -215,11 +208,14 @@ const HouseOwnerRegister = () => {
             </div>
 
             {/* Property Information */}
-            <div className="border-b border-secondary/20 dark:border-secondary/10 pb-6">
-              <h3 className="text-lg font-semibold text-primary dark:text-gray-100 mb-4">Property Information</h3>
-              <div className="space-y-4">
-                <div>
-                  <label htmlFor="propertyTitle" className="block text-sm font-medium text-primary dark:text-gray-200 mb-2">
+            <div className="border-t border-secondary/20 dark:border-secondary/10 pt-6">
+              <div className="flex items-center mb-4">
+                <div className="flex-shrink-0 w-1 h-5 bg-gradient-to-b from-primary to-primary-600 rounded-full mr-3"></div>
+                <h3 className="text-lg font-bold text-primary dark:text-gray-100">Property Information</h3>
+              </div>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="md:col-span-2">
+                  <label htmlFor="propertyTitle" className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-1.5">
                     Property Title *
                   </label>
                   <input
@@ -229,13 +225,13 @@ const HouseOwnerRegister = () => {
                     value={formData.propertyTitle}
                     onChange={handleInputChange}
                     required
-                    className="w-full px-4 py-3 border border-secondary/30 dark:border-secondary/20 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent bg-white dark:bg-[#1E2233] text-primary dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-500 transition-colors duration-200"
+                    className="w-full px-3 py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 dark:focus:ring-emerald-500 dark:focus:border-emerald-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500 transition-all duration-200"
                     placeholder="e.g., Cozy 2-Bedroom Near Campus"
                   />
                 </div>
                 
-                <div>
-                  <label htmlFor="propertyAddress" className="block text-sm font-medium text-primary dark:text-gray-200 mb-2">
+                <div className="md:col-span-2">
+                  <label htmlFor="propertyAddress" className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-1.5">
                     Property Address *
                   </label>
                   <textarea
@@ -244,116 +240,24 @@ const HouseOwnerRegister = () => {
                     value={formData.propertyAddress}
                     onChange={handleInputChange}
                     required
-                    rows="3"
-                    className="w-full px-4 py-3 border border-secondary/30 dark:border-secondary/20 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent bg-white dark:bg-[#1E2233] text-primary dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-500 transition-colors duration-200 resize-none"
+                    rows="2"
+                    className="w-full px-3 py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 dark:focus:ring-emerald-500 dark:focus:border-emerald-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500 transition-all duration-200 resize-none"
                     placeholder="Complete property address"
                   />
                 </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div>
-                    <label htmlFor="rent" className="block text-sm font-medium text-primary dark:text-gray-200 mb-2">
-                      Monthly Rent (USD) *
-                    </label>
-                    <input
-                      type="number"
-                      id="rent"
-                      name="rent"
-                      value={formData.rent}
-                      onChange={handleInputChange}
-                      required
-                      min="0"
-                      className="w-full px-4 py-3 border border-secondary/30 dark:border-secondary/20 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent bg-white dark:bg-[#1E2233] text-primary dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-500 transition-colors duration-200"
-                      placeholder="e.g., 800"
-                    />
-                  </div>
-                  <div>
-                    <label htmlFor="amenities" className="block text-sm font-medium text-primary dark:text-gray-200 mb-2">
-                      Key Amenities
-                    </label>
-                    <input
-                      type="text"
-                      id="amenities"
-                      name="amenities"
-                      value={formData.amenities}
-                      onChange={handleInputChange}
-                      className="w-full px-4 py-3 border border-secondary/30 dark:border-secondary/20 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent bg-white dark:bg-[#1E2233] text-primary dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-500 transition-colors duration-200"
-                      placeholder="e.g., WiFi, Parking, Laundry"
-                    />
-                  </div>
-                </div>
-                
-                <div>
-                  <label htmlFor="propertyDescription" className="block text-sm font-medium text-primary dark:text-gray-200 mb-2">
-                    Property Description *
-                  </label>
-                  <textarea
-                    id="propertyDescription"
-                    name="propertyDescription"
-                    value={formData.propertyDescription}
-                    onChange={handleInputChange}
-                    required
-                    rows="4"
-                    className="w-full px-4 py-3 border border-secondary/30 dark:border-secondary/20 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent bg-white dark:bg-[#1E2233] text-primary dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-500 transition-colors duration-200 resize-none"
-                    placeholder="Describe your property, rooms, facilities, and what makes it special for students"
-                  />
-                </div>
+
               </div>
             </div>
 
-            {/* Document Upload */}
-            <div>
-              <h3 className="text-lg font-semibold text-primary dark:text-gray-100 mb-4">Required Documents</h3>
-              
-              <div className="space-y-4">
-                <div>
-                  <label htmlFor="propertyOwnership" className="block text-sm font-medium text-primary dark:text-gray-200 mb-2">
-                    Property Ownership Document *
-                  </label>
-                  <div className="border-2 border-dashed border-secondary/30 dark:border-secondary/20 rounded-lg p-4 hover:border-primary transition-colors">
-                    <input
-                      type="file"
-                      id="propertyOwnership"
-                      name="propertyOwnership"
-                      onChange={handleFileChange}
-                      accept=".pdf,.jpg,.jpeg,.png"
-                      required
-                      className="w-full"
-                    />
-                    <p className="text-sm text-gray-600 dark:text-gray-400 mt-2">
-                      Upload property deed, lease agreement, or ownership certificate (PDF, JPG, or PNG)
-                    </p>
-                  </div>
-                </div>
 
-                <div>
-                  <label htmlFor="propertyImages" className="block text-sm font-medium text-primary dark:text-gray-200 mb-2">
-                    Property Images (Recommended)
-                  </label>
-                  <div className="border-2 border-dashed border-secondary/30 dark:border-secondary/20 rounded-lg p-4 hover:border-primary transition-colors">
-                    <input
-                      type="file"
-                      id="propertyImages"
-                      name="propertyImages"
-                      onChange={handleFileChange}
-                      accept=".jpg,.jpeg,.png"
-                      multiple
-                      className="w-full"
-                    />
-                    <p className="text-sm text-gray-600 dark:text-gray-400 mt-2">
-                      Upload up to 10 images of your property (JPG or PNG only)
-                    </p>
-                  </div>
-                </div>
-              </div>
-            </div>
 
             {/* Submit Button */}
-            <div className="pt-6">
+            <div className="pt-2">
               <Button
                 type="submit"
                 disabled={isLoading}
-                className="w-full"
+                className="w-full py-3"
               >
                 {isLoading ? (
                   <>
@@ -369,9 +273,9 @@ const HouseOwnerRegister = () => {
               </Button>
             </div>
 
-            <div className="text-center text-sm text-gray-600 dark:text-gray-400">
+            <div className="text-center text-sm text-gray-600 dark:text-gray-400 pt-4">
               Already have an account?{' '}
-              <Link to="/login" className="text-primary dark:text-accent hover:text-primary-hover dark:hover:text-accent-hover font-medium">
+              <Link to="/login" className="text-primary dark:text-accent hover:text-primary-hover dark:hover:text-accent-hover font-semibold transition-colors">
                 Sign in here
               </Link>
             </div>
