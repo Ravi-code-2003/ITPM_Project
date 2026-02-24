@@ -82,7 +82,7 @@ const RegisterPage = () => {
             <Sparkles className="h-8 w-8 text-white" />
           </div>
           <h1 className="text-4xl md:text-5xl font-bold text-primary dark:text-gray-100 mb-4 tracking-tight">
-            Join Student Connect
+            Join UniCore
           </h1>
           <p className="text-lg md:text-xl text-secondary dark:text-gray-300 max-w-3xl mx-auto leading-relaxed">
             Choose your account type to get started. Students get instant access, 

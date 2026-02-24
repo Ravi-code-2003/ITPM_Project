@@ -50,7 +50,7 @@ const ContactPage = () => {
             Get in Touch
           </h1>
           <p className="text-xl text-gray-600 dark:text-gray-400 max-w-3xl mx-auto">
-            Have questions or need support? We're here to help you make the most of Student Connect.
+            Have questions or need support? We're here to help you make the most of UniCore.
           </p>
         </div>
 
@@ -165,7 +165,7 @@ const ContactPage = () => {
                     <Mail className="h-6 w-6 text-primary dark:text-accent mt-1 mr-4 flex-shrink-0" />
                     <div>
                       <h3 className="font-medium text-primary dark:text-gray-100">Email</h3>
-                      <p className="text-gray-600 dark:text-gray-300">support@studentconnect.com</p>
+                      <p className="text-gray-600 dark:text-gray-300">support@unicore.com</p>
                       <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">We'll respond within 24 hours</p>
                     </div>
                   </div>

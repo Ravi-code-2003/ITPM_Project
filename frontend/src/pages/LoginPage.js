@@ -147,7 +147,7 @@ const LoginPage = () => {
           {/* Logo/Heading */}
           <div className="mb-12 text-center">
             <h1 className="text-5xl font-bold mb-4">Welcome Back!</h1>
-            <p className="text-xl text-accent-light">Connect, Learn, and Grow with Student Connect</p>
+            <p className="text-xl text-accent-light">Connect, Learn, and Grow with UniCore</p>
           </div>
 
           {/* Feature Cards */}
@@ -300,7 +300,7 @@ const LoginPage = () => {
                 <div className="w-full border-t border-gray-200 dark:border-gray-700" />
               </div>
               <div className="relative flex justify-center text-sm">
-                <span className="px-4 bg-surface dark:bg-surface-dark text-secondary dark:text-gray-400">New to Student Connect?</span>
+                <span className="px-4 bg-surface dark:bg-surface-dark text-secondary dark:text-gray-400">New to UniCore?</span>
               </div>
             </div>
 

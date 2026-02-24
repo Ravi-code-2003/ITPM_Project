@@ -56,13 +56,13 @@ const LandingPage = () => {
     {
       name: "Sarah Johnson",
       role: "Computer Science Student",
-      content: "Student Connect helped me find an amazing apartment near campus at an affordable price. The platform is so easy to use!",
+      content: "UniCore helped me find an amazing apartment near campus at an affordable price. The platform is so easy to use!",
       rating: 5
     },
     {
       name: "Mike Chen",
       role: "Business Student",
-      content: "I love the food discounts available through Student Connect. I've saved hundreds of dollars this semester!",
+      content: "I love the food discounts available through UniCore. I've saved hundreds of dollars this semester!",
       rating: 5
     },
     {
@@ -116,7 +116,7 @@ const LandingPage = () => {
               Everything You Need in One Place
             </h2>
             <p className="text-xl text-gray-600 dark:text-gray-400 max-w-3xl mx-auto">
-              Student Connect brings together all the essential services you need for a successful campus experience
+              UniCore brings together all the essential services you need for a successful campus experience
             </p>
           </div>
 
@@ -141,7 +141,7 @@ const LandingPage = () => {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-16">
             <h2 className="text-3xl md:text-4xl font-bold text-primary dark:text-gray-100 mb-4">
-              How Student Connect Works
+              How UniCore Works
             </h2>
             <p className="text-xl text-gray-600 dark:text-gray-400">Simple steps to get started</p>
           </div>
@@ -183,7 +183,7 @@ const LandingPage = () => {
                 Why Students Choose Us
               </h2>
               <p className="text-xl text-gray-600 dark:text-gray-400 mb-8">
-                Join thousands of students who trust Student Connect for their campus needs
+                Join thousands of students who trust UniCore for their campus needs
               </p>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 {benefits.map((benefit, index) => (
@@ -262,7 +262,7 @@ const LandingPage = () => {
             Ready to Transform Your Campus Experience?
           </h2>
           <p className="text-xl mb-8 text-gray-100">
-            Join Student Connect today and discover everything your campus has to offer
+            Join UniCore today and discover everything your campus has to offer
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <Link to="/register/student">

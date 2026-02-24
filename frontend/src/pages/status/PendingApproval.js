@@ -17,7 +17,7 @@ const PendingApproval = () => {
           </h1>
           
           <p className="text-secondary dark:text-gray-400 mb-6">
-            Thank you for registering with Student Connect! Your application is currently being reviewed by our admin team.
+            Thank you for registering with UniCore! Your application is currently being reviewed by our admin team.
           </p>
           
           <div className="bg-accent/20 dark:bg-accent/10 rounded-lg p-6 mb-6">

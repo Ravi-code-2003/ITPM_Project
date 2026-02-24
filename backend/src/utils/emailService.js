@@ -19,7 +19,7 @@ const sendEmail = async (options) => {
     const transporter = createTransporter();
 
     const message = {
-      from: `"Student Connect" <${process.env.EMAIL_FROM}>`,
+      from: `"UniCore" <${process.env.EMAIL_FROM}>`,
       to: options.email,
       subject: options.subject,
       html: options.html,
@@ -36,26 +36,26 @@ const sendEmail = async (options) => {
 
 // Send OTP email template
 const sendOTPEmail = async (email, otp, fullName) => {
-  const subject = "Password Reset OTP - Student Connect";
+  const subject = "Password Reset OTP - UniCore";
   const html = `
     <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
       <div style="background-color: #3b82f6; color: white; padding: 20px; text-align: center;">
-        <h1>Student Connect</h1>
+        <h1>UniCore</h1>
       </div>
       <div style="padding: 20px; background-color: #f9fafb;">
         <h2>Password Reset Request</h2>
         <p>Hello ${fullName},</p>
-        <p>We received a request to reset your password for your Student Connect account.</p>
+        <p>We received a request to reset your password for your UniCore account.</p>
         <p>Your OTP code is:</p>
         <div style="background-color: #e5e7eb; padding: 20px; text-align: center; margin: 20px 0;">
           <h1 style="color: #3b82f6; font-size: 32px; letter-spacing: 5px; margin: 0;">${otp}</h1>
         </div>
         <p>This OTP will expire in 5 minutes.</p>
         <p>If you didn't request this password reset, please ignore this email.</p>
-        <p>Best regards,<br>Student Connect Team</p>
+        <p>Best regards,<br>UniCore Team</p>
       </div>
       <div style="background-color: #374151; color: white; padding: 15px; text-align: center;">
-        <p style="margin: 0;">© 2026 Student Connect. All rights reserved.</p>
+        <p style="margin: 0;">© 2026 UniCore. All rights reserved.</p>
       </div>
     </div>
   `;
@@ -65,11 +65,11 @@ const sendOTPEmail = async (email, otp, fullName) => {
 
 // Send approval email template
 const sendApprovalEmail = async (email, fullName, role) => {
-  const subject = "Account Approved - Student Connect";
+  const subject = "Account Approved - UniCore";
   const html = `
     <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
       <div style="background-color: #10b981; color: white; padding: 20px; text-align: center;">
-        <h1>Student Connect</h1>
+        <h1>UniCore</h1>
       </div>
       <div style="padding: 20px; background-color: #f9fafb;">
         <h2>🎉 Account Approved!</h2>
@@ -82,11 +82,11 @@ const sendApprovalEmail = async (email, fullName, role) => {
             Login Now
           </a>
         </div>
-        <p>Welcome to the Student Connect community!</p>
-        <p>Best regards,<br>Student Connect Team</p>
+        <p>Welcome to the UniCore community!</p>
+        <p>Best regards,<br>UniCore Team</p>
       </div>
       <div style="background-color: #374151; color: white; padding: 15px; text-align: center;">
-        <p style="margin: 0;">© 2026 Student Connect. All rights reserved.</p>
+        <p style="margin: 0;">© 2026 UniCore. All rights reserved.</p>
       </div>
     </div>
   `;
@@ -96,11 +96,11 @@ const sendApprovalEmail = async (email, fullName, role) => {
 
 // Send rejection email template
 const sendRejectionEmail = async (email, fullName, role) => {
-  const subject = "Account Registration Update - Student Connect";
+  const subject = "Account Registration Update - UniCore";
   const html = `
     <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
       <div style="background-color: #ef4444; color: white; padding: 20px; text-align: center;">
-        <h1>Student Connect</h1>
+        <h1>UniCore</h1>
       </div>
       <div style="padding: 20px; background-color: #f9fafb;">
         <h2>Registration Update</h2>
@@ -119,11 +119,11 @@ const sendRejectionEmail = async (email, fullName, role) => {
             Contact Support
           </a>
         </div>
-        <p>Thank you for your interest in Student Connect.</p>
-        <p>Best regards,<br>Student Connect Team</p>
+        <p>Thank you for your interest in UniCore.</p>
+        <p>Best regards,<br>UniCore Team</p>
       </div>
       <div style="background-color: #374151; color: white; padding: 15px; text-align: center;">
-        <p style="margin: 0;">© 2026 Student Connect. All rights reserved.</p>
+        <p style="margin: 0;">© 2026 UniCore. All rights reserved.</p>
       </div>
     </div>
   `;

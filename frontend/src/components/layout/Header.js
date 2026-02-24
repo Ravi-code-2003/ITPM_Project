@@ -80,7 +80,7 @@ const Header = () => {
                 <BookOpen className="h-6 w-6" />
               </div>
               <div>
-                <span className="text-xl font-bold text-primary dark:text-gray-100">Student Connect</span>
+                <span className="text-xl font-bold text-primary dark:text-gray-100">UniCore</span>
                 {isDashboardPage && getCurrentPageName() && (
                   <div className="text-xs text-secondary dark:text-gray-400">
                     {getCurrentPageName()}
