@@ -7,6 +7,9 @@ const connectDB = require("./config/db");
 // Import routes
 const authRoutes = require("./routes/authRoutes");
 const adminRoutes = require("./routes/adminRoutes");
+const educationRoutes = require("./routes/EducationRoute");
+const lectureRequestRoutes = require("./routes/LectureRequestRoute");
+const programRoutes = require("./routes/ProgramRoute");
 
 // Load environment variables
 dotenv.config();
@@ -62,6 +65,9 @@ app.get("/", (req, res) => {
 // API Routes
 app.use("/api/auth", authRoutes);
 app.use("/api/admin", adminRoutes);
+app.use("/api/education/materials", educationRoutes);
+app.use("/api/education/requests", lectureRequestRoutes);
+app.use("/api/education/programs", programRoutes);
 
 // Health check endpoint
 app.get("/api/health", (req, res) => {

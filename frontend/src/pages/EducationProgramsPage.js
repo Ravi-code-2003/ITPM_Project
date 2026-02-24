@@ -1,248 +1,495 @@
-import React, { useState } from 'react';
-import { BookOpen, Clock, Users, Star, Search, Filter } from 'lucide-react';
+import React, { useState, useEffect, useCallback } from 'react';
+import { BookOpen, Clock, Users, Star, Plus, X, Send, Inbox, CheckCircle, XCircle, Trash2, MessageSquare, FileText, ExternalLink, Download, Youtube, HardDrive } from 'lucide-react';
 import Button from '../components/ui/Button';
 import Card, { CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from '../components/ui/Card';
+import { useAuth } from '../contexts/AuthContext';
+import api from '../services/api';
+import toast from 'react-hot-toast';
+
+/* ── request helpers ────────────────────────────────────────────────────── */
+const MATERIAL_TYPES = [
+  { value: 'lecture-notes', label: 'Lecture Notes' },
+  { value: 'tutorial',      label: 'Tutorial' },
+  { value: 'past-paper',    label: 'Past Paper' },
+  { value: 'assignment',    label: 'Assignment' },
+  { value: 'other',         label: 'Other' },
+];
+
+const STATUS_CFG = {
+  pending:   { label: 'Pending',   Icon: Clock,         color: 'text-yellow-600 dark:text-yellow-400', bg: 'bg-yellow-50 dark:bg-yellow-900/20',  border: 'border-yellow-200 dark:border-yellow-700' },
+  fulfilled: { label: 'Fulfilled', Icon: CheckCircle,   color: 'text-green-600 dark:text-green-400',  bg: 'bg-green-50 dark:bg-green-900/20',    border: 'border-green-200 dark:border-green-700'  },
+  rejected:  { label: 'Rejected',  Icon: XCircle,       color: 'text-red-600 dark:text-red-400',      bg: 'bg-red-50 dark:bg-red-900/20',        border: 'border-red-200 dark:border-red-700'      },
+};
+
+const StatusBadge = ({ status }) => {
+  const cfg = STATUS_CFG[status] || STATUS_CFG.pending;
+  const { Icon } = cfg;
+  return (
+    <span className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-semibold border ${cfg.bg} ${cfg.color} ${cfg.border}`}>
+      <Icon className="h-3 w-3" />{cfg.label}
+    </span>
+  );
+};
+
+const EMPTY_FORM = { title: '', description: '', course: '', materialType: 'lecture-notes' };
+
+const MAT_TYPES = [
+  { value: 'all',       label: 'All' },
+  { value: 'pdf',       label: 'PDF' },
+  { value: 'tute',      label: 'Tutorial' },
+  { value: 'pastpaper', label: 'Past Paper' },
+  { value: 'youtube',   label: 'YouTube' },
+  { value: 'drive',     label: 'Drive' },
+];
+
+const MAT_CFG = {
+  pdf:       { label: 'PDF',       bg: 'bg-red-100 dark:bg-red-900/30',     text: 'text-red-700 dark:text-red-400',     Icon: FileText },
+  tute:      { label: 'Tutorial',  bg: 'bg-blue-100 dark:bg-blue-900/30',   text: 'text-blue-700 dark:text-blue-400',   Icon: BookOpen },
+  pastpaper: { label: 'Past Paper',bg: 'bg-purple-100 dark:bg-purple-900/30',text: 'text-purple-700 dark:text-purple-400',Icon: FileText },
+  youtube:   { label: 'YouTube',   bg: 'bg-red-100 dark:bg-red-900/30',     text: 'text-red-700 dark:text-red-400',     Icon: Youtube },
+  drive:     { label: 'Drive',     bg: 'bg-green-100 dark:bg-green-900/30', text: 'text-green-700 dark:text-green-400', Icon: HardDrive },
+};
 
 const EducationProgramsPage = () => {
-  const [searchTerm, setSearchTerm] = useState('');
-  const [selectedCategory, setSelectedCategory] = useState('All');
+  const { user } = useAuth();
+  const isStudent = user?.role === 'student';
 
-  const programs = [
-    {
-      id: 1,
-      title: "Web Development Bootcamp",
-      category: "Technology",
-      provider: "TechEd Academy",
-      duration: "12 weeks",
-      level: "Beginner to Intermediate",
-      rating: 4.8,
-      students: 245,
-      price: "$299",
-      description: "Learn modern web development with React, Node.js, and MongoDB. Build real projects and get job-ready skills.",
-      image: "https://images.unsplash.com/photo-1498050108023-c5249f4df085?w=400&h=250&fit=crop",
-      tags: ["React", "Node.js", "MongoDB", "JavaScript"]
-    },
-    {
-      id: 2,
-      title: "Digital Marketing Fundamentals",
-      category: "Business",
-      provider: "Marketing Pro Institute",
-      duration: "8 weeks",
-      level: "Beginner",
-      rating: 4.6,
-      students: 189,
-      price: "$199",
-      description: "Master digital marketing strategies including SEO, social media marketing, and content creation.",
-      image: "https://images.unsplash.com/photo-1460925895917-afdab827c52f?w=400&h=250&fit=crop",
-      tags: ["SEO", "Social Media", "Content Marketing", "Analytics"]
-    },
-    {
-      id: 3,
-      title: "Data Science with Python",
-      category: "Technology",
-      provider: "Data Science Hub",
-      duration: "16 weeks",
-      level: "Intermediate",
-      rating: 4.9,
-      students: 312,
-      price: "$399",
-      description: "Comprehensive data science course covering Python, machine learning, and data visualization.",
-      image: "https://images.unsplash.com/photo-1551288049-bebda4e38f71?w=400&h=250&fit=crop",
-      tags: ["Python", "Machine Learning", "Data Analysis", "Visualization"]
-    },
-    {
-      id: 4,
-      title: "Graphic Design Mastery",
-      category: "Design",
-      provider: "Creative Studio",
-      duration: "10 weeks",
-      level: "Beginner",
-      rating: 4.7,
-      students: 156,
-      price: "$249",
-      description: "Learn professional graphic design using Adobe Creative Suite. Create logos, branding, and marketing materials.",
-      image: "https://images.unsplash.com/photo-1558655146-d09347e92766?w=400&h=250&fit=crop",
-      tags: ["Photoshop", "Illustrator", "Branding", "Typography"]
-    },
-    {
-      id: 5,
-      title: "Financial Planning Basics",
-      category: "Finance",
-      provider: "Money Management Academy",
-      duration: "6 weeks",
-      level: "Beginner",
-      rating: 4.5,
-      students: 98,
-      price: "$149",
-      description: "Essential financial planning skills for students and young professionals. Budgeting, investing, and saving strategies.",
-      image: "https://images.unsplash.com/photo-1554224155-6726b3ff858f?w=400&h=250&fit=crop",
-      tags: ["Budgeting", "Investing", "Savings", "Personal Finance"]
-    },
-    {
-      id: 6,
-      title: "Mobile App Development",
-      category: "Technology",
-      provider: "App Dev Institute",
-      duration: "14 weeks",
-      level: "Intermediate",
-      rating: 4.8,
-      students: 203,
-      price: "$349",
-      description: "Build iOS and Android apps using React Native. From concept to app store deployment.",
-      image: "https://images.unsplash.com/photo-1512941937669-90a1b58e7e9c?w=400&h=250&fit=crop",
-      tags: ["React Native", "iOS", "Android", "Mobile Development"]
+  // Programs from API
+  const [programs, setPrograms]       = useState([]);
+  const [loadingProg, setLoadingProg] = useState(false);
+
+  const fetchPrograms = useCallback(async () => {
+    setLoadingProg(true);
+    try {
+      const res = await api.get('/education/programs');
+      setPrograms(res.data.programs || []);
+    } catch {
+      setPrograms([]);
+    } finally {
+      setLoadingProg(false);
     }
-  ];
+  }, []);
 
-  const categories = ["All", "Technology", "Business", "Design", "Finance"];
+  useEffect(() => { fetchPrograms(); }, [fetchPrograms]);
+  // Study materials from API
+  const [materials, setMaterials]         = useState([]);
+  const [loadingMat, setLoadingMat]       = useState(false);
+  const [selectedMatType, setSelectedMatType] = useState('all');
 
-  const filteredPrograms = programs.filter(program => {
-    const matchesSearch = program.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         program.description.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesCategory = selectedCategory === 'All' || program.category === selectedCategory;
-    return matchesSearch && matchesCategory;
-  });
+  const fetchMaterials = useCallback(async () => {
+    setLoadingMat(true);
+    try {
+      const res = await api.get('/education/materials/all');
+      setMaterials(res.data.materials || []);
+    } catch {
+      setMaterials([]);
+    } finally {
+      setLoadingMat(false);
+    }
+  }, []);
+
+  useEffect(() => { fetchMaterials(); }, [fetchMaterials]);
+
+  const filteredMaterials = selectedMatType === 'all'
+    ? materials
+    : materials.filter(m => m.type === selectedMatType);
+
+  const [showModal, setShowModal] = useState(false);
+  const [form, setForm]           = useState(EMPTY_FORM);
+  const [submitting, setSubmitting] = useState(false);
+
+  // My requests state
+  const [requests, setRequests]   = useState([]);
+  const [loadingReq, setLoadingReq] = useState(false);
+
+  const fetchRequests = useCallback(async () => {
+    if (!isStudent) return;
+    setLoadingReq(true);
+    try {
+      const res = await api.get('/education/requests');
+      setRequests(res.data.requests || []);
+    } catch {
+      setRequests([]);
+    } finally {
+      setLoadingReq(false);
+    }
+  }, [isStudent]);
+
+  useEffect(() => { fetchRequests(); }, [fetchRequests]);
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    if (!form.title.trim()) { toast.error('Please enter a title'); return; }
+    setSubmitting(true);
+    try {
+      await api.post('/education/requests', form);
+      toast.success('Request submitted!');
+      setShowModal(false);
+      setForm(EMPTY_FORM);
+      fetchRequests();
+    } catch (err) {
+      toast.error(err.response?.data?.message || 'Failed to submit request');
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  const handleDelete = async (id) => {
+    if (!window.confirm('Cancel this request?')) return;
+    try {
+      await api.delete(`/education/requests/${id}`);
+      toast.success('Request cancelled');
+      setRequests((r) => r.filter((x) => x._id !== id));
+    } catch {
+      toast.error('Failed to cancel request');
+    }
+  };
 
   return (
-    <div className="min-h-screen bg-background dark:bg-background-dark py-12">
+    <>
+    <div className="min-h-screen bg-background dark:bg-background-dark py-8">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        {/* Header */}
-        <div className="text-center mb-12">
-          <h1 className="text-4xl md:text-5xl font-bold text-primary dark:text-gray-100 mb-4">
-            Education Programs
-          </h1>
-          <p className="text-xl text-gray-600 dark:text-gray-400 max-w-3xl mx-auto">
-            Discover skill-building courses and programs to enhance your career prospects and personal development.
-          </p>
-        </div>
-
-        {/* Search and Filter */}
-        <Card className="mb-8 shadow-soft-xl">
-          <CardContent className="p-6">
-            <div className="flex flex-col lg:flex-row gap-4 items-center">
-              <div className="flex-1 relative">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-500 dark:text-gray-400" />
-                <input
-                  type="text"
-                  placeholder="Search programs..."
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  className="w-full pl-10 pr-4 py-3 border border-secondary/30 dark:border-secondary/20 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent bg-white dark:bg-[#1E2233] text-primary dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-500"
-                />
-              </div>
-              <div className="flex items-center gap-2">
-                <Filter className="h-5 w-5 text-gray-500 dark:text-gray-400" />
-                <select
-                  value={selectedCategory}
-                  onChange={(e) => setSelectedCategory(e.target.value)}
-                  className="px-4 py-3 border border-secondary/30 dark:border-secondary/20 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent bg-white dark:bg-[#1E2233] text-primary dark:text-gray-100"
-                >
-                  {categories.map(category => (
-                    <option key={category} value={category}>{category}</option>
-                  ))}
-                </select>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Programs Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-          {filteredPrograms.map((program) => (
-            <Card key={program.id} hover className="overflow-hidden shadow-soft-xl">
-              <div className="relative">
-                <img
-                  src={program.image}
-                  alt={program.title}
-                  className="w-full h-48 object-cover"
-                />
-                <div className="absolute top-4 left-4">
-                  <span className="bg-primary text-white px-3 py-1 rounded-full text-sm font-medium">
-                    {program.category}
-                  </span>
-                </div>
-                <div className="absolute top-4 right-4">
-                  <span className="bg-white bg-opacity-90 text-primary px-2 py-1 rounded-full text-sm font-bold">
-                    {program.price}
-                  </span>
-                </div>
-              </div>
-
-              <CardContent className="p-6">
-                <CardTitle className="mb-2">{program.title}</CardTitle>
-                <CardDescription className="mb-4 line-clamp-2">{program.description}</CardDescription>
-
-                <div className="flex items-center justify-between mb-4">
-                  <div className="flex items-center">
-                    <Star className="h-4 w-4 text-accent fill-current" />
-                    <span className="ml-1 text-sm font-medium text-primary dark:text-gray-200">{program.rating}</span>
-                  </div>
-                  <div className="flex items-center text-sm text-gray-600 dark:text-gray-400">
-                    <Users className="h-4 w-4 mr-1" />
-                    {program.students} students
-                  </div>
-                </div>
-
-                <div className="space-y-2 mb-4">
-                  <div className="flex items-center text-sm text-gray-600 dark:text-gray-400">
-                    <BookOpen className="h-4 w-4 mr-2" />
-                    Provider: {program.provider}
-                  </div>
-                  <div className="flex items-center text-sm text-gray-600 dark:text-gray-400">
-                    <Clock className="h-4 w-4 mr-2" />
-                    Duration: {program.duration}
-                  </div>
-                  <div className="text-sm text-gray-600 dark:text-gray-400">
-                    Level: {program.level}
-                  </div>
-                </div>
-
-                <div className="flex flex-wrap gap-1 mb-4">
-                  {program.tags.slice(0, 3).map((tag, index) => (
-                    <span key={index} className="bg-accent/10 dark:bg-accent/5 text-primary dark:text-gray-300 px-2 py-1 rounded-md text-xs">
-                      {tag}
-                    </span>
-                  ))}
-                  {program.tags.length > 3 && (
-                    <span className="text-xs text-gray-600 dark:text-gray-500">+{program.tags.length - 3} more</span>
-                  )}
-                </div>
-
-                <div className="flex gap-2">
-                  <Button fullWidth>
-                    Enroll Now
-                  </Button>
-                  <Button variant="outline" className="px-4">
-                    Details
-                  </Button>
-                </div>
-              </CardContent>
-            </Card>
-          ))}
-        </div>
-
-        {filteredPrograms.length === 0 && (
-          <div className="text-center py-12">
-            <BookOpen className="h-16 w-16 text-gray-500 dark:text-gray-400 mx-auto mb-4" />
-            <h3 className="text-xl font-semibold text-primary dark:text-gray-100 mb-2">No programs found</h3>
-            <p className="text-gray-600 dark:text-gray-400">Try adjusting your search criteria or browse all programs.</p>
+        {/* Top bar — request button for students */}
+        {isStudent && (
+          <div className="flex justify-end mb-6">
+            <button
+              onClick={() => setShowModal(true)}
+              className="inline-flex items-center gap-2 bg-accent hover:bg-accent/90 text-white font-semibold px-5 py-1.5 rounded-xl shadow-md transition-all duration-200 hover:shadow-lg hover:-translate-y-0.5"
+            >
+              <Plus className="h-4 w-4" />
+              Request Study Material
+            </button>
           </div>
         )}
 
-        {/* Call to Action */}
-        <Card className="mt-16 !bg-primary dark:!bg-primary text-white text-center shadow-soft-xl">
-          <CardContent className="p-8">
-            <h2 className="text-3xl font-bold mb-4 text-white">Want to Offer a Program?</h2>
-            <p className="text-xl text-white/90 mb-6">
-              Join our platform as an education provider and reach thousands of eager students.
-            </p>
-            <Button variant="secondary" size="lg">
-              Become a Provider
-            </Button>
-          </CardContent>
-        </Card>
+        {/* ── Study Materials ──────────────────────────────────────────── */}
+        <div className="mt-14">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
+            <div>
+              <h2 className="text-2xl font-bold text-primary dark:text-gray-100">Study Materials</h2>
+              <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">Resources uploaded by education providers</p>
+            </div>
+            {/* type filter pills */}
+            <div className="flex flex-wrap gap-2">
+              {MAT_TYPES.map(({ value, label }) => (
+                <button
+                  key={value}
+                  onClick={() => setSelectedMatType(value)}
+                  className={`px-3 py-1.5 rounded-full text-xs font-semibold border transition-all ${
+                    selectedMatType === value
+                      ? 'bg-accent text-white border-accent shadow-sm'
+                      : 'bg-white dark:bg-gray-800 text-gray-600 dark:text-gray-400 border-gray-200 dark:border-gray-600 hover:border-accent/60'
+                  }`}
+                >
+                  {label}
+                  {value !== 'all' && (
+                    <span className="ml-1 opacity-70">({materials.filter(m => m.type === value).length})</span>
+                  )}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {loadingMat ? (
+            <div className="flex items-center justify-center py-16">
+              <div className="animate-spin h-8 w-8 border-4 border-accent border-t-transparent rounded-full" />
+            </div>
+          ) : filteredMaterials.length === 0 ? (
+            <div className="text-center py-12 border-2 border-dashed border-gray-200 dark:border-gray-700 rounded-2xl">
+              <FileText className="h-12 w-12 text-gray-300 dark:text-gray-600 mx-auto mb-3" />
+              <p className="text-secondary dark:text-gray-400">
+                {selectedMatType === 'all' ? 'No study materials uploaded yet.' : `No ${MAT_TYPES.find(t=>t.value===selectedMatType)?.label} materials yet.`}
+              </p>
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
+              {filteredMaterials.map((mat) => {
+                const cfg = MAT_CFG[mat.type] || MAT_CFG.pdf;
+                const { Icon } = cfg;
+                const isLink = mat.type === 'youtube' || mat.type === 'drive';
+                return (
+                  <div key={mat._id} className="bg-white dark:bg-[#1E2233] rounded-xl border border-gray-100 dark:border-gray-700 shadow-sm hover:shadow-md transition-all duration-200 p-5 flex flex-col gap-3">
+                    {/* top row */}
+                    <div className="flex items-start justify-between gap-2">
+                      <div className="flex items-center gap-2.5 min-w-0">
+                        <div className={`p-2 rounded-lg flex-shrink-0 ${cfg.bg}`}>
+                          <Icon className={`h-4 w-4 ${cfg.text}`} />
+                        </div>
+                        <p className="font-semibold text-primary dark:text-gray-100 text-sm leading-snug line-clamp-2">{mat.title}</p>
+                      </div>
+                      <span className={`flex-shrink-0 text-[10px] font-bold px-2 py-0.5 rounded-full ${cfg.bg} ${cfg.text}`}>
+                        {cfg.label}
+                      </span>
+                    </div>
+
+                    {/* description */}
+                    {mat.description && (
+                      <p className="text-xs text-gray-500 dark:text-gray-400 line-clamp-2">{mat.description}</p>
+                    )}
+
+                    {/* provider name */}
+                    {(mat.uploadedBy?.organizationName || mat.uploadedBy?.fullName) && (
+                      <p className="text-[11px] text-gray-400 dark:text-gray-500">By {mat.uploadedBy.organizationName || mat.uploadedBy.fullName}</p>
+                    )}
+
+                    {/* course tag */}
+                    {mat.course && (
+                      <span className="inline-flex w-fit items-center gap-1 px-2.5 py-1 bg-accent/10 dark:bg-accent/5 text-accent text-xs font-medium rounded-full">
+                        <BookOpen className="h-3 w-3" />{mat.course}
+                      </span>
+                    )}
+
+                    {/* file info */}
+                    {mat.fileSize && (
+                      <p className="text-[11px] text-gray-400 dark:text-gray-500">
+                        {(mat.fileSize / (1024 * 1024)).toFixed(2)} MB
+                      </p>
+                    )}
+
+                    {/* action button */}
+                    <div className="mt-auto">
+                      {isLink ? (
+                        <a
+                          href={mat.linkUrl}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="inline-flex items-center justify-center gap-2 w-full px-4 py-2 rounded-lg bg-accent/10 hover:bg-accent/20 text-accent font-semibold text-sm transition-colors"
+                        >
+                          <ExternalLink className="h-4 w-4" />
+                          Open {cfg.label}
+                        </a>
+                      ) : (
+                        <a
+                          href={`${process.env.REACT_APP_API_URL?.replace('/api', '') || 'http://localhost:5000'}${mat.fileUrl}`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          download
+                          className="inline-flex items-center justify-center gap-2 w-full px-4 py-2 rounded-lg bg-accent/10 hover:bg-accent/20 text-accent font-semibold text-sm transition-colors"
+                        >
+                          <Download className="h-4 w-4" />
+                          Download
+                        </a>
+                      )}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </div>
+
+        {/* ── My Study Material Requests (students only) ─────────────── */}
+        {isStudent && (
+          <Card className="mt-12">
+            <CardHeader>
+              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+                <div className="flex items-center gap-2.5">
+                  <Inbox className="h-5 w-5 text-accent" />
+                  <CardTitle>My Study Material Requests</CardTitle>
+                </div>
+                <div className="flex items-center gap-2 flex-wrap">
+                  <span className="inline-flex items-center gap-1.5 px-3 py-1 bg-yellow-50 dark:bg-yellow-900/20 text-yellow-700 dark:text-yellow-400 border border-yellow-200 dark:border-yellow-700 text-xs font-medium rounded-full">
+                    <Clock className="h-3 w-3" />
+                    {requests.filter(r => r.status === 'pending').length} Pending
+                  </span>
+                  <span className="inline-flex items-center gap-1.5 px-3 py-1 bg-green-50 dark:bg-green-900/20 text-green-700 dark:text-green-400 border border-green-200 dark:border-green-700 text-xs font-medium rounded-full">
+                    <CheckCircle className="h-3 w-3" />
+                    {requests.filter(r => r.status === 'fulfilled').length} Fulfilled
+                  </span>
+                </div>
+              </div>
+            </CardHeader>
+            <CardContent>
+              {loadingReq ? (
+                <div className="flex items-center justify-center py-12">
+                  <div className="animate-spin h-8 w-8 border-4 border-accent border-t-transparent rounded-full" />
+                </div>
+              ) : requests.length === 0 ? (
+                <div className="text-center py-12">
+                  <FileText className="h-12 w-12 text-gray-300 dark:text-gray-600 mx-auto mb-3" />
+                  <p className="text-secondary dark:text-gray-400 text-sm">
+                    No requests yet. Click <strong>Request Study Material</strong> above to get started.
+                  </p>
+                </div>
+              ) : (
+                <div className="overflow-x-auto -mx-4 sm:mx-0">
+                  <table className="w-full text-sm min-w-[560px]">
+                    <thead>
+                      <tr className="border-b border-gray-200 dark:border-gray-700">
+                        <th className="text-left py-3 px-4 text-xs font-semibold text-secondary dark:text-gray-400 uppercase tracking-wide">Title</th>
+                        <th className="text-left py-3 px-4 text-xs font-semibold text-secondary dark:text-gray-400 uppercase tracking-wide">Type</th>
+                        <th className="text-left py-3 px-4 text-xs font-semibold text-secondary dark:text-gray-400 uppercase tracking-wide">Course</th>
+                        <th className="text-left py-3 px-4 text-xs font-semibold text-secondary dark:text-gray-400 uppercase tracking-wide">Status</th>
+                        <th className="text-left py-3 px-4 text-xs font-semibold text-secondary dark:text-gray-400 uppercase tracking-wide">Date</th>
+                        <th className="py-3 px-4" />
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-gray-100 dark:divide-gray-700/50">
+                      {requests.map((req) => (
+                        <tr key={req._id} className="hover:bg-gray-50 dark:hover:bg-gray-700/30 transition-colors group">
+                          <td className="py-3.5 px-4">
+                            <p className="font-medium text-primary dark:text-gray-100 line-clamp-1">{req.title}</p>
+                            {req.description && (
+                              <p className="text-xs text-secondary dark:text-gray-500 mt-0.5 line-clamp-1">{req.description}</p>
+                            )}
+                          </td>
+                          <td className="py-3.5 px-4 text-secondary dark:text-gray-400 whitespace-nowrap">
+                            {MATERIAL_TYPES.find(t => t.value === req.materialType)?.label || req.materialType}
+                          </td>
+                          <td className="py-3.5 px-4 text-secondary dark:text-gray-400">
+                            {req.course || <span className="text-gray-300 dark:text-gray-600">—</span>}
+                          </td>
+                          <td className="py-3.5 px-4">
+                            <div className="flex flex-col gap-1">
+                              <StatusBadge status={req.status} />
+                              {req.adminNote && (
+                                <span className="flex items-center gap-1 text-xs text-secondary dark:text-gray-400">
+                                  <MessageSquare className="h-3 w-3 flex-shrink-0" />
+                                  <span className="line-clamp-1">{req.adminNote}</span>
+                                </span>
+                              )}
+                            </div>
+                          </td>
+                          <td className="py-3.5 px-4 text-secondary dark:text-gray-500 whitespace-nowrap text-xs">
+                            {new Date(req.createdAt).toLocaleDateString()}
+                          </td>
+                          <td className="py-3.5 px-4">
+                            {req.status === 'pending' && (
+                              <button
+                                onClick={() => handleDelete(req._id)}
+                                title="Cancel request"
+                                className="opacity-0 group-hover:opacity-100 transition-opacity text-red-400 hover:text-red-600 p-1.5 rounded-lg hover:bg-red-50 dark:hover:bg-red-900/20"
+                              >
+                                <Trash2 className="h-4 w-4" />
+                              </button>
+                            )}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        )}
+
       </div>
     </div>
+
+    {/* ── Request Study Material Modal ──────────────────────────────── */}
+    {showModal && (
+      <div
+        className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm"
+        onClick={(e) => { if (e.target === e.currentTarget) { setShowModal(false); setForm(EMPTY_FORM); } }}
+      >
+        <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl w-full max-w-lg max-h-[92vh] overflow-y-auto">
+          {/* header */}
+          <div className="flex items-center justify-between px-6 py-4 border-b border-gray-200 dark:border-gray-700 sticky top-0 bg-white dark:bg-gray-800 z-10 rounded-t-2xl">
+            <div className="flex items-center gap-2.5">
+              <div className="bg-accent/10 p-2 rounded-lg">
+                <Send className="h-5 w-5 text-accent" />
+              </div>
+              <h2 className="text-lg font-bold text-primary dark:text-gray-100">Request Study Material</h2>
+            </div>
+            <button
+              onClick={() => { setShowModal(false); setForm(EMPTY_FORM); }}
+              className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+            >
+              <X className="h-5 w-5 text-secondary dark:text-gray-400" />
+            </button>
+          </div>
+
+          {/* form */}
+          <form onSubmit={handleSubmit} className="px-6 py-5 space-y-4">
+            {/* Type */}
+            <div>
+              <label className="block text-sm font-medium text-primary dark:text-gray-200 mb-1.5">Material Type</label>
+              <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+                {MATERIAL_TYPES.map(({ value, label }) => (
+                  <button
+                    key={value}
+                    type="button"
+                    onClick={() => setForm(f => ({ ...f, materialType: value }))}
+                    className={`px-3 py-2 rounded-xl border-2 text-sm font-medium transition-all ${
+                      form.materialType === value
+                        ? 'border-accent bg-accent/10 text-accent'
+                        : 'border-gray-200 dark:border-gray-600 text-secondary dark:text-gray-400 hover:border-accent/50'
+                    }`}
+                  >
+                    {label}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Title */}
+            <div>
+              <label className="block text-sm font-medium text-primary dark:text-gray-200 mb-1">
+                What do you need? <span className="text-red-500">*</span>
+              </label>
+              <input
+                type="text"
+                value={form.title}
+                onChange={(e) => setForm(f => ({ ...f, title: e.target.value }))}
+                placeholder="e.g. Database Systems – Week 4 Lecture Notes"
+                className="w-full px-4 py-2.5 rounded-xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-primary dark:text-gray-100 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-accent/50 focus:border-accent transition"
+              />
+            </div>
+
+            {/* Course */}
+            <div>
+              <label className="block text-sm font-medium text-primary dark:text-gray-200 mb-1">
+                Course <span className="text-xs text-gray-400 font-normal">(optional)</span>
+              </label>
+              <input
+                type="text"
+                value={form.course}
+                onChange={(e) => setForm(f => ({ ...f, course: e.target.value }))}
+                placeholder="e.g. CS301 – Database Systems"
+                className="w-full px-4 py-2.5 rounded-xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-primary dark:text-gray-100 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-accent/50 focus:border-accent transition"
+              />
+            </div>
+
+            {/* Description */}
+            <div>
+              <label className="block text-sm font-medium text-primary dark:text-gray-200 mb-1">
+                Additional Details <span className="text-xs text-gray-400 font-normal">(optional)</span>
+              </label>
+              <textarea
+                value={form.description}
+                onChange={(e) => setForm(f => ({ ...f, description: e.target.value }))}
+                placeholder="Any specific topics, chapters, or notes for the provider…"
+                rows={3}
+                className="w-full px-4 py-2.5 rounded-xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-primary dark:text-gray-100 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-accent/50 focus:border-accent transition resize-none"
+              />
+            </div>
+
+            {/* Actions */}
+            <div className="flex gap-3 pt-2">
+              <button
+                type="button"
+                onClick={() => { setShowModal(false); setForm(EMPTY_FORM); }}
+                className="flex-1 px-4 py-2.5 rounded-xl border border-gray-300 dark:border-gray-600 text-secondary dark:text-gray-400 font-medium hover:bg-gray-50 dark:hover:bg-gray-700 transition"
+              >
+                Cancel
+              </button>
+              <button
+                type="submit"
+                disabled={submitting}
+                className="flex-1 flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-accent text-white font-semibold hover:bg-accent/90 disabled:opacity-60 transition"
+              >
+                {submitting
+                  ? <div className="animate-spin h-4 w-4 border-2 border-white border-t-transparent rounded-full" />
+                  : <Send className="h-4 w-4" />}
+                {submitting ? 'Submitting…' : 'Submit Request'}
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
+    )}
+  </>
   );
 };
 
