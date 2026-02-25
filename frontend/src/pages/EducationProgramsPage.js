@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { BookOpen, Clock, Users, Star, Plus, X, Send, Inbox, CheckCircle, XCircle, Trash2, MessageSquare, FileText, ExternalLink, Download, Youtube, HardDrive, FlaskConical, LayoutDashboard } from 'lucide-react';
+import { BookOpen, Clock, Users, Star, Plus, X, Send, Inbox, CheckCircle, XCircle, Trash2, MessageSquare, FileText, ExternalLink, Download, Youtube, HardDrive, FlaskConical, LayoutDashboard, CalendarDays, GraduationCap } from 'lucide-react';
 import Button from '../components/ui/Button';
 import Card, { CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from '../components/ui/Card';
 import { useAuth } from '../contexts/AuthContext';
@@ -33,6 +33,8 @@ const StatusBadge = ({ status }) => {
 
 const EMPTY_FORM = { title: '', description: '', course: '', materialType: 'lecture-notes' };
 
+const EMPTY_MODULE = { module: '', date: '' };
+
 const MAT_TYPES = [
   { value: 'all',       label: 'All' },
   { value: 'pdf',       label: 'PDF' },
@@ -55,6 +57,55 @@ const EducationProgramsPage = () => {
   const isStudent = user?.role === 'student';
   const [mode, setMode] = useState('normal');
   const isExamMode = mode === 'exam';
+
+  // Exam setup modal
+  const storageKey = user?._id ? `examModules_${user._id}` : 'examModules';
+  const [showExamSetup, setShowExamSetup] = useState(false);
+  const [examModules, setExamModules]     = useState([{ ...EMPTY_MODULE }, { ...EMPTY_MODULE }]);
+  const [examModules_saved, setExamModules_saved] = useState(() => {
+    try {
+      const key = user?._id ? `examModules_${user._id}` : 'examModules';
+      const stored = localStorage.getItem(key);
+      return stored ? JSON.parse(stored) : [];
+    } catch { return []; }
+  });
+
+  const openExamSetup = () => {
+    // Pre-fill with saved modules when editing; start fresh on first use
+    setExamModules(
+      examModules_saved.length > 0
+        ? examModules_saved.map((r) => ({ ...r }))
+        : [{ ...EMPTY_MODULE }, { ...EMPTY_MODULE }]
+    );
+    setShowExamSetup(true);
+  };
+
+  const handleAddModule = () => {
+    setExamModules((prev) => [...prev, { ...EMPTY_MODULE }]);
+  };
+
+  const handleRemoveModule = (idx) => {
+    if (examModules.length <= 1) return;
+    setExamModules((prev) => prev.filter((_, i) => i !== idx));
+  };
+
+  const handleModuleChange = (idx, field, value) => {
+    setExamModules((prev) => prev.map((row, i) => i === idx ? { ...row, [field]: value } : row));
+  };
+
+  const handleExamSubmit = (e) => {
+    e.preventDefault();
+    const filled = examModules.filter((r) => r.module.trim() || r.date);
+    if (filled.length === 0) {
+      toast.error('Please add at least one module');
+      return;
+    }
+    setExamModules_saved(filled);
+    try { localStorage.setItem(storageKey, JSON.stringify(filled)); } catch {}
+    setShowExamSetup(false);
+    setMode('exam');
+    toast.success('Exam mode activated!');
+  };
 
   // Programs from API
   const [programs, setPrograms]       = useState([]);
@@ -168,7 +219,7 @@ const EducationProgramsPage = () => {
               Normal Mode
             </button>
             <button
-              onClick={() => setMode('exam')}
+              onClick={() => isExamMode ? null : (examModules_saved.length > 0 ? setMode('exam') : openExamSetup())}
               className={`inline-flex items-center gap-1.5 px-4 py-1.5 rounded-lg text-sm font-semibold transition-all duration-200 ${
                 isExamMode
                   ? 'bg-white dark:bg-[#1E2233] text-purple-600 dark:text-purple-400 shadow-sm border border-gray-200 dark:border-gray-600'
@@ -192,7 +243,50 @@ const EducationProgramsPage = () => {
           )}
         </div>
 
-        {/* ── Study Materials ──────────────────────────────────────────── */}
+        {/* ── Exam Schedule Banner (shown in exam mode) ────────────── */}
+        {isExamMode && examModules_saved.length > 0 && (
+          <div className="mb-6 rounded-2xl border border-purple-200 dark:border-purple-700 bg-purple-50 dark:bg-purple-900/20 px-5 py-5">
+            {/* header row */}
+            <div className="flex items-center justify-between mb-4">
+              <div className="flex items-center gap-2.5">
+                <div className="bg-purple-100 dark:bg-purple-900/40 p-2 rounded-lg">
+                  <GraduationCap className="h-5 w-5 text-purple-600 dark:text-purple-400" />
+                </div>
+                <div>
+                  <p className="text-sm font-bold text-purple-700 dark:text-purple-300">Exam Schedule</p>
+                  <p className="text-xs text-purple-500 dark:text-purple-400">{examModules_saved.length} module{examModules_saved.length > 1 ? 's' : ''} scheduled</p>
+                </div>
+              </div>
+              <button
+                onClick={openExamSetup}
+                className="text-xs text-purple-600 dark:text-purple-400 hover:underline font-medium whitespace-nowrap"
+              >
+                Edit schedule
+              </button>
+            </div>
+            {/* module cards grid */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+              {examModules_saved.filter(r => r.module.trim()).map((r, i) => (
+                <div key={i} className="bg-white dark:bg-gray-800 border border-purple-200 dark:border-purple-700 rounded-xl px-4 py-3 flex flex-col gap-1.5">
+                  <div className="flex items-center gap-2">
+                    <span className="text-[10px] font-bold text-purple-400 dark:text-purple-500 uppercase tracking-wide">Module {i + 1}</span>
+                  </div>
+                  <p className="font-semibold text-primary dark:text-gray-100 text-sm leading-snug">{r.module}</p>
+                  {r.date ? (
+                    <span className="inline-flex items-center gap-1.5 text-xs text-purple-600 dark:text-purple-400 font-medium">
+                      <CalendarDays className="h-3.5 w-3.5 flex-shrink-0" />
+                      {new Date(r.date).toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric', year: 'numeric' })}
+                    </span>
+                  ) : (
+                    <span className="text-xs text-gray-400 dark:text-gray-500">No date set</span>
+                  )}
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* ── Study Materials ────────────────────────────────────────────── */}
         <div className="mt-14">
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
             <div>
@@ -545,6 +639,115 @@ const EducationProgramsPage = () => {
                   ? <div className="animate-spin h-4 w-4 border-2 border-white border-t-transparent rounded-full" />
                   : <Send className="h-4 w-4" />}
                 {submitting ? 'Submitting…' : 'Submit Request'}
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
+    )}
+
+    {/* ── Exam Setup Modal ──────────────────────────────────────────────── */}
+    {showExamSetup && (
+      <div
+        className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm"
+        onClick={(e) => { if (e.target === e.currentTarget) setShowExamSetup(false); }}
+      >
+        <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl w-full max-w-lg max-h-[92vh] overflow-y-auto">
+          {/* Header */}
+          <div className="flex items-center justify-between px-6 py-4 border-b border-gray-200 dark:border-gray-700 sticky top-0 bg-white dark:bg-gray-800 z-10 rounded-t-2xl">
+            <div className="flex items-center gap-2.5">
+              <div className="bg-purple-100 dark:bg-purple-900/40 p-2 rounded-lg">
+                <FlaskConical className="h-5 w-5 text-purple-600 dark:text-purple-400" />
+              </div>
+              <div>
+                <h2 className="text-base font-bold text-primary dark:text-gray-100">Enter Exam Mode</h2>
+                <p className="text-xs text-gray-500 dark:text-gray-400">Add your upcoming exam modules &amp; dates</p>
+              </div>
+            </div>
+            <button
+              onClick={() => setShowExamSetup(false)}
+              className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+            >
+              <X className="h-5 w-5 text-secondary dark:text-gray-400" />
+            </button>
+          </div>
+
+          {/* Form */}
+          <form onSubmit={handleExamSubmit} className="px-6 py-5 space-y-4">
+            {/* Module rows */}
+            <div className="space-y-3">
+              {examModules.map((row, idx) => (
+                <div key={idx} className="rounded-xl border border-gray-200 dark:border-gray-600 bg-gray-50 dark:bg-gray-700/40 p-3">
+                  <div className="flex items-center justify-between mb-2">
+                    <span className="text-xs font-bold text-purple-600 dark:text-purple-400 uppercase tracking-wide">
+                      Module {idx + 1}
+                    </span>
+                    <button
+                      type="button"
+                      onClick={() => handleRemoveModule(idx)}
+                      disabled={examModules.length <= 1}
+                      className="flex items-center justify-center w-7 h-7 rounded-lg text-gray-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 transition disabled:opacity-30 disabled:cursor-not-allowed"
+                    >
+                      <X className="h-3.5 w-3.5" />
+                    </button>
+                  </div>
+                  <div className="space-y-2">
+                    <div>
+                      <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">Module Name</label>
+                      <input
+                        type="text"
+                        value={row.module}
+                        onChange={(e) => handleModuleChange(idx, 'module', e.target.value)}
+                        placeholder={`e.g. Data Structures`}
+                        className="w-full px-3 py-2.5 rounded-xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-primary dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-purple-400/50 focus:border-purple-400 transition text-sm"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">Exam Date</label>
+                      <input
+                        type="date"
+                        value={row.date}
+                        onChange={(e) => handleModuleChange(idx, 'date', e.target.value)}
+                        className="w-full px-3 py-2.5 rounded-xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-primary dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-purple-400/50 focus:border-purple-400 transition text-sm"
+                      />
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            {/* Add module button */}
+            <button
+              type="button"
+              onClick={handleAddModule}
+              className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl border-2 border-dashed border-purple-300 dark:border-purple-700 text-purple-600 dark:text-purple-400 text-sm font-semibold hover:border-purple-400 hover:bg-purple-50 dark:hover:bg-purple-900/20 transition w-full justify-center"
+            >
+              <Plus className="h-4 w-4" />
+              Add Module
+            </button>
+
+            {/* Info note */}
+            <p className="text-xs text-gray-400 dark:text-gray-500 text-center">
+              In Exam Mode, only materials marked as{' '}
+              <strong className="text-yellow-600 dark:text-yellow-400">Important</strong>{' '}
+              by your provider will be shown.
+            </p>
+
+            {/* Actions */}
+            <div className="flex gap-3 pt-1">
+              <button
+                type="button"
+                onClick={() => setShowExamSetup(false)}
+                className="flex-1 px-4 py-2.5 rounded-xl border border-gray-300 dark:border-gray-600 text-secondary dark:text-gray-400 font-medium hover:bg-gray-50 dark:hover:bg-gray-700 transition text-sm"
+              >
+                Cancel
+              </button>
+              <button
+                type="submit"
+                className="flex-1 flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-purple-600 hover:bg-purple-700 text-white font-semibold transition text-sm"
+              >
+                <FlaskConical className="h-4 w-4" />
+                Start Exam Mode
               </button>
             </div>
           </form>
