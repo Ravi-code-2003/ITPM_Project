@@ -4,7 +4,7 @@ const multer = require('multer');
 const path = require('path');
 const fs = require('fs');
 
-const { addMaterial, getMaterials, getAllMaterials, deleteMaterial, getStudentCount } = require('../controllers/EducationController');
+const { addMaterial, getMaterials, getAllMaterials, deleteMaterial, getStudentCount, toggleImportant } = require('../controllers/EducationController');
 const { protect, authorize } = require('../middleware/auth');
 
 // Ensure uploads directory exists
@@ -61,6 +61,7 @@ router.get('/', protect, getMaterials);
 
 // POST and DELETE require education-path or admin role
 router.post('/',       protect, authorize('education-path', 'admin'), uploadPDF.single('file'), handleMulterError, addMaterial);
+router.patch('/:id/important', protect, authorize('education-path', 'admin'), toggleImportant);
 router.delete('/:id',  protect, authorize('education-path', 'admin'), deleteMaterial);
 
 module.exports = router;

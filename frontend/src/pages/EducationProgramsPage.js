@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { BookOpen, Clock, Users, Star, Plus, X, Send, Inbox, CheckCircle, XCircle, Trash2, MessageSquare, FileText, ExternalLink, Download, Youtube, HardDrive } from 'lucide-react';
+import { BookOpen, Clock, Users, Star, Plus, X, Send, Inbox, CheckCircle, XCircle, Trash2, MessageSquare, FileText, ExternalLink, Download, Youtube, HardDrive, FlaskConical, LayoutDashboard } from 'lucide-react';
 import Button from '../components/ui/Button';
 import Card, { CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from '../components/ui/Card';
 import { useAuth } from '../contexts/AuthContext';
@@ -53,6 +53,8 @@ const MAT_CFG = {
 const EducationProgramsPage = () => {
   const { user } = useAuth();
   const isStudent = user?.role === 'student';
+  const [mode, setMode] = useState('normal');
+  const isExamMode = mode === 'exam';
 
   // Programs from API
   const [programs, setPrograms]       = useState([]);
@@ -90,9 +92,10 @@ const EducationProgramsPage = () => {
 
   useEffect(() => { fetchMaterials(); }, [fetchMaterials]);
 
-  const filteredMaterials = selectedMatType === 'all'
+  const filteredMaterials = (selectedMatType === 'all'
     ? materials
-    : materials.filter(m => m.type === selectedMatType);
+    : materials.filter(m => m.type === selectedMatType)
+  ).filter(m => isExamMode ? m.isImportant : true);
 
   const [showModal, setShowModal] = useState(false);
   const [form, setForm]           = useState(EMPTY_FORM);
@@ -149,9 +152,36 @@ const EducationProgramsPage = () => {
     <>
     <div className="min-h-screen bg-background dark:bg-background-dark py-8">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        {/* Top bar — request button for students */}
-        {isStudent && (
-          <div className="flex justify-end mb-6">
+        {/* Top bar — mode toggle + request button for students */}
+        <div className="flex items-center justify-between mb-6">
+          {/* Mode toggle */}
+          <div className="flex items-center gap-1 p-1 bg-gray-100 dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 shadow-sm">
+            <button
+              onClick={() => setMode('normal')}
+              className={`inline-flex items-center gap-1.5 px-4 py-1.5 rounded-lg text-sm font-semibold transition-all duration-200 ${
+                !isExamMode
+                  ? 'bg-white dark:bg-[#1E2233] text-accent shadow-sm border border-gray-200 dark:border-gray-600'
+                  : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200'
+              }`}
+            >
+              <LayoutDashboard className="h-3.5 w-3.5" />
+              Normal Mode
+            </button>
+            <button
+              onClick={() => setMode('exam')}
+              className={`inline-flex items-center gap-1.5 px-4 py-1.5 rounded-lg text-sm font-semibold transition-all duration-200 ${
+                isExamMode
+                  ? 'bg-white dark:bg-[#1E2233] text-purple-600 dark:text-purple-400 shadow-sm border border-gray-200 dark:border-gray-600'
+                  : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200'
+              }`}
+            >
+              <FlaskConical className="h-3.5 w-3.5" />
+              Exam Mode
+            </button>
+          </div>
+
+          {/* Request button — students only */}
+          {isStudent && (
             <button
               onClick={() => setShowModal(true)}
               className="inline-flex items-center gap-2 bg-accent hover:bg-accent/90 text-white font-semibold px-5 py-1.5 rounded-xl shadow-md transition-all duration-200 hover:shadow-lg hover:-translate-y-0.5"
@@ -159,15 +189,26 @@ const EducationProgramsPage = () => {
               <Plus className="h-4 w-4" />
               Request Study Material
             </button>
-          </div>
-        )}
+          )}
+        </div>
 
         {/* ── Study Materials ──────────────────────────────────────────── */}
         <div className="mt-14">
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
             <div>
-              <h2 className="text-2xl font-bold text-primary dark:text-gray-100">Study Materials</h2>
-              <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">Resources uploaded by education providers</p>
+              <h2 className="text-2xl font-bold text-primary dark:text-gray-100">
+                {isExamMode ? 'Important Study Materials' : 'Study Materials'}
+                {isExamMode && (
+                  <span className="ml-2 text-sm font-semibold text-yellow-600 dark:text-yellow-400 bg-yellow-100 dark:bg-yellow-900/30 px-2.5 py-0.5 rounded-full align-middle">
+                    Exam Mode
+                  </span>
+                )}
+              </h2>
+              <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
+                {isExamMode
+                  ? 'Only materials marked as important by your education provider are shown'
+                  : 'Resources uploaded by education providers'}
+              </p>
             </div>
             {/* type filter pills */}
             <div className="flex flex-wrap gap-2">
@@ -196,10 +237,20 @@ const EducationProgramsPage = () => {
             </div>
           ) : filteredMaterials.length === 0 ? (
             <div className="text-center py-12 border-2 border-dashed border-gray-200 dark:border-gray-700 rounded-2xl">
-              <FileText className="h-12 w-12 text-gray-300 dark:text-gray-600 mx-auto mb-3" />
-              <p className="text-secondary dark:text-gray-400">
-                {selectedMatType === 'all' ? 'No study materials uploaded yet.' : `No ${MAT_TYPES.find(t=>t.value===selectedMatType)?.label} materials yet.`}
-              </p>
+              {isExamMode ? (
+                <>
+                  <Star className="h-12 w-12 text-yellow-300 dark:text-yellow-700 mx-auto mb-3" />
+                  <p className="text-secondary dark:text-gray-400 font-medium">No important materials yet</p>
+                  <p className="text-sm text-gray-400 dark:text-gray-500 mt-1">Your education provider hasn't marked any materials as important.</p>
+                </>
+              ) : (
+                <>
+                  <FileText className="h-12 w-12 text-gray-300 dark:text-gray-600 mx-auto mb-3" />
+                  <p className="text-secondary dark:text-gray-400">
+                    {selectedMatType === 'all' ? 'No study materials uploaded yet.' : `No ${MAT_TYPES.find(t=>t.value===selectedMatType)?.label} materials yet.`}
+                  </p>
+                </>
+              )}
             </div>
           ) : (
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
@@ -208,7 +259,11 @@ const EducationProgramsPage = () => {
                 const { Icon } = cfg;
                 const isLink = mat.type === 'youtube' || mat.type === 'drive';
                 return (
-                  <div key={mat._id} className="bg-white dark:bg-[#1E2233] rounded-xl border border-gray-100 dark:border-gray-700 shadow-sm hover:shadow-md transition-all duration-200 p-5 flex flex-col gap-3">
+                  <div key={mat._id} className={`bg-white dark:bg-[#1E2233] rounded-xl border shadow-sm hover:shadow-md transition-all duration-200 p-5 flex flex-col gap-3 ${
+                    mat.isImportant
+                      ? 'border-yellow-300 dark:border-yellow-700'
+                      : 'border-gray-100 dark:border-gray-700'
+                  }`}>
                     {/* top row */}
                     <div className="flex items-start justify-between gap-2">
                       <div className="flex items-center gap-2.5 min-w-0">
@@ -217,9 +272,16 @@ const EducationProgramsPage = () => {
                         </div>
                         <p className="font-semibold text-primary dark:text-gray-100 text-sm leading-snug line-clamp-2">{mat.title}</p>
                       </div>
-                      <span className={`flex-shrink-0 text-[10px] font-bold px-2 py-0.5 rounded-full ${cfg.bg} ${cfg.text}`}>
-                        {cfg.label}
-                      </span>
+                      <div className="flex flex-col items-end gap-1 flex-shrink-0">
+                        <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${cfg.bg} ${cfg.text}`}>
+                          {cfg.label}
+                        </span>
+                        {mat.isImportant && (
+                          <span className="inline-flex items-center gap-0.5 px-2 py-0.5 rounded-full bg-yellow-100 dark:bg-yellow-900/30 text-yellow-700 dark:text-yellow-400 text-[10px] font-bold">
+                            <Star className="h-2.5 w-2.5 fill-yellow-500 text-yellow-500" /> Important
+                          </span>
+                        )}
+                      </div>
                     </div>
 
                     {/* description */}

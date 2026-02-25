@@ -9,7 +9,7 @@ const LINK_TYPES = ['youtube', 'drive'];
 // POST /api/education/materials
 const addMaterial = async (req, res) => {
   try {
-    const { title, description, type, linkUrl, course } = req.body;
+    const { title, description, type, linkUrl, course, isImportant } = req.body;
 
     if (!title || !title.trim()) {
       return res.status(400).json({ message: 'Title is required' });
@@ -23,6 +23,7 @@ const addMaterial = async (req, res) => {
       description: description?.trim() || '',
       type,
       course: course?.trim() || '',
+      isImportant: isImportant === true || isImportant === 'true',
       uploadedBy: req.user._id,
     };
 
@@ -104,6 +105,27 @@ const deleteMaterial = async (req, res) => {
   }
 };
 
+// PATCH /api/education/materials/:id/important  — toggle isImportant flag
+const toggleImportant = async (req, res) => {
+  try {
+    const material = await LectureMaterial.findOne({
+      _id: req.params.id,
+      uploadedBy: req.user._id,
+    });
+
+    if (!material) {
+      return res.status(404).json({ message: 'Material not found' });
+    }
+
+    material.isImportant = !material.isImportant;
+    await material.save();
+    res.json({ success: true, isImportant: material.isImportant });
+  } catch (error) {
+    console.error('toggleImportant error:', error);
+    res.status(500).json({ message: 'Server error', error: error.message });
+  }
+};
+
 // GET /api/education/student-count  — total registered students
 const getStudentCount = async (req, res) => {
   try {
@@ -115,5 +137,5 @@ const getStudentCount = async (req, res) => {
   }
 };
 
-module.exports = { addMaterial, getMaterials, getAllMaterials, deleteMaterial, getStudentCount };
+module.exports = { addMaterial, getMaterials, getAllMaterials, deleteMaterial, getStudentCount, toggleImportant };
 

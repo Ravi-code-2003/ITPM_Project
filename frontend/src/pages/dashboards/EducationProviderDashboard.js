@@ -22,6 +22,7 @@ import {
   Inbox,
   MessageSquare,
   ChevronDown,
+  Star,
 } from 'lucide-react';
 import Card, { CardHeader, CardTitle, CardContent } from '../../components/ui/Card';
 import api from '../../services/api';
@@ -54,6 +55,7 @@ const EMPTY_FORM = {
   course: '',
   linkUrl: '',
   file: null,
+  isImportant: false,
 };
 
 /* ── helpers ────────────────────────────────────────────────────────────── */
@@ -229,6 +231,7 @@ const EducationProviderDashboard = () => {
       fd.append('description', form.description.trim());
       fd.append('type',        form.type);
       fd.append('course',      form.course.trim());
+      fd.append('isImportant', form.isImportant);
       if (isFileType) fd.append('file', form.file);
       else            fd.append('linkUrl', form.linkUrl.trim());
 
@@ -253,6 +256,19 @@ const EducationProviderDashboard = () => {
       setMaterials((m) => m.filter((x) => x._id !== id));
     } catch {
       toast.error('Failed to delete material');
+    }
+  };
+
+  /* toggle important */
+  const handleToggleImportant = async (id) => {
+    try {
+      const res = await api.patch(`/education/materials/${id}/important`);
+      setMaterials((m) =>
+        m.map((x) => (x._id === id ? { ...x, isImportant: res.data.isImportant } : x))
+      );
+      toast.success(res.data.isImportant ? 'Marked as important' : 'Removed from important');
+    } catch {
+      toast.error('Failed to update importance');
     }
   };
 
@@ -288,10 +304,10 @@ const EducationProviderDashboard = () => {
         {/* ── Stats ──────────────────────────────────────────────────── */}
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
           {[
-            { label: 'Uploaded Materials', value: materials.length,  Icon: Upload,        iconBg: 'bg-accent/20',                        iconColor: 'text-primary dark:text-accent' },
-            { label: 'Total Students',     value: studentCount,      Icon: Users,         iconBg: 'bg-blue-100 dark:bg-blue-900/30',      iconColor: 'text-blue-600 dark:text-blue-400' },
-            { label: 'Materials',          value: materials.length,  Icon: FileText,      iconBg: 'bg-purple-100 dark:bg-purple-900/30',  iconColor: 'text-purple-600 dark:text-purple-400' },
-            { label: 'Rating',             value: '4.8',             Icon: GraduationCap, iconBg: 'bg-green-100 dark:bg-green-900/30',    iconColor: 'text-green-600 dark:text-green-400' },
+            { label: 'Uploaded Materials', value: materials.length,                          Icon: Upload,        iconBg: 'bg-accent/20',                        iconColor: 'text-primary dark:text-accent' },
+            { label: 'Total Students',     value: studentCount,                              Icon: Users,         iconBg: 'bg-blue-100 dark:bg-blue-900/30',      iconColor: 'text-blue-600 dark:text-blue-400' },
+            { label: 'Important Materials',value: materials.filter(m => m.isImportant).length, Icon: Star,        iconBg: 'bg-yellow-100 dark:bg-yellow-900/30',  iconColor: 'text-yellow-600 dark:text-yellow-400' },
+            { label: 'Rating',             value: '4.8',                                     Icon: GraduationCap, iconBg: 'bg-green-100 dark:bg-green-900/30',    iconColor: 'text-green-600 dark:text-green-400' },
           ].map(({ label, value, Icon, iconBg, iconColor }) => (
             <Card key={label}>
               <CardContent className="p-5">
@@ -358,20 +374,44 @@ const EducationProviderDashboard = () => {
                   return (
                     <div
                       key={mat._id}
-                      className="border border-gray-200 dark:border-gray-700 rounded-xl p-4 hover:shadow-md transition-shadow group bg-white dark:bg-gray-800"
+                      className={`border rounded-xl p-4 hover:shadow-md transition-shadow group bg-white dark:bg-gray-800 ${
+                        mat.isImportant
+                          ? 'border-yellow-300 dark:border-yellow-700'
+                          : 'border-gray-200 dark:border-gray-700'
+                      }`}
                     >
                       {/* top row */}
                       <div className="flex items-start justify-between gap-2">
-                        <div className={`p-2 rounded-lg ${info.bg} flex-shrink-0`}>
-                          <Icon className={`h-5 w-5 ${info.color}`} />
+                        <div className="flex items-center gap-2">
+                          <div className={`p-2 rounded-lg ${info.bg} flex-shrink-0`}>
+                            <Icon className={`h-5 w-5 ${info.color}`} />
+                          </div>
+                          {mat.isImportant && (
+                            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-yellow-100 dark:bg-yellow-900/30 text-yellow-700 dark:text-yellow-400 text-[10px] font-bold">
+                              <Star className="h-2.5 w-2.5 fill-yellow-500 text-yellow-500" /> Important
+                            </span>
+                          )}
                         </div>
-                        <button
-                          onClick={() => handleDelete(mat._id)}
-                          title="Delete material"
-                          className="opacity-0 group-hover:opacity-100 transition-opacity text-red-400 hover:text-red-600 p-1 rounded-lg hover:bg-red-50 dark:hover:bg-red-900/20"
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </button>
+                        <div className="flex items-center gap-1">
+                          <button
+                            onClick={() => handleToggleImportant(mat._id)}
+                            title={mat.isImportant ? 'Remove important' : 'Mark as important'}
+                            className={`opacity-0 group-hover:opacity-100 transition-opacity p-1 rounded-lg ${
+                              mat.isImportant
+                                ? 'text-yellow-500 hover:text-yellow-600 hover:bg-yellow-50 dark:hover:bg-yellow-900/20'
+                                : 'text-gray-400 hover:text-yellow-500 hover:bg-yellow-50 dark:hover:bg-yellow-900/20'
+                            }`}
+                          >
+                            <Star className={`h-4 w-4 ${mat.isImportant ? 'fill-yellow-400' : ''}`} />
+                          </button>
+                          <button
+                            onClick={() => handleDelete(mat._id)}
+                            title="Delete material"
+                            className="opacity-0 group-hover:opacity-100 transition-opacity text-red-400 hover:text-red-600 p-1 rounded-lg hover:bg-red-50 dark:hover:bg-red-900/20"
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </button>
+                        </div>
                       </div>
 
                       {/* content */}
@@ -711,6 +751,33 @@ const EducationProviderDashboard = () => {
                   rows={2}
                   className="w-full px-4 py-2.5 rounded-xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-primary dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-accent/50 focus:border-accent transition resize-none"
                 />
+              </div>
+
+              {/* ── Important toggle ── */}
+              <div className={`flex items-center justify-between px-4 py-3 rounded-xl border-2 transition-all cursor-pointer ${
+                form.isImportant
+                  ? 'border-yellow-400 bg-yellow-50 dark:bg-yellow-900/20'
+                  : 'border-gray-200 dark:border-gray-600 hover:border-yellow-300'
+              }`}
+                onClick={() => setForm((f) => ({ ...f, isImportant: !f.isImportant }))}
+              >
+                <div className="flex items-center gap-2.5">
+                  <Star className={`h-5 w-5 ${
+                    form.isImportant ? 'fill-yellow-400 text-yellow-400' : 'text-gray-400'
+                  }`} />
+                  <div>
+                    <p className="text-sm font-semibold text-primary dark:text-gray-100">Mark as Important</p>
+                    <p className="text-xs text-gray-500 dark:text-gray-400">Students in Exam Mode will only see important materials</p>
+                  </div>
+                </div>
+                {/* toggle pill */}
+                <div className={`relative w-10 h-6 rounded-full transition-colors flex-shrink-0 ${
+                  form.isImportant ? 'bg-yellow-400' : 'bg-gray-300 dark:bg-gray-600'
+                }`}>
+                  <span className={`absolute top-0.5 left-0.5 w-5 h-5 bg-white rounded-full shadow transition-transform ${
+                    form.isImportant ? 'translate-x-4' : 'translate-x-0'
+                  }`} />
+                </div>
               </div>
 
               {/* ── File upload (PDF/Tute/PastPaper) ── */}

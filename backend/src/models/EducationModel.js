@@ -17,6 +17,8 @@ const lectureMaterialSchema = new mongoose.Schema(
     linkUrl: { type: String },
     // Optional course tag
     course: { type: String, trim: true, default: '' },
+    // Mark as important — visible-only in Exam Mode
+    isImportant: { type: Boolean, default: false },
     uploadedBy: {
       type: mongoose.Schema.Types.ObjectId,
       ref: 'User',
