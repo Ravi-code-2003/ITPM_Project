@@ -1,7 +1,7 @@
 const OpenAI = require("openai");
 
 const DEEPSEEK_BASE_URL = process.env.DEEPSEEK_BASE_URL || "https://api.deepseek.com";
-const DEEPSEEK_MODEL = process.env.DEEPSEEK_MODEL || "deepseek-chat";
+const DEEPSEEK_MODEL = process.env.DEEPSEEK_MODEL || "hhao/qwen2.5-coder-tools:3b";
 const DEEPSEEK_TIMEOUT_MS = parseInt(process.env.DEEPSEEK_TIMEOUT_MS, 10) || 120000;
 
 const SYSTEM_PROMPT = "You are a helpful assistant.";
@@ -107,6 +107,21 @@ const generateAssistantReply = async ({ user, contextMessages, userMessage }) =>
   } catch (error) {
     const status = error?.status || error?.response?.status;
     const details = error?.error || error?.response?.data || { cause: error.message };
+    const detailMessage = String(details?.message || "");
+    const detailCode = String(details?.code || "");
+
+    if (
+      (status === 400 || status === 402) &&
+      (/insufficient\s*(balance|quota|credit)/i.test(detailMessage) ||
+        detailCode.toLowerCase() === "insufficient_balance")
+    ) {
+      throw new DeepSeekServiceError(
+        "DeepSeek account has insufficient balance. Please top up your DeepSeek account and retry.",
+        "DEEPSEEK_INSUFFICIENT_BALANCE",
+        402,
+        details
+      );
+    }
 
     if (status === 401 || status === 403) {
       throw new DeepSeekServiceError(
