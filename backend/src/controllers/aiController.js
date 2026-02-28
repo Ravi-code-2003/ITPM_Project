@@ -1,6 +1,6 @@
 const joi = require("joi");
 const Chat = require("../models/Chat");
-const { generateAssistantReply } = require("../services/deepseekService");
+const { generateResponse } = require("../services/aiService");
 
 const CONTEXT_MESSAGE_LIMIT = 5;
 
@@ -89,10 +89,9 @@ const chatWithAI = async (req, res) => {
 
     const contextMessages = chat.messages.slice(-CONTEXT_MESSAGE_LIMIT);
 
-    const result = await generateAssistantReply({
+    const result = await generateResponse(sanitizedMessage, {
       user: req.user,
       contextMessages,
-      userMessage: sanitizedMessage,
     });
 
     const now = new Date();
@@ -108,7 +107,7 @@ const chatWithAI = async (req, res) => {
     });
     await chat.save();
 
-    console.log(`[AI] Response time: ${result.metrics.durationMs}ms`);
+    console.log(`[AI] Response time: ${result.metrics.durationMs}ms (attempt ${result.metrics.attempt})`);
 
     return res.json({
       reply: result.text,
