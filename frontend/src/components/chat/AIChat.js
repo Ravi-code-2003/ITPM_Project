@@ -102,12 +102,34 @@ const AIChat = ({ isFloating = false, onClose }) => {
     setError("");
     setIsSending(true);
 
+    const optimisticUserMessage = {
+      sender: "user",
+      content: trimmed,
+      timestamp: new Date().toISOString(),
+    };
+    setMessages((prev) => [...prev, optimisticUserMessage]);
+    setInput("");
+
     try {
       const response = await aiAPI.sendMessage(trimmed);
-      setMessages(response.messages || []);
-      setInput("");
+      const assistantMessage = response.reply;
+
+      if (!assistantMessage || typeof assistantMessage !== "string") {
+        throw new Error("Invalid AI response");
+      }
+
+      setMessages((prev) => [
+        ...prev,
+        {
+          sender: "ai",
+          content: assistantMessage,
+          timestamp: new Date().toISOString(),
+        },
+      ]);
     } catch (err) {
+      setMessages((prev) => prev.filter((msg) => msg !== optimisticUserMessage));
       setError(err.response?.data?.message || "Failed to send message");
+      setInput(trimmed);
     } finally {
       setIsSending(false);
     }
@@ -119,7 +141,7 @@ const AIChat = ({ isFloating = false, onClose }) => {
       handleSendMessage();
     }
   };
-  
+
   const containerClassName = isFloating
     ? "h-[70vh] max-h-[640px] flex flex-col shadow-2xl border border-secondary/30 dark:border-secondary/20"
     : "h-[75vh] flex flex-col";
