@@ -1,10 +1,6 @@
 const joi = require("joi");
 const Chat = require("../models/Chat");
-const {
-  LlamaServiceError,
-  buildLlamaPrompt,
-  streamLlamaResponse,
-} = require("../services/llamaService");
+const { generateResponse } = require("../services/aiService");
 
 const CONTEXT_MESSAGE_LIMIT = 5;
 
@@ -33,10 +29,6 @@ const hasBlockedPrompt = (value) => {
   ];
 
   return blockedPatterns.some((pattern) => pattern.test(value));
-};
-
-const sendSSE = (res, payload) => {
-  res.write(`data: ${JSON.stringify(payload)}\n\n`);
 };
 
 const getChatHistory = async (req, res) => {
@@ -83,11 +75,6 @@ const chatWithAI = async (req, res) => {
       });
     }
 
-    res.setHeader("Content-Type", "text/event-stream");
-    res.setHeader("Cache-Control", "no-cache");
-    res.setHeader("Connection", "keep-alive");
-    res.setHeader("X-Accel-Buffering", "no");
-
     let chat = await Chat.findOne({ userId: req.user._id });
 
     if (!chat) {
@@ -102,22 +89,10 @@ const chatWithAI = async (req, res) => {
 
     const contextMessages = chat.messages.slice(-CONTEXT_MESSAGE_LIMIT);
 
-    const prompt = buildLlamaPrompt({
+    const result = await generateResponse(sanitizedMessage, {
       user: req.user,
       contextMessages,
-      userMessage: sanitizedMessage,
     });
-
-    const streamResult = await streamLlamaResponse({
-      prompt,
-      onToken: async (token) => {
-        sendSSE(res, { type: "token", token });
-      },
-    });
-
-    if (!streamResult.text) {
-      throw new LlamaServiceError("Model returned empty response", "EMPTY_RESPONSE", 502);
-    }
 
     const now = new Date();
     chat.messages.push({
@@ -127,43 +102,27 @@ const chatWithAI = async (req, res) => {
     });
     chat.messages.push({
       sender: "ai",
-      content: streamResult.text,
+      content: result.text,
       timestamp: new Date(),
     });
     await chat.save();
 
-    console.log(`[AI] Response time: ${streamResult.metrics.durationMs}ms`);
-    console.log(`[AI] Approx tokens/sec: ${streamResult.metrics.tokensPerSecond.toFixed(1)}`);
+    console.log(`[AI] Response time: ${result.metrics.durationMs}ms (attempt ${result.metrics.attempt})`);
 
-    sendSSE(res, {
-      type: "done",
-      reply: streamResult.text,
-      role: chat.role,
-      metrics: {
-        durationMs: streamResult.metrics.durationMs,
-        tokensPerSecond: Number(streamResult.metrics.tokensPerSecond.toFixed(1)),
-      },
+    return res.json({
+      reply: result.text,
     });
-
-    return res.end();
   } catch (error) {
     console.error("AI chat error:", error);
 
     const status = error.status || 500;
-    const payload = {
+    return res.status(status).json({
+      message: error.message || "Server error while generating AI response",
       error: {
         code: error.code || "AI_CHAT_ERROR",
-        message: error.message || "Server error while generating AI response",
         details: error.details || null,
       },
-    };
-
-    if (res.headersSent) {
-      sendSSE(res, { type: "error", ...payload });
-      return res.end();
-    }
-
-    return res.status(status).json(payload);
+    });
   }
 };
 
