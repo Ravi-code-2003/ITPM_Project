@@ -155,7 +155,7 @@ const AIChat = ({ isFloating = false, onClose }) => {
             <button
               type="button"
               onClick={onClose}
-              className="rounded-md px-2 py-1 text-sm font-semibold text-secondary transition-colors hover:bg-secondary/10 dark:text-gray-300 dark:hover:bg-secondary/20"
+              className="rounded-md px-2 py-1 text-sm font-semibold text-secondary dark:text-gray-400 transition-colors hover:bg-secondary/10 dark:hover:bg-gray-700 dark:hover:text-gray-200"
               aria-label="Close chatbot"
             >
               Close
