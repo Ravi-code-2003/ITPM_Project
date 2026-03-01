@@ -1,6 +1,7 @@
 const joi = require("joi");
 const Chat = require("../models/Chat");
 const { generateResponse } = require("../services/aiService");
+const { buildDatabaseContext } = require("../services/databaseContextService");
 
 const CONTEXT_MESSAGE_LIMIT = 5;
 
@@ -89,9 +90,19 @@ const chatWithAI = async (req, res) => {
 
     const contextMessages = chat.messages.slice(-CONTEXT_MESSAGE_LIMIT);
 
+    let dbContext = null;
+    try {
+      dbContext = await buildDatabaseContext(sanitizedMessage);
+    } catch (contextError) {
+      // Context enrichment is optional; core chat should still work.
+      console.error("AI DB context build error:", contextError);
+      dbContext = null;
+    }
+
     const result = await generateResponse(sanitizedMessage, {
       user: req.user,
       contextMessages,
+      dbContext,
     });
 
     const now = new Date();
