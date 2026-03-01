@@ -3,6 +3,7 @@ import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import { Toaster } from 'react-hot-toast';
 import { AuthProvider } from './contexts/AuthContext';
 import { ThemeProvider } from './contexts/ThemeContext';
+import { CartProvider } from './contexts/CartContext';
 import { ProtectedRoute, PublicRoute, AdminRoute, RoleRoute } from './components/ProtectedRoute';
 import Layout from './components/layout/Layout';
 import FloatingAIChat from './components/chat/FloatingAIChat';
@@ -36,6 +37,10 @@ import HouseOwnerDashboard from './pages/dashboards/HouseOwnerDashboard';
 import EducationProviderDashboard from './pages/dashboards/EducationProviderDashboard';
 import AIChatPage from './pages/AIChatPage';
 
+// Student Components  
+import RestaurantDetail from './components/student/RestaurantDetail';
+import CartPage from './components/student/CartPage';
+
 // Status Pages
 import PendingApproval from './pages/status/PendingApproval';
 import UnauthorizedPage from './pages/UnauthorizedPage';
@@ -45,6 +50,7 @@ function App() {
   return (
     <ThemeProvider>
       <AuthProvider>
+        <CartProvider>
         <Router>
           <div className="min-h-screen bg-background dark:bg-background-dark transition-colors duration-200">
           <Routes>
@@ -198,6 +204,26 @@ function App() {
               } 
             />
             <Route 
+              path="/student/restaurant/:id" 
+              element={
+                <RoleRoute roles={['student']}>
+                  <Layout showFooter={false}>
+                    <RestaurantDetail />
+                  </Layout>
+                </RoleRoute>
+              } 
+            />
+            <Route 
+              path="/student/cart" 
+              element={
+                <RoleRoute roles={['student']}>
+                  <Layout showFooter={false}>
+                    <CartPage />
+                  </Layout>
+                </RoleRoute>
+              } 
+            />
+            <Route 
               path="/shop-owner/dashboard" 
               element={
                 <RoleRoute roles={['shop-owner']} requireApproval={true}>
@@ -297,6 +323,7 @@ function App() {
           <FloatingAIChat />
           </div>
         </Router>
+        </CartProvider>
       </AuthProvider>
     </ThemeProvider>
   );
