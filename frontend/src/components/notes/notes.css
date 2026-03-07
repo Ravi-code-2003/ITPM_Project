@@ -1,0 +1,56 @@
+.notes-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 12px;
+}
+
+.note-card {
+  border-radius: 12px;
+  padding: 12px;
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.12);
+  min-height: 140px;
+}
+
+.note-card-yellow {
+  background: #fde68a;
+}
+
+.note-card-blue {
+  background: #bfdbfe;
+}
+
+.note-card-pink {
+  background: #fbcfe8;
+}
+
+.note-card-green {
+  background: #bbf7d0;
+}
+
+.note-card-purple {
+  background: #ddd6fe;
+}
+
+.note-card-orange {
+  background: #fed7aa;
+}
+
+.notes-modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.35);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 80;
+  padding: 12px;
+}
+
+.notes-modal {
+  width: 100%;
+  max-width: 560px;
+  border-radius: 14px;
+  background: #ffffff;
+  padding: 16px;
+  box-shadow: 0 20px 30px rgba(0, 0, 0, 0.18);
+}

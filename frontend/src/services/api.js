@@ -239,4 +239,37 @@ export const aiAPI = {
   },
 };
 
+// Notes API calls
+export const notesAPI = {
+  getStickyNotes: async () => {
+    const response = await api.get("/notes/sticky");
+    return response.data;
+  },
+
+  getTodos: async () => {
+    const response = await api.get("/notes/todos");
+    return response.data;
+  },
+
+  createNote: async (payload) => {
+    const response = await api.post("/notes", payload);
+    return response.data;
+  },
+
+  toggleTodoCompletion: async (id, completed) => {
+    const response = await api.patch(`/notes/${id}/complete`, { completed });
+    return response.data;
+  },
+
+  updateTodo: async (id, payload) => {
+    const response = await api.patch(`/notes/${id}`, payload);
+    return response.data;
+  },
+
+  deleteNote: async (id) => {
+    const response = await api.delete(`/notes/${id}`);
+    return response.data;
+  },
+};
+
 export default api;
