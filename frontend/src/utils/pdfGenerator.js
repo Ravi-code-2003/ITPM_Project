@@ -269,7 +269,7 @@ export const generateOrderPDF = (orderData) => {
                   <div class="item-category">${itemCategory}</div>
                 </div>
                 <div class="item-quantity">×${itemQuantity}</div>
-                <div class="item-price">$${(itemPrice * itemQuantity).toFixed(2)}</div>
+                <div class="item-price">LKR ${(itemPrice * itemQuantity).toFixed(2)}</div>
               </div>
             `;
           }).join('')}
@@ -279,11 +279,11 @@ export const generateOrderPDF = (orderData) => {
         <div class="totals-section">
           <div class="total-row">
             <span class="total-label">Subtotal (${orderData.items.length} item${orderData.items.length !== 1 ? 's' : ''}):</span>
-            <span class="total-value">$${orderData.subtotal?.toFixed(2) || orderData.totalAmount?.toFixed(2) || '0.00'}</span>
+            <span class="total-value">LKR ${orderData.subtotal?.toFixed(2) || orderData.totalAmount?.toFixed(2) || '0.00'}</span>
           </div>
           <div class="total-row final-total">
             <span class="total-label">Total Amount:</span>
-            <span class="total-value">$${(orderData.totalAmount || 0).toFixed(2)}</span>
+            <span class="total-value">LKR ${(orderData.totalAmount || 0).toFixed(2)}</span>
           </div>
         </div>
 
@@ -346,14 +346,14 @@ Location: ${orderData.restaurant?.location || 'N/A'}
 ORDER ITEMS
 -------------------------------------
 ${orderData.items.map(item => 
-  `${item.name} ${item.isCombo ? '(Combo)' : ''}\n  Qty: ${item.quantity} x $${item.price?.toFixed(2)} = $${(item.price * item.quantity).toFixed(2)}`
+  `${item.name} ${item.isCombo ? '(Combo)' : ''}\n  Qty: ${item.quantity} x LKR ${item.price?.toFixed(2)} = LKR ${(item.price * item.quantity).toFixed(2)}`
 ).join('\n')}
 
 -------------------------------------
 TOTALS
 -------------------------------------
-Subtotal: $${orderData.totalAmount?.toFixed(2) || '0.00'}
-Total: $${(orderData.totalAmount || 0).toFixed(2)}
+Subtotal: LKR ${orderData.totalAmount?.toFixed(2) || '0.00'}
+Total: LKR ${(orderData.totalAmount || 0).toFixed(2)}
 
 =====================================
      Thank you for your order!

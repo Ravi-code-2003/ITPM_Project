@@ -188,8 +188,6 @@ export const CartProvider = ({ children }) => {
       type: CART_ACTIONS.ADD_ITEM,
       payload: { item, isCombo, restaurantId, restaurantName }
     });
-    
-    toast.success(`${item.name} added to cart`);
     console.log('Cart state after add:', state);
   };
 

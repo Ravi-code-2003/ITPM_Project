@@ -154,7 +154,7 @@ const FoodMenuCRUD = () => {
               
               <div>
                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                  Price ($) *
+                  Price (LKR) *
                 </label>
                 <input
                   type="number"
@@ -262,7 +262,7 @@ const FoodMenuCRUD = () => {
                     </div>
                     
                     <p className="text-lg font-semibold text-green-600 dark:text-green-400 mb-2">
-                      ${food.price.toFixed(2)}
+                      LKR {food.price.toFixed(2)}
                     </p>
                     
                     <div className="flex items-center gap-2">
