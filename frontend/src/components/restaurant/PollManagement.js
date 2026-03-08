@@ -265,7 +265,7 @@ const PollManagement = () => {
                           <option value="">Select food item</option>
                           {foods.filter(food => food.status === 'Available').map(food => (
                             <option key={food._id} value={food._id}>
-                              {food.name} (${food.price})
+                              {food.name} (LKR {food.price})
                             </option>
                           ))}
                         </select>
@@ -398,7 +398,7 @@ const PollManagement = () => {
                             )}
                           </div>
                           <p className="text-xs text-gray-600 dark:text-gray-400">
-                            {proposal.proposedDiscount}% off • ${proposal.foodItemId?.price}
+                            {proposal.proposedDiscount}% off • LKR {proposal.foodItemId?.price}
                           </p>
                           {proposal.description && (
                             <p className="text-xs text-gray-500 mt-1">{proposal.description}</p>

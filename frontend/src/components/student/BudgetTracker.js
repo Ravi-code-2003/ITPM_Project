@@ -126,7 +126,7 @@ const BudgetTracker = () => {
               <div className="space-y-4">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                    Monthly Budget ($)
+                    Monthly Budget (LKR)
                   </label>
                   <input
                     type="number"
@@ -173,7 +173,7 @@ const BudgetTracker = () => {
                   <div>
                     <p className="text-sm text-secondary dark:text-gray-400">Monthly Budget</p>
                     <p className="text-2xl font-bold text-primary dark:text-gray-100">
-                      ${budgetData.monthlyBudget.toFixed(2)}
+                      LKR {budgetData.monthlyBudget.toFixed(2)}
                     </p>
                   </div>
                   <div className="bg-blue-100 dark:bg-blue-900/30 p-3 rounded-lg">
@@ -189,7 +189,7 @@ const BudgetTracker = () => {
                   <div>
                     <p className="text-sm text-secondary dark:text-gray-400">Total Spent</p>
                     <p className="text-2xl font-bold text-primary dark:text-gray-100">
-                      ${budgetData.totalSpent.toFixed(2)}
+                      LKR {budgetData.totalSpent.toFixed(2)}
                     </p>
                   </div>
                   <div className="bg-purple-100 dark:bg-purple-900/30 p-3 rounded-lg">
@@ -205,7 +205,7 @@ const BudgetTracker = () => {
                   <div>
                     <p className="text-sm text-secondary dark:text-gray-400">Remaining</p>
                     <p className={`text-2xl font-bold ${getStatusColor(status)}`}>
-                      ${Math.max(0, budgetData.remaining).toFixed(2)}
+                      LKR {Math.max(0, budgetData.remaining).toFixed(2)}
                     </p>
                   </div>
                   <div className="bg-green-100 dark:bg-green-900/30 p-3 rounded-lg">
@@ -282,7 +282,7 @@ const BudgetTracker = () => {
                     <div>
                       <p className="text-sm text-secondary dark:text-gray-400">Daily Average</p>
                       <p className="font-semibold">
-                        ${budgetData.orderCount > 0 ? (budgetData.totalSpent / budgetData.orderCount).toFixed(2) : '0.00'}
+                        LKR {budgetData.orderCount > 0 ? (budgetData.totalSpent / budgetData.orderCount).toFixed(2) : '0.00'}
                       </p>
                     </div>
                     <div>
@@ -294,7 +294,7 @@ const BudgetTracker = () => {
                     <div>
                       <p className="text-sm text-secondary dark:text-gray-400">Daily Budget Left</p>
                       <p className="font-semibold text-green-600 dark:text-green-400">
-                        ${(budgetData.remaining / Math.max(1, new Date(new Date().getFullYear(), new Date().getMonth() + 1, 0).getDate() - new Date().getDate())).toFixed(2)}
+                        LKR {(budgetData.remaining / Math.max(1, new Date(new Date().getFullYear(), new Date().getMonth() + 1, 0).getDate() - new Date().getDate())).toFixed(2)}
                       </p>
                     </div>
                   </div>
@@ -321,7 +321,7 @@ const BudgetTracker = () => {
                           <span className="text-sm">{formatDate(date)}</span>
                         </div>
                         <span className="font-semibold text-green-600 dark:text-green-400">
-                          ${amount.toFixed(2)}
+                          LKR {amount.toFixed(2)}
                         </span>
                       </div>
                     ))}
@@ -349,7 +349,7 @@ const BudgetTracker = () => {
                         </p>
                       </div>
                       <span className="font-semibold text-green-600 dark:text-green-400">
-                        ${order.totalAmount.toFixed(2)}
+                        LKR {order.totalAmount.toFixed(2)}
                       </span>
                     </div>
                   ))}
