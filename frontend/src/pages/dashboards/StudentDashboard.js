@@ -6,6 +6,7 @@ import FavoritesPage from "../../components/student/FavoritesPage";
 import OrderHistory from "../../components/student/OrderHistory";
 import CartPage from "../../components/student/CartPage";
 import TodoTable from "../../components/notes/TodoTable";
+import LostFoundSection from "../../components/lostfound/LostFoundSection";
 import api from "../../services/api";
 import { useCart } from "../../contexts/CartContext";
 import toast from "react-hot-toast";
@@ -13,7 +14,6 @@ import toast from "react-hot-toast";
 const StudentDashboard = () => {
   const [searchParams] = useSearchParams();
   const [activeTab, setActiveTab] = useState("favorites");
-  const [loading, setLoading] = useState(false);
   const [dashboardDataLoading, setDashboardDataLoading] = useState(true);
   const [topRatedFoods, setTopRatedFoods] = useState([]);
   const { getCartCount } = useCart();
@@ -116,6 +116,8 @@ const StudentDashboard = () => {
               <TodoTable />
             </CardContent>
           </Card>
+
+          <LostFoundSection />
         </div>
 
         <div className="mb-8">
@@ -147,13 +149,7 @@ const StudentDashboard = () => {
           </div>
         </div>
 
-        {loading ? (
-          <div className="flex items-center justify-center py-8">
-            <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-primary"></div>
-          </div>
-        ) : (
-          renderTabContent()
-        )}
+        {renderTabContent()}
       </div>
     </div>
   );
