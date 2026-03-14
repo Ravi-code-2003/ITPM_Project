@@ -1,7 +1,6 @@
 import React from 'react';
 import { Home, Users, DollarSign, Calendar } from 'lucide-react';
-import Button from '../../components/ui/Button';
-import Card, { CardHeader, CardTitle, CardDescription, CardContent } from '../../components/ui/Card';
+import Card, { CardHeader, CardTitle, CardContent } from '../../components/ui/Card';
 
 const HouseOwnerDashboard = () => {
   return (
@@ -45,7 +44,7 @@ const HouseOwnerDashboard = () => {
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm text-secondary dark:text-gray-400">Monthly Rent</p>
-                  <p className="text-2xl font-bold text-primary dark:text-gray-100">$1,200</p>
+                  <p className="text-2xl font-bold text-primary dark:text-gray-100">LKR 1,200</p>
                 </div>
                 <div className="bg-green-100 dark:bg-green-900/30 p-3 rounded-lg">
                   <DollarSign className="h-8 w-8 text-green-600 dark:text-green-400" />

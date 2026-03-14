@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from 'react';
-import { BarChart, TrendingUp, DollarSign, ShoppingBag, Users, Calendar } from 'lucide-react';
+import React, { useState, useEffect, useCallback } from 'react';
+import { TrendingUp, DollarSign, ShoppingBag, Calendar } from 'lucide-react';
 import Button from '../ui/Button';
 import Card, { CardHeader, CardTitle, CardContent } from '../ui/Card';
 import api from '../../services/api';
@@ -9,14 +9,8 @@ const AnalyticsDashboard = () => {
   const [analytics, setAnalytics] = useState(null);
   const [loading, setLoading] = useState(true);
   const [period, setPeriod] = useState('30');
-  const [orders, setOrders] = useState([]);
 
-  useEffect(() => {
-    fetchAnalytics();
-    fetchRecentOrders();
-  }, [period]);
-
-  const fetchAnalytics = async () => {
+  const fetchAnalytics = useCallback(async () => {
     try {
       setLoading(true);
       const response = await api.get(`/shop/analytics?period=${period}`);
@@ -27,39 +21,11 @@ const AnalyticsDashboard = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [period]);
 
-  const fetchRecentOrders = async () => {
-    try {
-      const response = await api.get('/shop/orders?limit=10');
-      setOrders(response.data.orders);
-    } catch (error) {
-      console.error('Error fetching recent orders:', error);
-    }
-  };
-
-  const getOrderStatusColor = (status) => {
-    switch (status) {
-      case 'pending': return 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-300';
-      case 'confirmed': return 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300';
-      case 'ready': return 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300';
-      case 'completed': return 'bg-gray-100 text-gray-800 dark:bg-gray-900/30 dark:text-gray-300';
-      case 'cancelled': return 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300';
-      default: return 'bg-gray-100 text-gray-800 dark:bg-gray-900/30 dark:text-gray-300';
-    }
-  };
-
-  const updateOrderStatus = async (orderId, newStatus) => {
-    try {
-      await api.put(`/shop/orders/${orderId}/status`, { status: newStatus });
-      setOrders(orders.map(order => 
-        order._id === orderId ? { ...order, status: newStatus } : order
-      ));
-      toast.success('Order status updated successfully');
-    } catch (error) {
-      toast.error('Failed to update order status');
-    }
-  };
+  useEffect(() => {
+    fetchAnalytics();
+  }, [fetchAnalytics]);
 
   if (loading) {
     return (
@@ -124,7 +90,7 @@ const AnalyticsDashboard = () => {
               <div>
                 <p className="text-sm text-secondary dark:text-gray-400">Total Revenue</p>
                 <p className="text-2xl font-bold text-primary dark:text-gray-100">
-                  ${analytics.totalRevenue.toFixed(2)}
+                  LKR {analytics.totalRevenue.toFixed(2)}
                 </p>
               </div>
               <div className="bg-green-100 dark:bg-green-900/30 p-3 rounded-lg">
@@ -140,7 +106,7 @@ const AnalyticsDashboard = () => {
               <div>
                 <p className="text-sm text-secondary dark:text-gray-400">Avg Order Value</p>
                 <p className="text-2xl font-bold text-primary dark:text-gray-100">
-                  ${analytics.totalOrders > 0 ? (analytics.totalRevenue / analytics.totalOrders).toFixed(2) : '0.00'}
+                  LKR {analytics.totalOrders > 0 ? (analytics.totalRevenue / analytics.totalOrders).toFixed(2) : '0.00'}
                 </p>
               </div>
               <div className="bg-purple-100 dark:bg-purple-900/30 p-3 rounded-lg">
@@ -229,7 +195,7 @@ const AnalyticsDashboard = () => {
                         {day.orders} orders
                       </span>
                       <span className="font-semibold text-green-600 dark:text-green-400">
-                        ${day.sales.toFixed(2)}
+                        LKR {day.sales.toFixed(2)}
                       </span>
                     </div>
                   </div>
@@ -242,57 +208,6 @@ const AnalyticsDashboard = () => {
         </Card>
       </div>
 
-      {/* Recent Orders */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Recent Orders</CardTitle>
-        </CardHeader>
-        <CardContent>
-          {orders.length > 0 ? (
-            <div className="space-y-4">
-              {orders.map(order => (
-                <div key={order._id} className="border border-gray-200 dark:border-gray-700 rounded-lg p-4">
-                  <div className="flex justify-between items-start mb-3">
-                    <div>
-                      <p className="font-medium text-primary dark:text-gray-100">
-                        Order #{order.orderNumber}
-                      </p>
-                      <p className="text-sm text-secondary dark:text-gray-400">
-                        {order.studentId.fullName} • {new Date(order.createdAt).toLocaleDateString()}
-                      </p>
-                    </div>
-                    <div className="text-right">
-                      <p className="font-semibold text-green-600 dark:text-green-400">
-                        ${order.totalAmount.toFixed(2)}
-                      </p>
-                      <span className={`inline-block px-2 py-1 text-xs rounded-full ${getOrderStatusColor(order.status)}`}>
-                        {order.status}
-                      </span>
-                    </div>
-                  </div>
-                  
-                  <div className="flex items-center gap-2 flex-wrap">
-                    {['pending', 'confirmed', 'ready', 'completed'].map(status => (
-                      <Button
-                        key={status}
-                        size="sm"
-                        variant={order.status === status ? 'default' : 'outline'}
-                        onClick={() => updateOrderStatus(order._id, status)}
-                        disabled={order.status === status || order.status === 'cancelled'}
-                        className="text-xs"
-                      >
-                        {status.charAt(0).toUpperCase() + status.slice(1)}
-                      </Button>
-                    ))}
-                  </div>
-                </div>
-              ))}
-            </div>
-          ) : (
-            <p className="text-center text-gray-500 dark:text-gray-400">No orders yet</p>
-          )}
-        </CardContent>
-      </Card>
     </div>
   );
 };

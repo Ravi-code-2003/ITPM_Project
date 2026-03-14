@@ -1,8 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Plus, Minus, ShoppingCart, X, Store, CreditCard, Trash2, Download } from 'lucide-react';
+import { Plus, Minus, ShoppingCart, X, Store, CreditCard, Trash2 } from 'lucide-react';
 import Button from '../ui/Button';
-import Card from '../ui/Card';
 import { useCart } from '../../contexts/CartContext';
 import { downloadOrderPDF } from '../../utils/pdfGenerator';
 import api from '../../services/api';
@@ -78,10 +77,6 @@ const CartPage = () => {
 
         // Auto-download receipt
         downloadOrderPDF(receiptData);
-        toast.success('📄 Receipt downloaded successfully!', {
-          duration: 3000,
-          icon: '🧾'
-        });
         
         // Clear cart after successful order
         clearCart();
@@ -195,7 +190,7 @@ const CartPage = () => {
                         </div>
                         <div className="text-sm text-gray-600 dark:text-gray-300 capitalize font-medium">
                           <span className="bg-gray-200 dark:bg-gray-600 px-2 py-1 rounded text-xs mr-2">{item.category}</span>
-                          <span className="text-primary dark:text-accent font-semibold">${item.price.toFixed(2)}</span> each
+                          <span className="text-primary dark:text-accent font-semibold">LKR {item.price.toFixed(2)}</span> each
                         </div>
                       </div>
                       
@@ -221,7 +216,7 @@ const CartPage = () => {
                         
                         {/* Item Total */}
                         <div className="text-xl font-bold text-primary dark:text-accent min-w-[5rem] text-right bg-gray-100 dark:bg-gray-600 px-3 py-2 rounded-lg">
-                          ${(item.price * item.quantity).toFixed(2)}
+                          LKR {(item.price * item.quantity).toFixed(2)}
                         </div>
                         
                         {/* Remove Button */}
@@ -272,12 +267,12 @@ const CartPage = () => {
                 <div className="space-y-4 mb-8">
                   <div className="flex justify-between py-2 text-gray-700 dark:text-gray-300 border-b border-gray-100 dark:border-gray-700">
                     <span className="font-medium">Subtotal</span>
-                    <span className="font-semibold text-gray-900 dark:text-white">${getCartTotal().toFixed(2)}</span>
+                    <span className="font-semibold text-gray-900 dark:text-white">LKR {getCartTotal().toFixed(2)}</span>
                   </div>
                   <div className="bg-gradient-to-r from-primary/10 to-primary/5 dark:from-primary/20 dark:to-primary/10 rounded-lg p-4 mt-4">
                     <div className="flex justify-between text-2xl font-bold text-gray-900 dark:text-white">
                       <span>Total</span>
-                      <span className="text-primary dark:text-accent">${getCartTotal().toFixed(2)}</span>
+                      <span className="text-primary dark:text-accent">LKR {getCartTotal().toFixed(2)}</span>
                     </div>
                   </div>
                 </div>
@@ -298,7 +293,7 @@ const CartPage = () => {
                     ) : (
                       <>
                         <CreditCard className="h-6 w-6 mr-3" />
-                        <span className="text-white dark:text-white">Place Order • ${getCartTotal().toFixed(2)}</span>
+                        <span className="text-white dark:text-white">Place Order • LKR {getCartTotal().toFixed(2)}</span>
                       </>
                     )}
                   </Button>

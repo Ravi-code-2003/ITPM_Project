@@ -7,10 +7,7 @@ import {
   Home, 
   GraduationCap,
   CheckCircle,
-  Star,
-  MapPin,
-  Phone,
-  Mail
+  Star
 } from 'lucide-react';
 import Button from '../components/ui/Button';
 import Card, { CardHeader, CardTitle, CardDescription, CardContent } from '../components/ui/Card';

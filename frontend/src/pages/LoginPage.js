@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
-import { Eye, EyeOff, Mail, Lock, AlertCircle, Home, Users, BookOpen, ShoppingBag, GraduationCap } from 'lucide-react';
+import { Eye, EyeOff, Mail, Lock, AlertCircle, Home, Users, ShoppingBag, GraduationCap } from 'lucide-react';
 import toast from 'react-hot-toast';
 import Button from '../components/ui/Button';
 

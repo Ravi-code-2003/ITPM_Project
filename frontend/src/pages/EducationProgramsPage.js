@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { BookOpen, Clock, Users, Star, Search, Filter } from 'lucide-react';
 import Button from '../components/ui/Button';
-import Card, { CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from '../components/ui/Card';
+import Card, { CardTitle, CardDescription, CardContent } from '../components/ui/Card';
 
 const EducationProgramsPage = () => {
   const [searchTerm, setSearchTerm] = useState('');
@@ -17,7 +17,7 @@ const EducationProgramsPage = () => {
       level: "Beginner to Intermediate",
       rating: 4.8,
       students: 245,
-      price: "$299",
+      price: "LKR 299",
       description: "Learn modern web development with React, Node.js, and MongoDB. Build real projects and get job-ready skills.",
       image: "https://images.unsplash.com/photo-1498050108023-c5249f4df085?w=400&h=250&fit=crop",
       tags: ["React", "Node.js", "MongoDB", "JavaScript"]
@@ -31,7 +31,7 @@ const EducationProgramsPage = () => {
       level: "Beginner",
       rating: 4.6,
       students: 189,
-      price: "$199",
+      price: "LKR 199",
       description: "Master digital marketing strategies including SEO, social media marketing, and content creation.",
       image: "https://images.unsplash.com/photo-1460925895917-afdab827c52f?w=400&h=250&fit=crop",
       tags: ["SEO", "Social Media", "Content Marketing", "Analytics"]
@@ -45,7 +45,7 @@ const EducationProgramsPage = () => {
       level: "Intermediate",
       rating: 4.9,
       students: 312,
-      price: "$399",
+      price: "LKR 399",
       description: "Comprehensive data science course covering Python, machine learning, and data visualization.",
       image: "https://images.unsplash.com/photo-1551288049-bebda4e38f71?w=400&h=250&fit=crop",
       tags: ["Python", "Machine Learning", "Data Analysis", "Visualization"]
@@ -59,7 +59,7 @@ const EducationProgramsPage = () => {
       level: "Beginner",
       rating: 4.7,
       students: 156,
-      price: "$249",
+      price: "LKR 249",
       description: "Learn professional graphic design using Adobe Creative Suite. Create logos, branding, and marketing materials.",
       image: "https://images.unsplash.com/photo-1558655146-d09347e92766?w=400&h=250&fit=crop",
       tags: ["Photoshop", "Illustrator", "Branding", "Typography"]
@@ -73,7 +73,7 @@ const EducationProgramsPage = () => {
       level: "Beginner",
       rating: 4.5,
       students: 98,
-      price: "$149",
+      price: "LKR 149",
       description: "Essential financial planning skills for students and young professionals. Budgeting, investing, and saving strategies.",
       image: "https://images.unsplash.com/photo-1554224155-6726b3ff858f?w=400&h=250&fit=crop",
       tags: ["Budgeting", "Investing", "Savings", "Personal Finance"]
@@ -87,7 +87,7 @@ const EducationProgramsPage = () => {
       level: "Intermediate",
       rating: 4.8,
       students: 203,
-      price: "$349",
+      price: "LKR 349",
       description: "Build iOS and Android apps using React Native. From concept to app store deployment.",
       image: "https://images.unsplash.com/photo-1512941937669-90a1b58e7e9c?w=400&h=250&fit=crop",
       tags: ["React Native", "iOS", "Android", "Mobile Development"]

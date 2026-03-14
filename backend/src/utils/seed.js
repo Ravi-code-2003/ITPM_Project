@@ -49,26 +49,6 @@ const seedUsers = async () => {
       console.log("ℹ️ Sample student already exists:", studentExists.email);
     }
 
-    // Create sample shop owner (pending approval)
-    const shopOwnerExists = await User.findOne({ email: "shopowner@example.com" });
-    
-    if (!shopOwnerExists) {
-      const shopOwner = await User.create({
-        fullName: "Jane Shop Owner",
-        email: "shopowner@example.com",
-        password: "ShopOwner123",
-        role: "shop-owner",
-        shopName: "Campus Food Corner",
-        location: "University Main Building",
-        proofImage: "https://via.placeholder.com/400x300?text=Shop+License", // Placeholder image
-        isApproved: false,
-        status: "pending",
-      });
-      console.log("✅ Sample shop owner created:", shopOwner.email);
-    } else {
-      console.log("ℹ️ Sample shop owner already exists:", shopOwnerExists.email);
-    }
-
     // Create sample house owner (pending approval)
     const houseOwnerExists = await User.findOne({ email: "houseowner@example.com" });
     
@@ -117,10 +97,7 @@ const seedUsers = async () => {
     console.log("\n👨‍🎓 Student (Auto-approved):");
     console.log("   Email: student@example.com");
     console.log("   Password: Student123");
-    console.log("\n🏪 Shop Owner (Pending approval):");
-    console.log("   Email: shopowner@example.com");
-    console.log("   Password: ShopOwner123");
-    console.log("\n🏠 House Owner (Pending approval):");
+    console.log("\n House Owner (Pending approval):");
     console.log("   Email: houseowner@example.com");
     console.log("   Password: HouseOwner123");
     console.log("\n📚 Education Path (Pending approval):");

@@ -1,8 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
-import { MapPin, Clock, Tag, Star, Store, Percent, DollarSign, Gift, TrendingUp, ShoppingCart } from 'lucide-react';
+import { MapPin, Clock, Store, Percent, DollarSign, Gift, TrendingUp, ShoppingCart, Search } from 'lucide-react';
 import Button from '../components/ui/Button';
-import Card from '../components/ui/Card';
 import { useCart } from '../contexts/CartContext';
 import { downloadOrderPDF } from '../utils/pdfGenerator';
 import api from '../services/api';
@@ -13,6 +11,7 @@ const AllOffersPage = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [selectedCategory, setSelectedCategory] = useState('all');
+  const [searchQuery, setSearchQuery] = useState('');
   const [orderingItem, setOrderingItem] = useState(null);
   const { addToCart } = useCart();
 
@@ -77,9 +76,6 @@ const AllOffersPage = () => {
 
         // Auto-download receipt
         downloadOrderPDF(receiptData);
-        toast.success('📄 Receipt downloaded successfully!', {
-          duration: 3000,
-        });
       }
     } catch (error) {
       console.error('Order error:', error);
@@ -104,19 +100,18 @@ const AllOffersPage = () => {
       const discountedPrice = originalPrice - (originalPrice * offer.discountPercent / 100);
       
       // Prepare cart item with discount information
+      // Must use _id so the cart reducer can identify the item correctly
       const cartItem = {
-        id: offer.foodItemId._id,
+        _id: offer.foodItemId._id,
         name: offer.foodItemId.name,
         originalPrice: originalPrice,
         price: discountedPrice,
-        restaurantId: offer.restaurantId._id,
-        restaurantName: offer.restaurantId.shopName,
-        isCombo: false,
+        category: offer.foodItemId.category,
         isOffer: true,
         discountPercent: offer.discountPercent
       };
 
-      addToCart(cartItem);
+      addToCart(cartItem, false, offer.restaurantId._id, offer.restaurantId.shopName);
       toast.success(`${offer.foodItemId.name} added to cart with ${offer.discountPercent}% discount!`);
     } catch (error) {
       console.error('Add to cart error:', error);
@@ -143,43 +138,42 @@ const AllOffersPage = () => {
   };
 
   const categories = [
-    { id: 'all', label: 'All Offers', icon: Gift, color: 'bg-primary' },
-    { id: 'Main Course', label: 'Main Course', icon: Star, color: 'bg-green-600' },
-    { id: 'Appetizer', label: 'Appetizers', icon: Percent, color: 'bg-blue-600' },
-    { id: 'Dessert', label: 'Desserts', icon: TrendingUp, color: 'bg-purple-600' },
-    { id: 'Beverage', label: 'Beverages', icon: DollarSign, color: 'bg-orange-600' }
+    { id: 'all', label: 'All', emoji: '🎁' },
+    { id: 'breakfast', label: 'Breakfast', emoji: '🥐' },
+    { id: 'lunch', label: 'Lunch', emoji: '🍱' },
+    { id: 'dinner', label: 'Dinner', emoji: '🍽️' },
+    { id: 'snack', label: 'Snacks', emoji: '🍿' },
+    { id: 'drink', label: 'Drinks', emoji: '🥤' },
+    { id: 'Main Course', label: 'Main Course', emoji: '🥘' },
+    { id: 'Dessert', label: 'Desserts', emoji: '🍰' },
   ];
 
   const filteredOffers = offers.filter(offer => {
-    if (selectedCategory === 'all') return true;
-    return offer.foodItemId?.category === selectedCategory;
+    const matchesCategory = selectedCategory === 'all' || offer.foodItemId?.category === selectedCategory;
+    const matchesSearch = searchQuery === '' ||
+      offer.foodItemId?.name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      offer.restaurantId?.shopName?.toLowerCase().includes(searchQuery.toLowerCase());
+    return matchesCategory && matchesSearch;
   });
 
-  const getOfferStats = () => {
-    const totalOffers = offers.length;
-    const totalSavings = offers.reduce((sum, offer) => {
-      if (offer.foodItemId?.price && offer.discountPercent) {
-        return sum + (offer.foodItemId.price * offer.discountPercent / 100);
-      }
-      return sum;
-    }, 0);
-    const avgDiscount = offers.length > 0 ? 
-      offers.reduce((sum, offer) => sum + (offer.discountPercent || 0), 0) / offers.length : 0;
-    const restaurantCount = new Set(offers.map(offer => offer.restaurantId?._id)).size;
+  const getCategoryEmoji = (category) => {
+    const map = { breakfast: '🥐', lunch: '🍱', dinner: '🍽️', snack: '🍿', drink: '🥤', 'Main Course': '🍖', Dessert: '🍰', Appetizer: '🥗', Beverage: '🧃' };
+    return map[category] || '🍴';
+  };
 
-    return { totalOffers, totalSavings, avgDiscount, restaurantCount };
+  const getDiscountColor = (pct) => {
+    if (pct >= 40) return { bg: 'bg-red-500', text: 'text-red-600 dark:text-red-400', light: 'bg-red-50 dark:bg-red-900/20 text-red-700 dark:text-red-300' };
+    if (pct >= 25) return { bg: 'bg-orange-500', text: 'text-orange-600 dark:text-orange-400', light: 'bg-orange-50 dark:bg-orange-900/20 text-orange-700 dark:text-orange-300' };
+    return { bg: 'bg-green-500', text: 'text-green-600 dark:text-green-400', light: 'bg-green-50 dark:bg-green-900/20 text-green-700 dark:text-green-300' };
   };
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-background dark:bg-background-dark py-8">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center justify-center py-20">
-            <div className="text-center">
-              <div className="animate-spin rounded-full h-16 w-16 border-4 border-primary/20 border-t-primary mx-auto mb-6"></div>
-              <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">Loading Offers</h3>
-              <p className="text-gray-500 dark:text-gray-400">Discovering the best deals for you...</p>
-            </div>
+      <div className="py-16">
+        <div className="flex items-center justify-center">
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-14 w-14 border-4 border-primary/20 border-t-primary mx-auto mb-4"></div>
+            <p className="text-secondary dark:text-gray-400 font-medium">Loading offers...</p>
           </div>
         </div>
       </div>
@@ -188,336 +182,267 @@ const AllOffersPage = () => {
 
   if (error) {
     return (
-      <div className="min-h-screen bg-background dark:bg-background-dark py-8">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center justify-center py-20">
-            <Card className="p-8 text-center max-w-md shadow-soft-lg">
-              <div className="w-16 h-16 bg-red-100 dark:bg-red-900/30 rounded-full flex items-center justify-center mx-auto mb-4">
-                <svg className="w-8 h-8 text-red-600 dark:text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                </svg>
-              </div>
-              <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-2">Unable to Load Offers</h2>
-              <p className="text-gray-500 dark:text-gray-400 mb-6">{error}</p>
-              <Button 
-                onClick={fetchAllOffers} 
-                className="bg-primary hover:bg-primary-hover text-white px-6 py-2"
-              >
-                Try Again
-              </Button>
-            </Card>
-          </div>
+      <div className="py-16 text-center">
+        <div className="w-16 h-16 bg-red-100 dark:bg-red-900/30 rounded-full flex items-center justify-center mx-auto mb-4">
+          <span className="text-3xl">⚠️</span>
         </div>
+        <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">Unable to Load Offers</h3>
+        <p className="text-secondary dark:text-gray-400 mb-4">{error}</p>
+        <Button onClick={fetchAllOffers}>Try Again</Button>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-background dark:bg-background-dark">
-      {/* Hero Header Section */}
-      <div className="bg-gradient-to-br from-primary via-primary-600 to-primary-700 text-white relative overflow-hidden">
-        {/* Background Pattern */}
-        <div 
-          className="absolute inset-0 opacity-30"
-          style={{
-            backgroundImage: `url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='0.05'%3E%3Ccircle cx='30' cy='30' r='4'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E")`
-          }}
-        ></div>
-        
-        <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
-          <div className="text-center">
-            {/* Decorative Icon */}
-            <div className="inline-flex items-center justify-center w-20 h-20 bg-accent/20 rounded-full mb-6">
-              <Gift className="w-10 h-10 text-accent" />
+    <div className="space-y-6">
+      {/* Header Banner */}
+      <div className="bg-gradient-to-r from-orange-500 via-red-500 to-pink-500 rounded-2xl p-6 text-white relative overflow-hidden">
+        <div className="absolute right-4 top-1/2 -translate-y-1/2 text-8xl opacity-20 pointer-events-none select-none">🎁</div>
+        <div className="relative">
+          <div className="flex items-center gap-2 mb-1">
+            <Gift className="w-5 h-5 text-white/80" />
+            <span className="text-sm font-medium text-white/80 uppercase tracking-wide">Special Deals</span>
+          </div>
+          <h2 className="text-2xl font-bold mb-1">Exclusive Offers &amp; Discounts</h2>
+          <p className="text-white/80 text-sm">Save big on your favourite meals today</p>
+          <div className="flex flex-wrap gap-4 mt-4">
+            <div className="flex items-center gap-1.5 bg-white/15 rounded-lg px-3 py-1.5">
+              <Gift className="w-4 h-4" />
+              <span className="text-sm font-semibold">{offers.length} Active Offers</span>
             </div>
-            
-            <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold mb-6 tracking-tight">
-              Exclusive Restaurant
-              <span className="block text-accent">Offers & Deals</span>
-            </h1>
-            
-            <p className="text-xl md:text-2xl text-primary-100 max-w-3xl mx-auto mb-8 leading-relaxed">
-              Discover amazing discounts and special deals from your favorite restaurants. 
-              Save more, eat better!
-            </p>
-            
-            {/* Quick Stats */}
-            <div className="flex flex-wrap justify-center gap-6 mt-8">
-              <div className="bg-white/10 backdrop-blur-sm rounded-xl px-6 py-4">
-                <div className="text-2xl font-bold text-accent">{offers.length}</div>
-                <div className="text-primary-200 text-sm">Active Offers</div>
-              </div>
-              <div className="bg-white/10 backdrop-blur-sm rounded-xl px-6 py-4">
-                <div className="text-2xl font-bold text-accent">
-                  {new Set(offers.map(offer => offer.restaurantId?._id)).size}
-                </div>
-                <div className="text-primary-200 text-sm">Partner Restaurants</div>
-              </div>
-              <div className="bg-white/10 backdrop-blur-sm rounded-xl px-6 py-4">
-                <div className="text-2xl font-bold text-accent">Up to 50%</div>
-                <div className="text-primary-200 text-sm">Max Savings</div>
-              </div>
+            <div className="flex items-center gap-1.5 bg-white/15 rounded-lg px-3 py-1.5">
+              <Store className="w-4 h-4" />
+              <span className="text-sm font-semibold">{new Set(offers.map(o => o.restaurantId?._id)).size} Restaurants</span>
             </div>
+            {offers.length > 0 && (
+              <div className="flex items-center gap-1.5 bg-white/15 rounded-lg px-3 py-1.5">
+                <TrendingUp className="w-4 h-4" />
+                <span className="text-sm font-semibold">Up to {Math.max(...offers.map(o => o.discountPercent || 0))}% OFF</span>
+              </div>
+            )}
           </div>
         </div>
       </div>
 
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {/* Filter Categories */}
-        <div className="mb-8">
-          <div className="bg-surface dark:bg-surface-dark rounded-2xl shadow-soft p-6 border border-gray-200 dark:border-gray-700">
-            <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4 flex items-center gap-2">
-              <Tag className="w-5 h-5 text-primary" />
-              Filter by Category
-            </h3>
-            <div className="flex flex-wrap gap-3">
-              {categories.map((category) => {
-                const IconComponent = category.icon;
-                const isActive = selectedCategory === category.id;
-                return (
-                  <Button
-                    key={category.id}
-                    onClick={() => setSelectedCategory(category.id)}
-                    className={`
-                      flex items-center gap-2 px-4 py-2 rounded-xl font-medium transition-all duration-200
-                      ${isActive
-                        ? `${category.color} text-white shadow-lg transform scale-105`
-                        : 'bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700 hover:scale-105'
-                      }
-                    `}
-                  >
-                    <IconComponent className="w-4 h-4" />
-                    {category.label}
-                    {isActive && filteredOffers.length > 0 && (
-                      <span className="bg-white/20 text-white text-xs px-2 py-1 rounded-full ml-1">
-                        {filteredOffers.length}
-                      </span>
-                    )}
-                  </Button>
-                );
-              })}
-            </div>
-          </div>
+      {/* Search + Filter Row */}
+      <div className="bg-surface dark:bg-surface-dark rounded-xl border border-gray-200 dark:border-gray-700 p-4 shadow-sm">
+        {/* Search */}
+        <div className="relative mb-4">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+          <input
+            type="text"
+            placeholder="Search offers or restaurants..."
+            value={searchQuery}
+            onChange={e => setSearchQuery(e.target.value)}
+            className="w-full pl-9 pr-4 py-2.5 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-600 rounded-lg text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent text-sm"
+          />
         </div>
 
-        {/* Offers Grid */}
-        {filteredOffers.length === 0 ? (
-          <div className="text-center py-16">
-            <Card className="max-w-md mx-auto p-8 shadow-soft-lg border border-gray-200 dark:border-gray-700">
-              <div className="w-24 h-24 bg-gray-100 dark:bg-gray-800 rounded-full flex items-center justify-center mx-auto mb-6">
-                <svg className="w-12 h-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-                </svg>
-              </div>
-              <h3 className="text-2xl font-bold text-gray-900 dark:text-white mb-3">
-                No Offers Found
-              </h3>
-              <p className="text-gray-500 dark:text-gray-400 mb-6 leading-relaxed">
-                {selectedCategory === 'all' 
-                  ? 'There are currently no active offers available. Check back soon for exciting deals!'
-                  : `No offers found in the "${categories.find(c => c.id === selectedCategory)?.label}" category. Try browsing other categories.`
-                }
-              </p>
-              {selectedCategory !== 'all' && (
-                <Button 
-                  onClick={() => setSelectedCategory('all')} 
-                  className="bg-primary hover:bg-primary-hover text-white px-6 py-2"
-                >
-                  View All Offers
-                </Button>
-              )}
-            </Card>
-          </div>
-        ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {filteredOffers.map((offer) => (
-              <Card 
-                key={offer._id} 
-                className="overflow-hidden hover:shadow-soft-lg transition-all duration-300 border border-gray-200 dark:border-gray-700 group hover:-translate-y-1"
+        {/* Category Pills */}
+        <div className="flex flex-wrap gap-2">
+          {categories.map(cat => {
+            const count = cat.id === 'all'
+              ? offers.filter(o => searchQuery === '' || o.foodItemId?.name?.toLowerCase().includes(searchQuery.toLowerCase()) || o.restaurantId?.shopName?.toLowerCase().includes(searchQuery.toLowerCase())).length
+              : offers.filter(o => o.foodItemId?.category === cat.id && (searchQuery === '' || o.foodItemId?.name?.toLowerCase().includes(searchQuery.toLowerCase()) || o.restaurantId?.shopName?.toLowerCase().includes(searchQuery.toLowerCase()))).length;
+            if (cat.id !== 'all' && count === 0) return null;
+            const isActive = selectedCategory === cat.id;
+            return (
+              <button
+                key={cat.id}
+                onClick={() => setSelectedCategory(cat.id)}
+                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm font-medium transition-all duration-200 ${
+                  isActive
+                    ? 'bg-primary text-white shadow-md'
+                    : 'bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700'
+                }`}
               >
-                {/* Offer Header with Restaurant */}
-                <div className="bg-gradient-to-br from-primary via-primary-600 to-primary-700 text-white p-6 relative overflow-hidden">
-                  {/* Background Pattern */}
-                  <div 
-                    className="absolute inset-0 opacity-20"
-                    style={{
-                      backgroundImage: `url("data:image/svg+xml,%3Csvg width='40' height='40' viewBox='0 0 40 40' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='%23ffffff' fill-opacity='0.1'%3E%3Cpath d='M20 20c0 4.4-3.6 8-8 8s-8-3.6-8-8 3.6-8 8-8 8 3.6 8 8zm0-20c0 4.4-3.6 8-8 8s-8-3.6-8-8 3.6-8 8-8 8 3.6 8 8z'/%3E%3C/g%3E%3C/svg%3E")`
-                    }}
-                  ></div>
-                  
-                  <div className="relative">
-                    <div className="flex items-center justify-between mb-3">
-                      <div className="flex items-center gap-2">
-                        <div className="w-8 h-8 bg-accent/20 rounded-full flex items-center justify-center">
-                          <Store className="h-4 w-4 text-accent" />
-                        </div>
-                        <span className="font-semibold text-sm text-primary-100">
-                          {offer.restaurantId?.shopName || 'Restaurant'}
-                        </span>
-                      </div>
-                      <div className={`px-3 py-1 rounded-full text-xs font-medium border bg-green-50 border-green-200 text-green-700`}>
-                        {offer.discountPercent}% OFF
-                      </div>
+                <span>{cat.emoji}</span>
+                <span>{cat.label}</span>
+                <span className={`text-xs px-1.5 py-0.5 rounded-full ${isActive ? 'bg-white/20 text-white' : 'bg-gray-200 dark:bg-gray-700 text-gray-500 dark:text-gray-400'}`}>{count}</span>
+              </button>
+            );
+          })}
+        </div>
+      </div>
+
+      {/* Results count */}
+      {(searchQuery || selectedCategory !== 'all') && (
+        <p className="text-sm text-secondary dark:text-gray-400">
+          Showing <span className="font-semibold text-primary dark:text-white">{filteredOffers.length}</span> offer{filteredOffers.length !== 1 ? 's' : ''}
+          {searchQuery && <> for "<span className="font-medium">{searchQuery}</span>"</>}
+        </p>
+      )}
+
+      {/* Offers Grid */}
+      {filteredOffers.length === 0 ? (
+        <div className="text-center py-16 bg-surface dark:bg-surface-dark rounded-xl border border-gray-200 dark:border-gray-700">
+          <div className="text-6xl mb-4">🔍</div>
+          <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-2">No Offers Found</h3>
+          <p className="text-secondary dark:text-gray-400 mb-6 max-w-sm mx-auto">
+            {searchQuery
+              ? `No offers match "${searchQuery}". Try a different search.`
+              : selectedCategory === 'all'
+                ? 'There are currently no active offers. Check back soon!'
+                : `No offers in this category. Try browsing others.`
+            }
+          </p>
+          <div className="flex gap-3 justify-center">
+            {searchQuery && (
+              <Button variant="outline" onClick={() => setSearchQuery('')}>Clear Search</Button>
+            )}
+            {selectedCategory !== 'all' && (
+              <Button onClick={() => setSelectedCategory('all')}>View All Offers</Button>
+            )}
+          </div>
+        </div>
+      ) : (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+          {filteredOffers.map((offer) => {
+            const discountColors = getDiscountColor(offer.discountPercent);
+            const originalPrice = offer.foodItemId?.price || 0;
+            const discountedPrice = originalPrice - (originalPrice * offer.discountPercent / 100);
+            const savings = originalPrice * offer.discountPercent / 100;
+            const isOrdering = orderingItem?.foodItemId?._id === offer.foodItemId?._id;
+
+            return (
+              <div
+                key={offer._id}
+                className="bg-surface dark:bg-surface-dark rounded-xl border border-gray-200 dark:border-gray-700 shadow-sm hover:shadow-lg hover:-translate-y-0.5 transition-all duration-200 overflow-hidden flex flex-col"
+              >
+                {/* Card Top: emoji + discount badge */}
+                <div className="relative bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-800 dark:to-gray-700 p-5 flex items-center gap-4">
+                  <div className="w-16 h-16 bg-white dark:bg-gray-900/50 rounded-2xl flex items-center justify-center text-4xl shadow-sm flex-shrink-0">
+                    {getCategoryEmoji(offer.foodItemId?.category)}
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <h3 className="font-bold text-gray-900 dark:text-white text-base leading-tight line-clamp-2">
+                      {offer.foodItemId?.name || 'Special Offer'}
+                    </h3>
+                    <div className="flex items-center gap-1.5 mt-1">
+                      <Store className="w-3.5 h-3.5 text-secondary dark:text-gray-400 flex-shrink-0" />
+                      <span className="text-sm text-secondary dark:text-gray-400 truncate">
+                        {offer.restaurantId?.shopName || 'Restaurant'}
+                      </span>
                     </div>
-                    
-                    <div className="text-3xl font-bold mb-2 text-accent">
-                      {offer.discountPercent}% OFF
-                    </div>
-                    
-                    {offer.restaurantId?.location && (
-                      <div className="flex items-center gap-1 text-primary-200 text-sm">
-                        <MapPin className="h-3 w-3" />
-                        <span>{offer.restaurantId.location}</span>
-                      </div>
-                    )}
+                  </div>
+                  {/* Discount Badge */}
+                  <div className={`absolute top-3 right-3 ${discountColors.bg} text-white text-xs font-bold px-2.5 py-1 rounded-full shadow`}>
+                    -{offer.discountPercent}%
                   </div>
                 </div>
 
-                {/* Offer Content */}
-                <div className="p-6 bg-surface dark:bg-surface-dark">
-                  <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-3 line-clamp-1">
-                    {offer.foodItemId?.name || 'Special Offer'}
-                  </h3>
-                  
-                  <div className="mb-4">
-                    <div className="flex items-center gap-3 mb-2">
-                      <span className="text-lg font-semibold text-red-500 line-through">
-                        ${offer.foodItemId?.price}
-                      </span>
-                      <span className="text-xl font-bold text-green-600">
-                        ${(offer.foodItemId?.price - (offer.foodItemId?.price * offer.discountPercent / 100)).toFixed(2)}
-                      </span>
+                {/* Card Body */}
+                <div className="p-5 flex-1 flex flex-col gap-4">
+                  {/* Price Section */}
+                  <div className="flex items-end justify-between">
+                    <div>
+                      <p className="text-xs text-secondary dark:text-gray-400 mb-0.5">Discounted Price</p>
+                      <p className={`text-2xl font-bold ${discountColors.text}`}>
+                        LKR {discountedPrice.toFixed(2)}
+                      </p>
+                      <p className="text-sm text-gray-400 line-through">LKR {originalPrice}</p>
                     </div>
-                    <p className="text-sm text-gray-600 dark:text-gray-400">
-                      Save ${(offer.foodItemId?.price * offer.discountPercent / 100).toFixed(2)} on this delicious {offer.foodItemId?.category || 'item'}!
-                    </p>
+                    <div className={`${discountColors.light} text-xs font-semibold px-3 py-1.5 rounded-full`}>
+                      Save LKR {savings.toFixed(2)}
+                    </div>
                   </div>
 
-                  {/* Offer Details */}
-                  <div className="space-y-3 mb-6">
-                    <div className="flex items-center gap-2 text-sm text-gray-500 dark:text-gray-400 bg-gray-50 dark:bg-gray-800/50 rounded-lg p-3">
-                      <Clock className="h-4 w-4 text-primary" />
-                      <span>
-                        Valid until: {new Date(offer.validDate).toLocaleDateString()}
-                      </span>
+                  {/* Meta Row */}
+                  <div className="flex items-center justify-between text-xs text-secondary dark:text-gray-400">
+                    <div className="flex items-center gap-1">
+                      <span className="text-sm">{getCategoryEmoji(offer.foodItemId?.category)}</span>
+                      <span className="capitalize">{offer.foodItemId?.category || 'Food'}</span>
                     </div>
-                    
-                    <div className="flex flex-wrap gap-2">
-                      <div className="text-xs bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-300 px-3 py-1 rounded-full">
-                        Category: {offer.foodItemId?.category || 'Food'}
-                      </div>
-                      
-                      <div className="text-xs bg-green-50 dark:bg-green-900/20 text-green-700 dark:text-green-300 px-3 py-1 rounded-full">
-                        {offer.discountPercent}% Discount
-                      </div>
+                    <div className="flex items-center gap-1">
+                      <Clock className="w-3.5 h-3.5" />
+                      <span>Valid until {new Date(offer.validDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}</span>
                     </div>
                   </div>
+
+                  {offer.restaurantId?.location && (
+                    <div className="flex items-center gap-1.5 text-xs text-secondary dark:text-gray-400">
+                      <MapPin className="w-3.5 h-3.5 flex-shrink-0" />
+                      <span className="truncate">{offer.restaurantId.location}</span>
+                    </div>
+                  )}
 
                   {/* Action Buttons */}
-                  <div className="space-y-3">
-                    <Button 
-                      onClick={() => handleOrderNow(offer)}
-                      disabled={orderingItem?.foodItemId?._id === offer.foodItemId?._id}
-                      className="w-full bg-primary hover:bg-primary-hover text-white font-semibold py-3 rounded-xl transition-all duration-200 group-hover:shadow-lg"
-                    >
-                      {orderingItem?.foodItemId?._id === offer.foodItemId?._id ? (
-                        <span>Processing...</span>
-                      ) : (
-                        <>
-                          <span>Order Now</span>
-                          <svg className="w-4 h-4 ml-2 transition-transform duration-200 group-hover:translate-x-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5m0 0l-5 5m5-5H6" />
-                          </svg>
-                        </>
-                      )}
-                    </Button>
-                    
-                    <Button 
+                  <div className="flex gap-2 mt-auto pt-1">
+                    <Button
                       onClick={() => handleAddToCart(offer)}
                       variant="outline"
-                      className="w-full border-2 border-primary text-primary hover:bg-primary hover:text-white font-semibold py-3 rounded-xl transition-all duration-200"
+                      size="sm"
+                      className="flex-1"
                     >
-                      <ShoppingCart className="w-4 h-4 mr-2" />
-                      <span>Add to Cart</span>
+                      <ShoppingCart className="w-4 h-4 mr-1.5" />
+                      Add to Cart
+                    </Button>
+                    <Button
+                      onClick={() => handleOrderNow(offer)}
+                      disabled={isOrdering}
+                      size="sm"
+                      className="flex-1"
+                    >
+                      {isOrdering ? (
+                        <span className="flex items-center gap-1.5">
+                          <div className="w-3.5 h-3.5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                          Processing...
+                        </span>
+                      ) : 'Order Now'}
                     </Button>
                   </div>
                 </div>
-              </Card>
-            ))}
-          </div>
-        )}
-
-        {/* Stats Section */}
-        {filteredOffers.length > 0 && (
-          <div className="mt-16">
-            <Card className="bg-gradient-to-r from-accent/5 via-accent/10 to-accent/5 border border-accent/20 shadow-soft-lg">
-              <div className="p-8">
-                <div className="text-center mb-8">
-                  <h3 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">
-                    Savings Summary
-                  </h3>
-                  <p className="text-gray-600 dark:text-gray-400">
-                    Your current offers overview
-                  </p>
-                </div>
-                
-                <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-                  <div className="text-center bg-surface dark:bg-surface-dark rounded-xl p-6 shadow-sm border border-gray-200 dark:border-gray-600">
-                    <div className="w-12 h-12 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-3">
-                      <Gift className="w-6 h-6 text-primary" />
-                    </div>
-                    <div className="text-3xl font-bold text-primary mb-1">{filteredOffers.length}</div>
-                    <div className="text-sm text-gray-500 dark:text-gray-400">
-                      Total Active Offers
-                    </div>
-                  </div>
-                  
-                  <div className="text-center bg-surface dark:bg-surface-dark rounded-xl p-6 shadow-sm border border-gray-200 dark:border-gray-600">
-                    <div className="w-12 h-12 bg-green-100 dark:bg-green-900/30 rounded-full flex items-center justify-center mx-auto mb-3">
-                      <Store className="w-6 h-6 text-green-600 dark:text-green-400" />
-                    </div>
-                    <div className="text-3xl font-bold text-green-600 dark:text-green-400 mb-1">
-                      {new Set(offers.map(offer => offer.restaurantId?._id)).size}
-                    </div>
-                    <div className="text-sm text-gray-500 dark:text-gray-400">Partner Restaurants</div>
-                  </div>
-                  
-                  <div className="text-center bg-surface dark:bg-surface-dark rounded-xl p-6 shadow-sm border border-gray-200 dark:border-gray-600">
-                    <div className="w-12 h-12 bg-accent/20 rounded-full flex items-center justify-center mx-auto mb-3">
-                      <Percent className="w-6 h-6 text-accent-dark" />
-                    </div>
-                    <div className="text-3xl font-bold text-accent-dark mb-1">
-                      {offers.length > 0 ? Math.round(offers.reduce((sum, offer) => sum + (offer.discountPercent || 0), 0) / offers.length) : 0}%
-                    </div>
-                    <div className="text-sm text-gray-500 dark:text-gray-400">Average Discount</div>
-                  </div>
-                  
-                  <div className="text-center bg-surface dark:bg-surface-dark rounded-xl p-6 shadow-sm border border-gray-200 dark:border-gray-600">
-                    <div className="w-12 h-12 bg-blue-100 dark:bg-blue-900/30 rounded-full flex items-center justify-center mx-auto mb-3">
-                      <DollarSign className="w-6 h-6 text-blue-600 dark:text-blue-400" />
-                    </div>
-                    <div className="text-3xl font-bold text-blue-600 dark:text-blue-400 mb-1">
-                      ${Math.round(offers.reduce((sum, offer) => {
-                        if (offer.foodItemId?.price && offer.discountPercent) {
-                          return sum + (offer.foodItemId.price * offer.discountPercent / 100);
-                        }
-                        return sum;
-                      }, 0))}
-                    </div>
-                    <div className="text-sm text-gray-500 dark:text-gray-400">Total Potential Savings</div>
-                  </div>
-                </div>
-                
-                <div className="text-center mt-8">
-                  <p className="text-sm text-gray-500 dark:text-gray-400">
-                    🎯 Start exploring these amazing deals and save on your next order!
-                  </p>
-                </div>
               </div>
-            </Card>
+            );
+          })}
+        </div>
+      )}
+
+      {/* Compact Stats Bar */}
+      {filteredOffers.length > 0 && (
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+          <div className="bg-surface dark:bg-surface-dark rounded-xl border border-gray-200 dark:border-gray-700 p-4 flex items-center gap-3">
+            <div className="w-10 h-10 bg-primary/10 rounded-lg flex items-center justify-center flex-shrink-0">
+              <Gift className="w-5 h-5 text-primary" />
+            </div>
+            <div>
+              <p className="text-xl font-bold text-primary">{filteredOffers.length}</p>
+              <p className="text-xs text-secondary dark:text-gray-400">Active Offers</p>
+            </div>
           </div>
-        )}
-      </div>
+          <div className="bg-surface dark:bg-surface-dark rounded-xl border border-gray-200 dark:border-gray-700 p-4 flex items-center gap-3">
+            <div className="w-10 h-10 bg-green-100 dark:bg-green-900/30 rounded-lg flex items-center justify-center flex-shrink-0">
+              <Store className="w-5 h-5 text-green-600 dark:text-green-400" />
+            </div>
+            <div>
+              <p className="text-xl font-bold text-green-600 dark:text-green-400">{new Set(offers.map(o => o.restaurantId?._id)).size}</p>
+              <p className="text-xs text-secondary dark:text-gray-400">Restaurants</p>
+            </div>
+          </div>
+          <div className="bg-surface dark:bg-surface-dark rounded-xl border border-gray-200 dark:border-gray-700 p-4 flex items-center gap-3">
+            <div className="w-10 h-10 bg-orange-100 dark:bg-orange-900/30 rounded-lg flex items-center justify-center flex-shrink-0">
+              <Percent className="w-5 h-5 text-orange-600 dark:text-orange-400" />
+            </div>
+            <div>
+              <p className="text-xl font-bold text-orange-600 dark:text-orange-400">
+                {offers.length > 0 ? Math.round(offers.reduce((s, o) => s + (o.discountPercent || 0), 0) / offers.length) : 0}%
+              </p>
+              <p className="text-xs text-secondary dark:text-gray-400">Avg. Discount</p>
+            </div>
+          </div>
+          <div className="bg-surface dark:bg-surface-dark rounded-xl border border-gray-200 dark:border-gray-700 p-4 flex items-center gap-3">
+            <div className="w-10 h-10 bg-blue-100 dark:bg-blue-900/30 rounded-lg flex items-center justify-center flex-shrink-0">
+              <DollarSign className="w-5 h-5 text-blue-600 dark:text-blue-400" />
+            </div>
+            <div>
+              <p className="text-xl font-bold text-blue-600 dark:text-blue-400">
+                LKR {Math.round(offers.reduce((s, o) => s + ((o.foodItemId?.price || 0) * (o.discountPercent || 0) / 100), 0))}
+              </p>
+              <p className="text-xs text-secondary dark:text-gray-400">Total Savings</p>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

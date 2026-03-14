@@ -73,10 +73,6 @@ const RestaurantList = () => {
     return 'snack';
   };
 
-  const getCategoryDescription = () => {
-    return `Explore our full menu - breakfast, lunch, dinner, snacks & drinks available!`;
-  };
-
   const filteredRestaurants = restaurants
     .filter(restaurant => 
       restaurant.shopName.toLowerCase().includes(searchTerm.toLowerCase()) ||

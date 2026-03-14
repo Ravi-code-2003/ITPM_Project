@@ -29,18 +29,34 @@ const Footer = () => {
               to enhance their university experience.
             </p>
             <div className="flex space-x-4">
-              <a href="#" className="text-gray-300 hover:text-accent transition-colors duration-200">
+              <button
+                type="button"
+                aria-label="Facebook"
+                className="text-gray-300 hover:text-accent transition-colors duration-200"
+              >
                 <Facebook className="h-5 w-5" />
-              </a>
-              <a href="#" className="text-gray-300 hover:text-accent transition-colors duration-200">
+              </button>
+              <button
+                type="button"
+                aria-label="Twitter"
+                className="text-gray-300 hover:text-accent transition-colors duration-200"
+              >
                 <Twitter className="h-5 w-5" />
-              </a>
-              <a href="#" className="text-gray-300 hover:text-accent transition-colors duration-200">
+              </button>
+              <button
+                type="button"
+                aria-label="Instagram"
+                className="text-gray-300 hover:text-accent transition-colors duration-200"
+              >
                 <Instagram className="h-5 w-5" />
-              </a>
-              <a href="#" className="text-gray-300 hover:text-accent transition-colors duration-200">
+              </button>
+              <button
+                type="button"
+                aria-label="LinkedIn"
+                className="text-gray-300 hover:text-accent transition-colors duration-200"
+              >
                 <Linkedin className="h-5 w-5" />
-              </a>
+              </button>
             </div>
           </div>
 

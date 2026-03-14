@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { Clock, MapPin, Star, Package, Filter, Calendar } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import Button from '../ui/Button';
@@ -17,11 +17,7 @@ const OrderHistory = () => {
 
   const statuses = ['pending', 'confirmed', 'ready', 'completed', 'cancelled'];
 
-  useEffect(() => {
-    fetchOrders();
-  }, [statusFilter]);
-
-  const fetchOrders = async () => {
+  const fetchOrders = useCallback(async () => {
     try {
       setLoading(true);
       const params = statusFilter ? `?status=${statusFilter}` : '';
@@ -33,7 +29,11 @@ const OrderHistory = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [statusFilter]);
+
+  useEffect(() => {
+    fetchOrders();
+  }, [fetchOrders]);
 
   const submitRating = async () => {
     if (!selectedOrder) return;
@@ -164,7 +164,7 @@ const OrderHistory = () => {
                   <div className="text-right">
                     <p className="text-sm text-secondary dark:text-gray-400">Order #{order.orderNumber}</p>
                     <p className="text-xl font-bold text-green-600 dark:text-green-400">
-                      ${order.totalAmount.toFixed(2)}
+                      LKR {order.totalAmount.toFixed(2)}
                     </p>
                   </div>
                 </div>
@@ -184,7 +184,7 @@ const OrderHistory = () => {
                           </span>
                         </div>
                         <span className="text-sm font-medium">
-                          ${item.price.toFixed(2)}
+                          LKR {item.price.toFixed(2)}
                         </span>
                       </div>
                     ))}

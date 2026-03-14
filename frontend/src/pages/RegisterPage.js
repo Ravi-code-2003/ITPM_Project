@@ -14,7 +14,7 @@ import {
   Zap
 } from 'lucide-react';
 import Button from '../components/ui/Button';
-import Card, { CardHeader, CardTitle, CardDescription, CardContent } from '../components/ui/Card';
+import Card, { CardContent } from '../components/ui/Card';
 
 const RegisterPage = () => {
   const registrationOptions = [

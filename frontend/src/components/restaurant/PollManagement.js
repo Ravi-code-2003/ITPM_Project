@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Plus, Vote, Clock, CheckCircle, XCircle, Trash2, Eye, Edit3, TrendingUp } from 'lucide-react';
+import { Plus, Vote, Clock, CheckCircle, XCircle, Trash2, TrendingUp } from 'lucide-react';
 import Button from '../ui/Button';
 import Card from '../ui/Card';
 import api from '../../services/api';
@@ -127,7 +127,7 @@ const PollManagement = () => {
 
   const createOfferFromPoll = async (pollId, proposalId) => {
     try {
-      const response = await api.post(`/shop/polls/${pollId}/create-offer`, {
+      await api.post(`/shop/polls/${pollId}/create-offer`, {
         proposalId
       });
       
@@ -265,7 +265,7 @@ const PollManagement = () => {
                           <option value="">Select food item</option>
                           {foods.filter(food => food.status === 'Available').map(food => (
                             <option key={food._id} value={food._id}>
-                              {food.name} (${food.price})
+                              {food.name} (LKR {food.price})
                             </option>
                           ))}
                         </select>
@@ -398,7 +398,7 @@ const PollManagement = () => {
                             )}
                           </div>
                           <p className="text-xs text-gray-600 dark:text-gray-400">
-                            {proposal.proposedDiscount}% off • ${proposal.foodItemId?.price}
+                            {proposal.proposedDiscount}% off • LKR {proposal.foodItemId?.price}
                           </p>
                           {proposal.description && (
                             <p className="text-xs text-gray-500 mt-1">{proposal.description}</p>

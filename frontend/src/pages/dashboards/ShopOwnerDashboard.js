@@ -1,12 +1,13 @@
 import React, { useState, useEffect } from 'react';
-import { Store, Users, BarChart, Package, Plus, Calendar, TrendingUp, Eye, Vote } from 'lucide-react';
+import { Store, BarChart, Package, Plus, TrendingUp, Vote, ShoppingBag } from 'lucide-react';
 import Button from '../../components/ui/Button';
-import Card, { CardHeader, CardTitle, CardDescription, CardContent } from '../../components/ui/Card';
+import Card, { CardContent } from '../../components/ui/Card';
 import FoodMenuCRUD from '../../components/restaurant/FoodMenuCRUD';
 import OffersCRUD from '../../components/restaurant/OffersCRUD';
 import ComboMealCRUD from '../../components/restaurant/ComboMealCRUD';
 import AnalyticsDashboard from '../../components/restaurant/AnalyticsDashboard';
 import PollManagement from '../../components/restaurant/PollManagement';
+import OrdersManagement from '../../components/restaurant/OrdersManagement';
 import api from '../../services/api';
 
 const ShopOwnerDashboard = () => {
@@ -56,6 +57,7 @@ const ShopOwnerDashboard = () => {
 
   const tabs = [
     { id: 'overview', label: 'Overview', icon: BarChart },
+    { id: 'orders', label: 'Orders', icon: ShoppingBag },
     { id: 'menu', label: 'Menu Management', icon: Package },
     { id: 'offers', label: 'Offers & Promotions', icon: Store },
     { id: 'polls', label: 'Customer Polls', icon: Vote },
@@ -67,148 +69,167 @@ const ShopOwnerDashboard = () => {
     switch (activeTab) {
       case 'overview':
         return (
-          <div className="space-y-6">
-            {/* Quick Stats */}
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-              <Card>
+          <div className="space-y-8">
+
+            {/* Welcome banner */}
+            <div className="rounded-2xl bg-gradient-to-r from-primary/90 to-primary p-8 text-white shadow-md">
+              <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+                <div>
+                  <h2 className="text-2xl font-bold mb-1">Welcome back! 👋</h2>
+                  <p className="text-white/80 text-sm">
+                    Here's a snapshot of your restaurant's performance over the last 30 days.
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            {/* KPI cards */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+              <Card className="hover:shadow-md transition-shadow cursor-pointer" onClick={() => setActiveTab('orders')}>
                 <CardContent className="p-6">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <p className="text-sm text-secondary dark:text-gray-400">Total Orders (30d)</p>
-                      <p className="text-2xl font-bold text-primary dark:text-gray-100">
-                        {stats.totalOrders}
-                      </p>
+                  <div className="flex items-center justify-between mb-4">
+                    <div className="bg-blue-100 dark:bg-blue-900/30 p-3 rounded-xl">
+                      <ShoppingBag className="h-7 w-7 text-blue-600 dark:text-blue-400" />
                     </div>
-                    <div className="bg-blue-100 dark:bg-blue-900/30 p-3 rounded-lg">
-                      <Store className="h-8 w-8 text-blue-600 dark:text-blue-400" />
-                    </div>
+                    <span className="text-xs font-medium text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/20 px-2 py-1 rounded-full">30 days</span>
                   </div>
+                  <p className="text-3xl font-bold text-primary dark:text-gray-100">{stats.totalOrders}</p>
+                  <p className="text-sm text-secondary dark:text-gray-400 mt-1">Total Orders</p>
                 </CardContent>
               </Card>
 
-              <Card>
+              <Card className="hover:shadow-md transition-shadow cursor-pointer" onClick={() => setActiveTab('analytics')}>
                 <CardContent className="p-6">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <p className="text-sm text-secondary dark:text-gray-400">Revenue (30d)</p>
-                      <p className="text-2xl font-bold text-primary dark:text-gray-100">
-                        ${stats.totalRevenue.toFixed(2)}
-                      </p>
+                  <div className="flex items-center justify-between mb-4">
+                    <div className="bg-green-100 dark:bg-green-900/30 p-3 rounded-xl">
+                      <TrendingUp className="h-7 w-7 text-green-600 dark:text-green-400" />
                     </div>
-                    <div className="bg-green-100 dark:bg-green-900/30 p-3 rounded-lg">
-                      <BarChart className="h-8 w-8 text-green-600 dark:text-green-400" />
-                    </div>
+                    <span className="text-xs font-medium text-green-600 dark:text-green-400 bg-green-50 dark:bg-green-900/20 px-2 py-1 rounded-full">30 days</span>
                   </div>
+                  <p className="text-3xl font-bold text-primary dark:text-gray-100">LKR {stats.totalRevenue.toFixed(0)}</p>
+                  <p className="text-sm text-secondary dark:text-gray-400 mt-1">Total Revenue</p>
                 </CardContent>
               </Card>
 
-              <Card>
+              <Card className="hover:shadow-md transition-shadow cursor-pointer" onClick={() => setActiveTab('menu')}>
                 <CardContent className="p-6">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <p className="text-sm text-secondary dark:text-gray-400">Menu Items</p>
-                      <p className="text-2xl font-bold text-primary dark:text-gray-100">
-                        {stats.totalFoods}
-                      </p>
+                  <div className="flex items-center justify-between mb-4">
+                    <div className="bg-purple-100 dark:bg-purple-900/30 p-3 rounded-xl">
+                      <Package className="h-7 w-7 text-purple-600 dark:text-purple-400" />
                     </div>
-                    <div className="bg-purple-100 dark:bg-purple-900/30 p-3 rounded-lg">
-                      <Package className="h-8 w-8 text-purple-600 dark:text-purple-400" />
-                    </div>
+                    <span className="text-xs font-medium text-purple-600 dark:text-purple-400 bg-purple-50 dark:bg-purple-900/20 px-2 py-1 rounded-full">active</span>
                   </div>
+                  <p className="text-3xl font-bold text-primary dark:text-gray-100">{stats.totalFoods}</p>
+                  <p className="text-sm text-secondary dark:text-gray-400 mt-1">Menu Items</p>
                 </CardContent>
               </Card>
 
-              <Card>
+              <Card className="hover:shadow-md transition-shadow cursor-pointer" onClick={() => setActiveTab('offers')}>
                 <CardContent className="p-6">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <p className="text-sm text-secondary dark:text-gray-400">Active Offers</p>
-                      <p className="text-2xl font-bold text-primary dark:text-gray-100">
-                        {stats.activeOffers}
-                      </p>
+                  <div className="flex items-center justify-between mb-4">
+                    <div className="bg-orange-100 dark:bg-orange-900/30 p-3 rounded-xl">
+                      <Store className="h-7 w-7 text-orange-600 dark:text-orange-400" />
                     </div>
-                    <div className="bg-orange-100 dark:bg-orange-900/30 p-3 rounded-lg">
-                      <Users className="h-8 w-8 text-orange-600 dark:text-orange-400" />
-                    </div>
+                    <span className="text-xs font-medium text-orange-600 dark:text-orange-400 bg-orange-50 dark:bg-orange-900/20 px-2 py-1 rounded-full">live</span>
                   </div>
+                  <p className="text-3xl font-bold text-primary dark:text-gray-100">{stats.activeOffers}</p>
+                  <p className="text-sm text-secondary dark:text-gray-400 mt-1">Active Offers</p>
                 </CardContent>
               </Card>
             </div>
 
-            {/* Quick Actions */}
-            <Card>
-              <CardHeader>
-                <CardTitle>Quick Actions</CardTitle>
-                <CardDescription>Manage your restaurant efficiently</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
-                  <Button 
-                    onClick={() => setActiveTab('menu')}
-                    className="h-20 flex flex-col gap-2"
-                  >
-                    <Package className="h-6 w-6" />
-                    Add Food Items
-                  </Button>
-                  
-                  <Button 
-                    onClick={() => setActiveTab('offers')}
-                    variant="outline"
-                    className="h-20 flex flex-col gap-2"
-                  >
-                    <Store className="h-6 w-6" />
-                    Create Offers
-                  </Button>
+            {/* Management tiles */}
+            <div>
+              <h3 className="text-lg font-semibold text-primary dark:text-gray-100 mb-4">Manage Your Restaurant</h3>
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
 
-                  <Button 
-                    onClick={() => setActiveTab('polls')}
-                    variant="outline"
-                    className="h-20 flex flex-col gap-2"
-                  >
-                    <Vote className="h-6 w-6" />
-                    Create Polls
-                  </Button>
-                  
-                  <Button 
-                    onClick={() => setActiveTab('combos')}
-                    variant="outline"
-                    className="h-20 flex flex-col gap-2"
-                  >
-                    <Plus className="h-6 w-6" />
-                    Combo Meals
-                  </Button>
-                  
-                  <Button 
-                    onClick={() => setActiveTab('analytics')}
-                    variant="outline"
-                    className="h-20 flex flex-col gap-2"
-                  >
-                    <TrendingUp className="h-6 w-6" />
-                    View Analytics
-                  </Button>
-                </div>
-              </CardContent>
-            </Card>
-
-            {/* Tips for New Users */}
-            {stats.totalFoods === 0 && (
-              <Card className="border-2 border-dashed border-blue-200 dark:border-blue-800">
-                <CardContent className="p-6">
-                  <div className="text-center">
-                    <Package className="h-12 w-12 mx-auto mb-4 text-blue-500 opacity-50" />
-                    <h3 className="text-lg font-semibold mb-2">Build Your Complete Menu</h3>
-                    <p className="text-secondary dark:text-gray-400 mb-4">
-                      Add items across all categories - breakfast, lunch, dinner, snacks & drinks to attract students throughout the day.
-                    </p>
-                    <Button onClick={() => setActiveTab('menu')}>
-                      Add Your First Food Item
-                    </Button>
+                <div
+                  onClick={() => setActiveTab('menu')}
+                  className="group cursor-pointer rounded-2xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 p-6 hover:border-purple-400 hover:shadow-lg transition-all"
+                >
+                  <div className="bg-purple-100 dark:bg-purple-900/30 p-3 rounded-xl w-fit mb-4 group-hover:bg-purple-200 dark:group-hover:bg-purple-900/50 transition-colors">
+                    <Package className="h-6 w-6 text-purple-600 dark:text-purple-400" />
                   </div>
-                </CardContent>
-              </Card>
+                  <h4 className="font-semibold text-primary dark:text-gray-100 mb-1">Menu Management</h4>
+                  <p className="text-sm text-secondary dark:text-gray-400">Add, edit or remove food items. Keep your menu fresh and up to date.</p>
+                </div>
+
+                <div
+                  onClick={() => setActiveTab('offers')}
+                  className="group cursor-pointer rounded-2xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 p-6 hover:border-orange-400 hover:shadow-lg transition-all"
+                >
+                  <div className="bg-orange-100 dark:bg-orange-900/30 p-3 rounded-xl w-fit mb-4 group-hover:bg-orange-200 dark:group-hover:bg-orange-900/50 transition-colors">
+                    <Store className="h-6 w-6 text-orange-600 dark:text-orange-400" />
+                  </div>
+                  <h4 className="font-semibold text-primary dark:text-gray-100 mb-1">Offers & Promotions</h4>
+                  <p className="text-sm text-secondary dark:text-gray-400">Create discount offers to attract more students and boost your sales.</p>
+                </div>
+
+                <div
+                  onClick={() => setActiveTab('combos')}
+                  className="group cursor-pointer rounded-2xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 p-6 hover:border-pink-400 hover:shadow-lg transition-all"
+                >
+                  <div className="bg-pink-100 dark:bg-pink-900/30 p-3 rounded-xl w-fit mb-4 group-hover:bg-pink-200 dark:group-hover:bg-pink-900/50 transition-colors">
+                    <Plus className="h-6 w-6 text-pink-600 dark:text-pink-400" />
+                  </div>
+                  <h4 className="font-semibold text-primary dark:text-gray-100 mb-1">Combo Meals</h4>
+                  <p className="text-sm text-secondary dark:text-gray-400">Bundle popular items into combo deals for a better value experience.</p>
+                </div>
+
+                <div
+                  onClick={() => setActiveTab('polls')}
+                  className="group cursor-pointer rounded-2xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 p-6 hover:border-blue-400 hover:shadow-lg transition-all"
+                >
+                  <div className="bg-blue-100 dark:bg-blue-900/30 p-3 rounded-xl w-fit mb-4 group-hover:bg-blue-200 dark:group-hover:bg-blue-900/50 transition-colors">
+                    <Vote className="h-6 w-6 text-blue-600 dark:text-blue-400" />
+                  </div>
+                  <h4 className="font-semibold text-primary dark:text-gray-100 mb-1">Customer Polls</h4>
+                  <p className="text-sm text-secondary dark:text-gray-400">Ask students what they want next. Use polls to drive menu decisions.</p>
+                </div>
+
+                <div
+                  onClick={() => setActiveTab('orders')}
+                  className="group cursor-pointer rounded-2xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 p-6 hover:border-green-400 hover:shadow-lg transition-all"
+                >
+                  <div className="bg-green-100 dark:bg-green-900/30 p-3 rounded-xl w-fit mb-4 group-hover:bg-green-200 dark:group-hover:bg-green-900/50 transition-colors">
+                    <ShoppingBag className="h-6 w-6 text-green-600 dark:text-green-400" />
+                  </div>
+                  <h4 className="font-semibold text-primary dark:text-gray-100 mb-1">Orders</h4>
+                  <p className="text-sm text-secondary dark:text-gray-400">Track and update the status of orders placed by students in real time.</p>
+                </div>
+
+                <div
+                  onClick={() => setActiveTab('analytics')}
+                  className="group cursor-pointer rounded-2xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 p-6 hover:border-teal-400 hover:shadow-lg transition-all"
+                >
+                  <div className="bg-teal-100 dark:bg-teal-900/30 p-3 rounded-xl w-fit mb-4 group-hover:bg-teal-200 dark:group-hover:bg-teal-900/50 transition-colors">
+                    <TrendingUp className="h-6 w-6 text-teal-600 dark:text-teal-400" />
+                  </div>
+                  <h4 className="font-semibold text-primary dark:text-gray-100 mb-1">Analytics</h4>
+                  <p className="text-sm text-secondary dark:text-gray-400">Dive into sales trends, popular items and daily revenue breakdowns.</p>
+                </div>
+
+              </div>
+            </div>
+
+            {/* Empty-state nudge */}
+            {stats.totalFoods === 0 && (
+              <div className="rounded-2xl border-2 border-dashed border-purple-300 dark:border-purple-700 bg-purple-50 dark:bg-purple-900/10 p-8 text-center">
+                <Package className="h-12 w-12 mx-auto mb-4 text-purple-400 opacity-60" />
+                <h3 className="text-lg font-semibold text-primary dark:text-gray-100 mb-2">Your menu is empty</h3>
+                <p className="text-secondary dark:text-gray-400 mb-4 max-w-md mx-auto">
+                  Start by adding food items to your menu so students can discover and order from you.
+                </p>
+                <Button onClick={() => setActiveTab('menu')}>
+                  Add Your First Food Item
+                </Button>
+              </div>
             )}
+
           </div>
         );
+      case 'orders':
+        return <OrdersManagement />;
       case 'menu':
         return <FoodMenuCRUD />;
       case 'offers':

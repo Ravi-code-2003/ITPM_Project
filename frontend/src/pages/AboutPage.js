@@ -1,6 +1,6 @@
 import React from 'react';
 import { Users, Target, Award, Heart } from 'lucide-react';
-import Card, { CardHeader, CardTitle, CardDescription, CardContent } from '../components/ui/Card';
+import Card, { CardTitle, CardDescription, CardContent } from '../components/ui/Card';
 
 const AboutPage = () => {
   return (

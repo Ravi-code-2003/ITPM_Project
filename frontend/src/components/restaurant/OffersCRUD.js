@@ -189,7 +189,7 @@ const OffersCRUD = () => {
                   <option value="">Select a food item</option>
                   {foods.map(food => (
                     <option key={food._id} value={food._id}>
-                      {food.name} (${food.price}) - {food.category}
+                      {food.name} (LKR {food.price}) - {food.category}
                     </option>
                   ))}
                 </select>
@@ -253,7 +253,7 @@ const OffersCRUD = () => {
                 </h3>
                 <p className="text-sm text-secondary dark:text-gray-400 mb-2">
                   {offer.foodItemId.category.charAt(0).toUpperCase() + offer.foodItemId.category.slice(1)} • 
-                  Original Price: ${offer.foodItemId.price.toFixed(2)}
+                  Original Price: LKR {offer.foodItemId.price.toFixed(2)}
                 </p>
               </div>
               
@@ -289,7 +289,7 @@ const OffersCRUD = () => {
                 <div className="text-right">
                   <p className="text-sm text-gray-500 dark:text-gray-400">Discounted Price</p>
                   <p className="font-bold text-green-600 dark:text-green-400">
-                    ${(offer.foodItemId.price * (1 - offer.discountPercent / 100)).toFixed(2)}
+                    LKR {(offer.foodItemId.price * (1 - offer.discountPercent / 100)).toFixed(2)}
                   </p>
                 </div>
               </div>

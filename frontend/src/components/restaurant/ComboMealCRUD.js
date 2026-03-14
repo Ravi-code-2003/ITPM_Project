@@ -208,7 +208,7 @@ const ComboMealCRUD = () => {
               
               <div>
                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                  Total Price ($) *
+                  Total Price (LKR) *
                 </label>
                 <div className="relative">
                   <input
@@ -229,7 +229,7 @@ const ComboMealCRUD = () => {
                       className="absolute right-2 top-1/2 transform -translate-y-1/2 text-xs"
                       onClick={() => setFormData({ ...formData, totalPrice: calculateSuggestedPrice() })}
                     >
-                      Suggest: ${calculateSuggestedPrice()}
+                      Suggest: LKR {calculateSuggestedPrice()}
                     </Button>
                   )}
                 </div>
@@ -266,7 +266,7 @@ const ComboMealCRUD = () => {
                       key={item._id}
                       className="inline-flex items-center gap-1 px-2 py-1 bg-blue-100 dark:bg-blue-800 text-blue-800 dark:text-blue-200 text-sm rounded-md"
                     >
-                      {item.name} (${item.price})
+                      {item.name} (LKR {item.price})
                       <button
                         type="button"
                         onClick={() => handleItemToggle(item._id)}
@@ -278,9 +278,9 @@ const ComboMealCRUD = () => {
                   ))}
                 </div>
                 <p className="text-sm text-blue-600 dark:text-blue-300 mt-2">
-                  Individual total: ${getSelectedItems().reduce((sum, item) => sum + item.price, 0).toFixed(2)} • 
-                  Your price: ${formData.totalPrice || '0.00'} • 
-                  Savings: ${Math.max(0, getSelectedItems().reduce((sum, item) => sum + item.price, 0) - parseFloat(formData.totalPrice || 0)).toFixed(2)}
+                  Individual total: LKR {getSelectedItems().reduce((sum, item) => sum + item.price, 0).toFixed(2)} • 
+                  Your price: LKR {formData.totalPrice || '0.00'} • 
+                  Savings: LKR {Math.max(0, getSelectedItems().reduce((sum, item) => sum + item.price, 0) - parseFloat(formData.totalPrice || 0)).toFixed(2)}
                 </p>
               </div>
             )}
@@ -313,7 +313,7 @@ const ComboMealCRUD = () => {
                                 {food.name}
                               </p>
                               <p className="text-sm text-green-600 dark:text-green-400">
-                                ${food.price.toFixed(2)}
+                                LKR {food.price.toFixed(2)}
                               </p>
                             </div>
                             {formData.items.includes(food._id) ? (
@@ -356,7 +356,7 @@ const ComboMealCRUD = () => {
                   {combo.name}
                 </h3>
                 <p className="text-2xl font-bold text-green-600 dark:text-green-400">
-                  ${combo.totalPrice.toFixed(2)}
+                  LKR {combo.totalPrice.toFixed(2)}
                 </p>
               </div>
               
@@ -401,7 +401,7 @@ const ComboMealCRUD = () => {
                   {combo.items.map(item => (
                     <div key={item._id} className="flex justify-between text-sm">
                       <span className="text-gray-600 dark:text-gray-400">{item.name}</span>
-                      <span className="text-gray-500 dark:text-gray-500">${item.price.toFixed(2)}</span>
+                      <span className="text-gray-500 dark:text-gray-500">LKR {item.price.toFixed(2)}</span>
                     </div>
                   ))}
                 </div>
@@ -411,13 +411,13 @@ const ComboMealCRUD = () => {
                   <div className="flex justify-between text-sm font-medium">
                     <span className="text-gray-600 dark:text-gray-400">Individual total:</span>
                     <span className="line-through text-gray-500 dark:text-gray-500">
-                      ${combo.items.reduce((sum, item) => sum + item.price, 0).toFixed(2)}
+                      LKR {combo.items.reduce((sum, item) => sum + item.price, 0).toFixed(2)}
                     </span>
                   </div>
                   <div className="flex justify-between text-sm font-medium text-green-600 dark:text-green-400">
                     <span>You save:</span>
                     <span>
-                      ${Math.max(0, combo.items.reduce((sum, item) => sum + item.price, 0) - combo.totalPrice).toFixed(2)}
+                      LKR {Math.max(0, combo.items.reduce((sum, item) => sum + item.price, 0) - combo.totalPrice).toFixed(2)}
                     </span>
                   </div>
                 </div>

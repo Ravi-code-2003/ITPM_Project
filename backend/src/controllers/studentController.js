@@ -227,7 +227,10 @@ const createOrder = async (req, res) => {
           });
         }
         
-        calculatedTotal += foodItem.price * item.quantity;
+        // Use the price sent by the client (which may be a discounted offer price).
+        // The totalAmount check below ensures the client cannot lie about the sum.
+        const itemPrice = item.price != null ? item.price : foodItem.price;
+        calculatedTotal += itemPrice * item.quantity;
       } else if (item.comboMealId) {
         const comboMeal = await ComboMeal.findOne({
           _id: item.comboMealId,

@@ -1,6 +1,6 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { ArrowLeft, Plus, Minus, Star, Heart, MapPin, ShoppingCart, Tag, Vote, Download } from 'lucide-react';
+import { ArrowLeft, Plus, Star, Heart, MapPin, ShoppingCart, Tag, Vote } from 'lucide-react';
 import Button from '../ui/Button';
 import Card from '../ui/Card';
 import api from '../../services/api';
@@ -11,7 +11,7 @@ import toast from 'react-hot-toast';
 const RestaurantDetail = () => {
   const { id } = useParams();
   const navigate = useNavigate();
-  const { addToCart, getCartCount } = useCart();
+  const { addToCart } = useCart();
   
   const [restaurant, setRestaurant] = useState(null);
   const [menu, setMenu] = useState(null);
@@ -26,19 +26,8 @@ const RestaurantDetail = () => {
   const [userRating, setUserRating] = useState(0);
   const [ratingComment, setRatingComment] = useState('');
   const [restaurantRating, setRestaurantRating] = useState({ average: 0, count: 0 });
-  const [allOffers, setAllOffers] = useState([]);
 
-  useEffect(() => {
-    if (id) {
-      fetchRestaurantMenu();
-      checkFavoriteStatus();
-      fetchPolls();
-      fetchEnhancedPolls();
-      fetchAllOffers();
-    }
-  }, [id]);
-
-  const fetchRestaurantMenu = async () => {
+  const fetchRestaurantMenu = useCallback(async () => {
     try {
       setLoading(true);
       // Fetch restaurant menu and rating in parallel
@@ -63,7 +52,7 @@ const RestaurantDetail = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [id]);
 
   const submitRating = async () => {
     try {
@@ -113,7 +102,7 @@ const RestaurantDetail = () => {
     );
   };
 
-  const checkFavoriteStatus = async () => {
+  const checkFavoriteStatus = useCallback(async () => {
     try {
       const response = await api.get('/student/favorites');
       const favoriteIds = response.data.favorites.map(fav => fav.restaurantId._id);
@@ -121,33 +110,35 @@ const RestaurantDetail = () => {
     } catch (error) {
       console.error('Error checking favorite status:', error);
     }
-  };
+  }, [id]);
 
-  const fetchPolls = async () => {
+  const fetchPolls = useCallback(async () => {
     try {
       const response = await api.get(`/student/poll/${id}`);
       setPolls(response.data.polls);
     } catch (error) {
       console.error('Error fetching polls:', error);
     }
-  };
+  }, [id]);
 
-  const fetchEnhancedPolls = async () => {
+  const fetchEnhancedPolls = useCallback(async () => {
     try {
       const response = await api.get(`/student/polls/${id}`);
       setEnhancedPolls(response.data.polls || []);
     } catch (error) {
       console.error('Error fetching enhanced polls:', error);
     }
-  };
-  const fetchAllOffers = async () => {
-    try {
-      const response = await api.get('/student/offers');
-      setAllOffers(response.data.offers || []);
-    } catch (error) {
-      console.error('Error fetching offers:', error);
+  }, [id]);
+
+  useEffect(() => {
+    if (id) {
+      fetchRestaurantMenu();
+      checkFavoriteStatus();
+      fetchPolls();
+      fetchEnhancedPolls();
     }
-  };
+  }, [id, fetchRestaurantMenu, checkFavoriteStatus, fetchPolls, fetchEnhancedPolls]);
+
   const toggleFavorite = async () => {
     try {
       const response = await api.post('/student/favorites', { restaurantId: id });
@@ -207,10 +198,6 @@ const RestaurantDetail = () => {
 
         // Auto-download receipt
         downloadOrderPDF(receiptData);
-        toast.success('📄 Receipt downloaded successfully!', {
-          duration: 3000,
-          icon: '🧾'
-        });
       } else {
         throw new Error(response.data.message || 'Failed to place order');
       }
@@ -398,19 +385,19 @@ const RestaurantDetail = () => {
         </div>
 
         {/* Special Offers Section */}
-        {allOffers.length > 0 && (
+        {(menu?.offers || []).length > 0 && (
           <div className="bg-gradient-to-r from-green-50 to-emerald-50 dark:from-green-900/20 dark:to-emerald-900/20 rounded-2xl p-6 mb-8 border border-green-200 dark:border-green-800">
             <h2 className="text-2xl font-bold mb-6 text-green-800 dark:text-green-200 flex items-center gap-3">
               <div className="bg-green-500 rounded-lg p-2">
                 <Tag className="h-6 w-6 text-white" />
               </div>
-              Special Offers from All Restaurants
+              Special Offers
               <span className="text-lg text-green-600 dark:text-green-400 font-normal">
-                ({allOffers.length} amazing deals)
+                ({(menu?.offers || []).length} amazing deals)
               </span>
             </h2>
             <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
-              {allOffers.map(offer => (
+              {(menu?.offers || []).map(offer => (
                 <div key={offer._id} className="bg-white dark:bg-gray-800 rounded-xl p-5 shadow-md hover:shadow-lg transition-shadow border border-green-200 dark:border-green-700">
                   <div className="flex justify-between items-start mb-3">
                     <div className="flex-1">
@@ -430,10 +417,10 @@ const RestaurantDetail = () => {
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-2">
                       <span className="text-lg text-gray-500 dark:text-gray-400 line-through">
-                        ${offer.foodItemId?.price?.toFixed(2) || '0.00'}
+                        LKR {offer.foodItemId?.price?.toFixed(2) || '0.00'}
                       </span>
                       <span className="text-2xl font-bold text-green-600 dark:text-green-400">
-                        ${((offer.foodItemId?.price || 0) * (1 - offer.discountPercent / 100)).toFixed(2)}
+                        LKR {((offer.foodItemId?.price || 0) * (1 - offer.discountPercent / 100)).toFixed(2)}
                       </span>
                     </div>
                   </div>
@@ -529,10 +516,10 @@ const RestaurantDetail = () => {
                                 </div>
                                 <div className="flex items-center gap-2 mb-2">
                                   <span className="text-lg text-gray-500 dark:text-gray-400 line-through">
-                                    ${proposal.foodItemId?.price?.toFixed(2)}
+                                    LKR {proposal.foodItemId?.price?.toFixed(2)}
                                   </span>
                                   <span className="text-xl font-bold text-green-600 dark:text-green-400">
-                                    ${((proposal.foodItemId?.price || 0) * (1 - proposal.proposedDiscount / 100)).toFixed(2)}
+                                    LKR {((proposal.foodItemId?.price || 0) * (1 - proposal.proposedDiscount / 100)).toFixed(2)}
                                   </span>
                                 </div>
                                 {proposal.description && proposal.description !== `${proposal.proposedDiscount}% off` && (
@@ -600,7 +587,7 @@ const RestaurantDetail = () => {
             {/* Legacy Polls Display (for backward compatibility) */}
             {polls.length > 0 && enhancedPolls.length === 0 && (
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {polls.map(poll => (
+                {polls.filter(poll => poll.foodItemId).map(poll => (
                   <div 
                     key={poll._id}
                     className="bg-white dark:bg-gray-800 rounded-xl p-5 shadow-md hover:shadow-lg transition-all duration-200 border border-purple-200 dark:border-purple-700 cursor-pointer hover:scale-[1.02]"
@@ -612,7 +599,7 @@ const RestaurantDetail = () => {
                           {poll.foodItemId.name}
                         </h3>
                         <p className="text-sm text-gray-600 dark:text-gray-400 mb-2">
-                          ${poll.foodItemId.price.toFixed(2)} • {poll.foodItemId.category}
+                          LKR {poll.foodItemId.price.toFixed(2)} • {poll.foodItemId.category}
                         </p>
                       </div>
                       <div className="text-right">
@@ -814,7 +801,7 @@ const RestaurantDetail = () => {
                             <div>
                               <p className="text-sm text-gray-600 dark:text-gray-400 mb-1">Price</p>
                               <p className="text-3xl font-bold text-primary">
-                                ${item.price.toFixed(2)}
+                                LKR {item.price.toFixed(2)}
                               </p>
                             </div>
                             <div className="text-right">
@@ -945,13 +932,13 @@ const RestaurantDetail = () => {
                             <div>
                               <p className="text-sm text-gray-600 dark:text-gray-400 mb-1">Combo Price</p>
                               <p className="text-3xl font-bold text-primary">
-                                ${combo.totalPrice.toFixed(2)}
+                                LKR {combo.totalPrice.toFixed(2)}
                               </p>
                             </div>
                             <div className="text-right">
                               <p className="text-xs text-green-600 dark:text-green-400 mb-1">You Save</p>
                               <p className="text-lg font-bold text-green-600 dark:text-green-400">
-                                ${Math.max(0, combo.items.reduce((sum, item) => sum + item.price, 0) - combo.totalPrice).toFixed(2)}
+                                LKR {Math.max(0, combo.items.reduce((sum, item) => sum + item.price, 0) - combo.totalPrice).toFixed(2)}
                               </p>
                             </div>
                           </div>
@@ -969,7 +956,7 @@ const RestaurantDetail = () => {
                                 index !== combo.items.length - 1 ? 'border-b border-gray-100 dark:border-gray-700' : ''
                               }`}>
                                 <span className="text-sm text-gray-700 dark:text-gray-300 font-medium">{item.name}</span>
-                                <span className="text-sm text-gray-500 dark:text-gray-400">${item.price.toFixed(2)}</span>
+                                <span className="text-sm text-gray-500 dark:text-gray-400">LKR {item.price.toFixed(2)}</span>
                               </div>
                             ))}
                             
@@ -978,13 +965,13 @@ const RestaurantDetail = () => {
                               <div className="flex justify-between text-sm mb-1">
                                 <span className="text-gray-600 dark:text-gray-400">Individual total:</span>
                                 <span className="line-through text-gray-500 dark:text-gray-500">
-                                  ${combo.items.reduce((sum, item) => sum + item.price, 0).toFixed(2)}
+                                  LKR {combo.items.reduce((sum, item) => sum + item.price, 0).toFixed(2)}
                                 </span>
                               </div>
                               <div className="flex justify-between text-sm font-semibold">
                                 <span className="text-primary">Combo price:</span>
                                 <span className="text-primary">
-                                  ${combo.totalPrice.toFixed(2)}
+                                  LKR {combo.totalPrice.toFixed(2)}
                                 </span>
                               </div>
                             </div>
@@ -1169,10 +1156,10 @@ const RestaurantDetail = () => {
                                     )}
                                   </div>
                                   <p className="text-sm text-gray-600 dark:text-gray-400">
-                                    ${proposal.foodItemId?.price?.toFixed(2)} • {proposal.foodItemId?.category}
+                                    LKR {proposal.foodItemId?.price?.toFixed(2)} • {proposal.foodItemId?.category}
                                   </p>
                                   <p className="text-xs text-gray-700 dark:text-gray-300 mt-1">
-                                    Final Price: ${((proposal.foodItemId?.price || 0) * (1 - proposal.proposedDiscount / 100)).toFixed(2)}
+                                    Final Price: LKR {((proposal.foodItemId?.price || 0) * (1 - proposal.proposedDiscount / 100)).toFixed(2)}
                                   </p>
                                   {proposal.description && proposal.description !== `${proposal.proposedDiscount}% off` && (
                                     <p className="text-xs text-gray-500 mt-1 italic">
@@ -1216,7 +1203,7 @@ const RestaurantDetail = () => {
                 <div>
                   <h3 className="text-lg font-semibold mb-3">Available Polls</h3>
                   <div className="space-y-3">
-                    {polls.map(poll => (
+                    {polls.filter(poll => poll.foodItemId).map(poll => (
                       <div 
                         key={poll._id}
                         className="border border-gray-200 dark:border-gray-700 rounded-lg p-3 hover:bg-gray-50 dark:hover:bg-gray-800 cursor-pointer"
@@ -1226,7 +1213,7 @@ const RestaurantDetail = () => {
                           <div>
                             <p className="font-medium">{poll.foodItemId.name}</p>
                             <p className="text-sm text-secondary dark:text-gray-400">
-                              ${poll.foodItemId.price.toFixed(2)} • {poll.foodItemId.category}
+                              LKR {poll.foodItemId.price.toFixed(2)} • {poll.foodItemId.category}
                             </p>
                           </div>
                           <div className="text-right">
