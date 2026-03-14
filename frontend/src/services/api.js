@@ -272,4 +272,42 @@ export const notesAPI = {
   },
 };
 
+// Lost & Found API calls
+export const lostFoundAPI = {
+  createPost: async (formData) => {
+    const response = await api.post("/lostfound", formData);
+    return response.data;
+  },
+
+  getLostPosts: async () => {
+    const response = await api.get("/lostfound/lost");
+    return response.data;
+  },
+
+  getFoundPosts: async () => {
+    const response = await api.get("/lostfound/found");
+    return response.data;
+  },
+
+  getCurrentUserPosts: async () => {
+    const response = await api.get("/lostfound/user");
+    return response.data;
+  },
+
+  deletePost: async (id) => {
+    const response = await api.delete(`/lostfound/${id}`);
+    return response.data;
+  },
+
+  resolvePost: async (id) => {
+    const response = await api.patch(`/lostfound/${id}/resolve`);
+    return response.data;
+  },
+
+  getMatchesByLostId: async (lostId) => {
+    const response = await api.get(`/lostfound/matches/${lostId}`);
+    return response.data;
+  },
+};
+
 export default api;

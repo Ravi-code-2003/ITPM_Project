@@ -15,6 +15,7 @@ const aiRoutes = require("./routes/aiRoutes");
 const shopRoutes = require("./routes/shopRoutes");
 const studentRoutes = require("./routes/studentRoutes");
 const noteRoutes = require("./routes/noteRoutes");
+const lostFoundRoutes = require("./routes/lostFoundRoutes");
 
 
 
@@ -66,6 +67,7 @@ app.get("/", (req, res) => {
       shop: "/api/shop",
       student: "/api/student",
       notes: "/api/notes",
+      lostfound: "/api/lostfound",
     },
   });
 });
@@ -77,6 +79,7 @@ app.use("/api/ai", aiRoutes);
 app.use("/api/shop", shopRoutes);
 app.use("/api/student", studentRoutes);
 app.use("/api/notes", noteRoutes);
+app.use("/api/lostfound", lostFoundRoutes);
 
 // Health check endpoint
 app.get("/api/health", (req, res) => {
