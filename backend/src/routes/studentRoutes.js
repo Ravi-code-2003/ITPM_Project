@@ -13,6 +13,7 @@ const {
   voteInPoll,
   getPollResults,
   getBudgetTracker,
+  setBudgetTracker,
   // New enhanced poll methods
   getRestaurantPolls,
   voteInPollProposal
@@ -32,6 +33,7 @@ router.get("/restaurant/:id/menu", getRestaurantMenu);
 // Smart Features Routes
 router.get("/budget-meals", getBudgetMeals);
 router.get("/budget-tracker", getBudgetTracker);
+router.post("/budget-tracker", setBudgetTracker);
 
 // Order Routes
 router.route("/orders")

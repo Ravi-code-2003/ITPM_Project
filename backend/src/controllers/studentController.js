@@ -7,6 +7,22 @@ const FavoriteRestaurant = require("../models/FavoriteRestaurant");
 const Rating = require("../models/Rating");
 const Poll = require("../models/Poll");
 const PollProposal = require("../models/PollProposal");
+const StudentBudget = require("../models/StudentBudget");
+
+const getMonthKey = (date) => {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  return `${year}-${month}`;
+};
+
+const getMonthRange = (monthKey) => {
+  const [yearStr, monthStr] = monthKey.split("-");
+  const year = Number(yearStr);
+  const monthIndex = Number(monthStr) - 1;
+  const start = new Date(year, monthIndex, 1, 0, 0, 0, 0);
+  const end = new Date(year, monthIndex + 1, 0, 23, 59, 59, 999);
+  return { start, end };
+};
 
 /**
  * GET /api/student/restaurants
@@ -644,14 +660,36 @@ const getPollResults = async (req, res) => {
  */
 const getBudgetTracker = async (req, res) => {
   try {
-    const { monthlyBudget } = req.query;
+    const { monthlyBudget, month } = req.query;
     const studentId = req.user.id;
-    
-    // Get current month orders
+
     const now = new Date();
-    const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
-    const monthEnd = new Date(now.getFullYear(), now.getMonth() + 1, 0);
-    
+    const monthKey = month || getMonthKey(now);
+    const { start: monthStart, end: monthEnd } = getMonthRange(monthKey);
+
+    if (monthlyBudget !== undefined) {
+      const parsedBudget = parseFloat(monthlyBudget);
+      if (Number.isNaN(parsedBudget) || parsedBudget < 0) {
+        return res.status(400).json({
+          success: false,
+          message: "Monthly budget must be a non-negative number",
+        });
+      }
+
+      await StudentBudget.findOneAndUpdate(
+        { studentId, month: monthKey },
+        { monthlyBudget: parsedBudget },
+        { upsert: true, new: true, setDefaultsOnInsert: true }
+      );
+    }
+
+    const budgetRecord = await StudentBudget.findOne({
+      studentId,
+      month: monthKey,
+    });
+
+    const budgetValue = budgetRecord ? budgetRecord.monthlyBudget : 0;
+
     const monthlyOrders = await Order.find({
       studentId,
       createdAt: { $gte: monthStart, $lte: monthEnd },
@@ -661,8 +699,7 @@ const getBudgetTracker = async (req, res) => {
       .sort({ createdAt: -1 });
     
     const totalSpent = monthlyOrders.reduce((sum, order) => sum + order.totalAmount, 0);
-    const budget = parseFloat(monthlyBudget) || 0;
-    const remaining = budget - totalSpent;
+    const remaining = budgetValue - totalSpent;
     
     // Daily spending breakdown
     const dailySpending = {};
@@ -674,10 +711,11 @@ const getBudgetTracker = async (req, res) => {
     res.json({
       success: true,
       budgetTracker: {
-        monthlyBudget: budget,
+        month: monthKey,
+        monthlyBudget: budgetValue,
         totalSpent: totalSpent,
         remaining: remaining,
-        percentageUsed: budget > 0 ? (totalSpent / budget * 100) : 0,
+        percentageUsed: budgetValue > 0 ? (totalSpent / budgetValue * 100) : 0,
         orderCount: monthlyOrders.length,
         dailySpending,
         monthlyOrders
@@ -687,6 +725,45 @@ const getBudgetTracker = async (req, res) => {
     res.status(500).json({
       success: false,
       message: error.message
+    });
+  }
+};
+
+/**
+ * POST /api/student/budget-tracker
+ * Set monthly budget tracking
+ */
+const setBudgetTracker = async (req, res) => {
+  try {
+    const { monthlyBudget, month } = req.body;
+    const studentId = req.user.id;
+
+    const parsedBudget = parseFloat(monthlyBudget);
+    if (Number.isNaN(parsedBudget) || parsedBudget < 0) {
+      return res.status(400).json({
+        success: false,
+        message: "Monthly budget must be a non-negative number",
+      });
+    }
+
+    const now = new Date();
+    const monthKey = month || getMonthKey(now);
+
+    const budgetRecord = await StudentBudget.findOneAndUpdate(
+      { studentId, month: monthKey },
+      { monthlyBudget: parsedBudget },
+      { upsert: true, new: true, setDefaultsOnInsert: true }
+    );
+
+    res.json({
+      success: true,
+      budget: budgetRecord,
+      message: "Budget updated successfully",
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: error.message,
     });
   }
 };
@@ -824,6 +901,7 @@ module.exports = {
   voteInPoll,
   getPollResults,
   getBudgetTracker,
+  setBudgetTracker,
   // New enhanced poll methods
   getRestaurantPolls,
   voteInPollProposal
