@@ -79,6 +79,8 @@ roomOfferSchema.methods.isCurrentlyValid = function() {
   return this.isActive && now >= this.validFrom && now <= this.validTo;
 };
 
+roomOfferSchema.index({ room: 1, isActive: 1 });
+
 const RoomOffer = mongoose.model("RoomOffer", roomOfferSchema);
 
 module.exports = RoomOffer;

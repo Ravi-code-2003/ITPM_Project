@@ -69,6 +69,7 @@ roomRequestSchema.pre("save", function () {
 
 // Prevent duplicate requests from the same student for the same room
 roomRequestSchema.index({ room: 1, student: 1 }, { unique: true });
+roomRequestSchema.index({ room: 1, status: 1 });
 
 const RoomRequest = mongoose.model("RoomRequest", roomRequestSchema);
 

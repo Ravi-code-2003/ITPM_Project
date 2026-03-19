@@ -501,29 +501,63 @@ const deleteRoom = async (req, res) => {
 // @access  Private (House Owner only)
 const getMyRooms = async (req, res) => {
   try {
-    const rooms = await Room.find({ owner: req.user._id })
-      .sort({ createdAt: -1 });
+    const rooms = await Room.find({ owner: req.user._id }).sort({ createdAt: -1 }).lean();
 
-    // Get requests count for each room
-    const roomsWithStats = await Promise.all(
-      rooms.map(async (room) => {
-        const requestsCount = await RoomRequest.countDocuments({
-          room: room._id,
+    if (rooms.length === 0) {
+      return res.status(200).json({
+        success: true,
+        data: [],
+      });
+    }
+
+    const roomIds = rooms.map((room) => room._id);
+
+    // Aggregate pending requests counts in one query
+    const pendingRequestsAgg = await RoomRequest.aggregate([
+      {
+        $match: {
+          room: { $in: roomIds },
           status: "PENDING",
-        });
-        const offersCount = await RoomOffer.countDocuments({
-          room: room._id,
+        },
+      },
+      {
+        $group: {
+          _id: "$room",
+          count: { $sum: 1 },
+        },
+      },
+    ]);
+
+    // Aggregate active offers counts in one query
+    const activeOffersAgg = await RoomOffer.aggregate([
+      {
+        $match: {
+          room: { $in: roomIds },
           isActive: true,
-        });
-        return {
-          ...room.toObject(),
-          stats: {
-            pendingRequests: requestsCount,
-            activeOffers: offersCount,
-          },
-        };
-      })
+        },
+      },
+      {
+        $group: {
+          _id: "$room",
+          count: { $sum: 1 },
+        },
+      },
+    ]);
+
+    const pendingRequestsMap = new Map(
+      pendingRequestsAgg.map((item) => [item._id.toString(), item.count])
     );
+    const activeOffersMap = new Map(
+      activeOffersAgg.map((item) => [item._id.toString(), item.count])
+    );
+
+    const roomsWithStats = rooms.map((room) => ({
+      ...room,
+      stats: {
+        pendingRequests: pendingRequestsMap.get(room._id.toString()) || 0,
+        activeOffers: activeOffersMap.get(room._id.toString()) || 0,
+      },
+    }));
 
     res.status(200).json({
       success: true,

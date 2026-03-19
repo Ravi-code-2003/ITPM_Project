@@ -107,6 +107,7 @@ const roomSchema = new mongoose.Schema({
 
 // Create geospatial index for location-based queries
 roomSchema.index({ "location.coordinates": "2dsphere" });
+roomSchema.index({ owner: 1, createdAt: -1 });
 
 // Update timestamp on save (modern async style)
 roomSchema.pre("save", async function () {
