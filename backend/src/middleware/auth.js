@@ -3,10 +3,10 @@ const User = require("../models/User");
 
 // Protect routes - verify JWT token
 const protect = async (req, res, next) => {
-  let token;
+  try {
+    let token;
 
-  if (req.headers.authorization && req.headers.authorization.startsWith("Bearer")) {
-    try {
+    if (req.headers.authorization && req.headers.authorization.startsWith("Bearer")) {
       // Get token from header
       token = req.headers.authorization.split(" ")[1];
 
@@ -20,15 +20,15 @@ const protect = async (req, res, next) => {
         return res.status(401).json({ message: "Not authorized, user not found" });
       }
 
-      next();
-    } catch (error) {
-      console.error(error);
-      return res.status(401).json({ message: "Not authorized, token failed" });
+      return next();
     }
-  }
 
-  if (!token) {
-    return res.status(401).json({ message: "Not authorized, no token" });
+    if (!token) {
+      return res.status(401).json({ message: "Not authorized, no token" });
+    }
+  } catch (error) {
+    console.error("Auth middleware error:", error);
+    return res.status(401).json({ message: "Not authorized, token failed" });
   }
 };
 

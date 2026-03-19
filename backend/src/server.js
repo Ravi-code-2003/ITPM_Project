@@ -7,6 +7,9 @@ const connectDB = require("./config/db");
 // Import routes
 const authRoutes = require("./routes/authRoutes");
 const adminRoutes = require("./routes/adminRoutes");
+const roomRoutes = require("./routes/roomRoutes");
+const roomRequestRoutes = require("./routes/roomRequestRoutes");
+const roomOfferRoutes = require("./routes/roomOfferRoutes");
 
 // Load environment variables
 dotenv.config();
@@ -55,6 +58,9 @@ app.get("/", (req, res) => {
     endpoints: {
       auth: "/api/auth",
       admin: "/api/admin",
+      rooms: "/api/rooms",
+      roomRequests: "/api/room-requests",
+      roomOffers: "/api/room-offers",
     },
   });
 });
@@ -62,6 +68,9 @@ app.get("/", (req, res) => {
 // API Routes
 app.use("/api/auth", authRoutes);
 app.use("/api/admin", adminRoutes);
+app.use("/api/rooms", roomRoutes);
+app.use("/api/room-requests", roomRequestRoutes);
+app.use("/api/room-offers", roomOfferRoutes);
 
 // Health check endpoint
 app.get("/api/health", (req, res) => {
