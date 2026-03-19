@@ -90,21 +90,19 @@ const Header = () => {
             </Link>
           </div>
 
-          {/* Desktop Navigation - Only show for non-authenticated users */}
-          {!isAuthenticated && (
-            <nav className="hidden md:flex items-center space-x-8">
-              {publicNavItems.map((item) => (
-                <Link
-                  key={item.name}
-                  to={item.href}
-                  className="flex items-center space-x-1 text-gray-700 dark:text-gray-300 hover:text-primary dark:hover:text-accent transition-colors duration-200 font-medium"
-                >
-                  <item.icon className="h-4 w-4" />
-                  <span>{item.name}</span>
-                </Link>
-              ))}
-            </nav>
-          )}
+          {/* Desktop Navigation */}
+          <nav className="hidden md:flex items-center space-x-8">
+            {publicNavItems.map((item) => (
+              <Link
+                key={item.name}
+                to={item.href}
+                className="flex items-center space-x-1 text-gray-700 dark:text-gray-300 hover:text-primary dark:hover:text-accent transition-colors duration-200 font-medium"
+              >
+                <item.icon className="h-4 w-4" />
+                <span>{item.name}</span>
+              </Link>
+            ))}
+          </nav>
 
           {/* Auth Buttons / User Menu */}
           <div className="hidden md:flex items-center space-x-4">
@@ -197,24 +195,22 @@ const Header = () => {
         {isMenuOpen && (
           <div className="md:hidden border-t border-secondary/20 dark:border-secondary/10 py-4">
             <div className="flex flex-col space-y-3">
-              {!isAuthenticated && (
-                <>
-                  {publicNavItems.map((item) => (
-                    <Link
-                      key={item.name}
-                      to={item.href}
-                      className="flex items-center space-x-2 text-gray-700 dark:text-gray-300 hover:text-primary dark:hover:text-accent px-2 py-2 rounded-md transition-colors duration-200 font-medium"
-                      onClick={() => setIsMenuOpen(false)}
-                    >
-                      <item.icon className="h-4 w-4" />
-                      <span>{item.name}</span>
-                    </Link>
-                  ))}
-                </>
-              )}
+              {/* Navigation Items */}
+              {publicNavItems.map((item) => (
+                <Link
+                  key={item.name}
+                  to={item.href}
+                  className="flex items-center space-x-2 text-gray-700 dark:text-gray-300 hover:text-primary dark:hover:text-accent px-2 py-2 rounded-md transition-colors duration-200 font-medium"
+                  onClick={() => setIsMenuOpen(false)}
+                >
+                  <item.icon className="h-4 w-4" />
+                  <span>{item.name}</span>
+                </Link>
+              ))}
               
+              {/* User Section */}
               {isAuthenticated ? (
-                <div className={`${!isAuthenticated ? 'border-t border-secondary/20 dark:border-secondary/10 pt-3 mt-3' : ''}`}>
+                <div className="border-t border-secondary/20 dark:border-secondary/10 pt-3 mt-3">
                   <div className="flex items-center space-x-2 px-2 py-2 mb-3">
                     <div className="bg-accent/20 p-2 rounded-full">
                       <User className="h-5 w-5 text-primary dark:text-accent" />

@@ -83,7 +83,7 @@ api.interceptors.response.use(
     const message = error.response?.data?.message || error.message || 'Network error occurred';
     
     // Don't show toast for certain paths to avoid conflicts
-    const skipPaths = ['/auth/login', '/auth/register'];
+    const skipPaths = ['/auth/login', '/auth/register', '/requests', '/room-requests'];
     const isSkip = skipPaths.some(path => error.config?.url?.includes(path));
     
     if (!isSkip) {

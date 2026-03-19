@@ -1,300 +1,1071 @@
-import React from 'react';
-import { Building2, MapPin, DollarSign, Users, Wifi, Utensils, Shield, Star } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { Search, Filter, MapIcon, List, X, Calendar, ChevronLeft, ChevronRight } from 'lucide-react';
+import { MapContainer, TileLayer, Marker, Popup } from 'react-leaflet';
+import 'leaflet/dist/leaflet.css';
+import L from 'leaflet';
 import Button from '../components/ui/Button';
-import Card, { CardHeader, CardTitle, CardContent } from '../components/ui/Card';
+import Card from '../components/ui/Card';
+import RoomCard from '../Component/Accommodation/RoomCard';
+import RoomDetailModal from '../Component/Accommodation/RoomDetailModal';
+import { roomService } from '../services/accommodationService';
+import toast from 'react-hot-toast';
+
+// Fix Leaflet default marker icon issue
+delete L.Icon.Default.prototype._getIconUrl;
+L.Icon.Default.mergeOptions({
+  iconRetinaUrl: require('leaflet/dist/images/marker-icon-2x.png'),
+  iconUrl: require('leaflet/dist/images/marker-icon.png'),
+  shadowUrl: require('leaflet/dist/images/marker-shadow.png'),
+});
 
 const AccommodationPage = () => {
-  const accommodations = [
-    {
-      id: 1,
-      name: "University Residence Hall A",
-      type: "On-Campus Dormitory",
-      description: "Modern dormitory with shared and private room options, located right on campus for maximum convenience.",
-      location: "Main Campus, North Wing",
-      price: "LKR 15,000/month",
-      capacity: "Single, Double, or Quad occupancy",
-      rating: 4.5,
-      features: ["24/7 Security", "WiFi", "Laundry", "Study Rooms", "Common Kitchen"],
-      amenities: ["Air Conditioning", "Attached Bathroom", "Study Desk", "Wardrobe"]
+  const [rooms, setRooms] = useState([]);
+  // Flexible dates state
+  const [flexibleDuration, setFlexibleDuration] = useState(''); // '1-6', '6-12', '12+'
+  const [flexibleSelectedMonths, setFlexibleSelectedMonths] = useState([]); // Array of selected months
+  const [flexibleMonthsDisplay, setFlexibleMonthsDisplay] = useState([
+    'February', 'March', 'April', 'May', 'June', 'July'
+  ]);
+
+  // Handlers for flexible months navigation
+  const handlePrevFlexibleMonth = () => {
+    setFlexibleMonthsDisplay(months => {
+      const prev = new Date(`${months[0]} 1, 2026`);
+      prev.setMonth(prev.getMonth() - 1);
+      return Array.from({length: 6}, (_, i) => {
+        const d = new Date(prev.getFullYear(), prev.getMonth() + i, 1);
+        return d.toLocaleString('en-US', { month: 'long' });
+      });
+    });
+  };
+  const handleNextFlexibleMonth = () => {
+    setFlexibleMonthsDisplay(months => {
+      const next = new Date(`${months[months.length-1]} 1, 2026`);
+      next.setMonth(next.getMonth() + 1);
+      return Array.from({length: 6}, (_, i) => {
+        const d = new Date(next.getFullYear(), next.getMonth() - 5 + i, 1);
+        return d.toLocaleString('en-US', { month: 'long' });
+      });
+    });
+  };
+  const handleFlexibleMonthToggle = (month) => {
+    setFlexibleSelectedMonths(prev => 
+      prev.includes(month) ? prev.filter(m => m !== month) : [...prev, month]
+    );
+  };
+
+  const [campuses, setCampuses] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [showMap, setShowMap] = useState(false);
+  const [showFilters, setShowFilters] = useState(false);
+  const [selectedRoom, setSelectedRoom] = useState(null);
+  const [showMatchFilter, setShowMatchFilter] = useState(false);
+  const [showMatchModal, setShowMatchModal] = useState(false); // Separate state for modal visibility
+  const [showDatePicker, setShowDatePicker] = useState(false);
+  const [selectedDates, setSelectedDates] = useState({ moveIn: '', moveOut: '' });
+  const [isFlexible, setIsFlexible] = useState(false);
+  const [currentMonth, setCurrentMonth] = useState(new Date());
+
+  // Filter state
+  const [filters, setFilters] = useState({
+    area: '',
+    minRent: '',
+    maxRent: '',
+    roomType: '',
+    gender: '',
+    availability: 'AVAILABLE',
+    wifi: false,
+    parking: false,
+    attachedBathroom: false,
+    campusId: '',
+    moveInDate: '',
+    sortBy: 'createdAt',
+    order: 'desc',
+  });
+
+  // Match filter state
+  const [matchFilters, setMatchFilters] = useState({
+    maxBudget: '',
+    requiredFacilities: {
+      wifi: false,
+      parking: false,
+      attachedBathroom: false,
+      furnished: false,
+      kitchen: false,
     },
-    {
-      id: 2,
-      name: "Green Valley Student Apartments",
-      type: "Off-Campus Apartment",
-      description: "Fully furnished apartments perfect for students who prefer independent living with home-like comfort.",
-      location: "2 km from Campus",
-      price: "LKR 25,000/month",
-      capacity: "1-3 students per unit",
-      rating: 4.7,
-      features: ["Furnished", "Kitchen", "Free Parking", "24/7 Security", "Gym Access"],
-      amenities: ["Private Kitchen", "Living Room", "Balcony", "High-Speed Internet"]
-    },
-    {
-      id: 3,
-      name: "Student Housing Complex B",
-      type: "On-Campus Apartment Style",
-      description: "Apartment-style living on campus with shared facilities and a vibrant student community.",
-      location: "Main Campus, South Block",
-      price: "LKR 18,000/month",
-      capacity: "2-4 students per apartment",
-      rating: 4.3,
-      features: ["Meal Plan Available", "Recreation Room", "WiFi", "Study Lounge", "Maintenance"],
-      amenities: ["Shared Kitchen", "Common Area", "Private Bedroom", "Bathroom"]
-    },
-    {
-      id: 4,
-      name: "Lakeside Hostel",
-      type: "Off-Campus Hostel",
-      description: "Budget-friendly hostel accommodation with a friendly atmosphere, ideal for students on a tight budget.",
-      location: "1.5 km from Campus (Near Lake)",
-      price: "LKR 10,000/month",
-      capacity: "Shared rooms (4-6 students)",
-      rating: 4.0,
-      features: ["Budget Friendly", "WiFi", "Common Kitchen", "Bike Storage", "Near Public Transport"],
-      amenities: ["Shared Bathroom", "Locker", "Study Area", "Common Room"]
-    },
-    {
-      id: 5,
-      name: "Premium Student Studios",
-      type: "Off-Campus Studio",
-      description: "Luxurious studio apartments with modern amenities for students seeking comfort and privacy.",
-      location: "3 km from Campus (City Center)",
-      price: "LKR 35,000/month",
-      capacity: "Single occupancy",
-      rating: 4.8,
-      features: ["Fully Furnished", "Housekeeping", "Gym", "Swimming Pool", "Security"],
-      amenities: ["Private Kitchen", "Ensuite Bathroom", "Smart TV", "High-Speed Internet"]
+  });
+
+  useEffect(() => {
+    fetchCampuses();
+    fetchRooms();
+  }, []);
+
+  // Auto-search with debounce when area filter changes
+  useEffect(() => {
+    const timerId = setTimeout(() => {
+      if (filters.area !== undefined) {
+        fetchRooms();
+      }
+    }, 500); // 500ms debounce
+
+    return () => clearTimeout(timerId);
+  }, [filters.area]);
+
+  const fetchCampuses = async () => {
+    try {
+      const response = await roomService.getCampuses();
+      setCampuses(response.data || []);
+      // Don't auto-select a campus - let user choose
+    } catch (error) {
+      console.error('Error fetching campuses:', error);
     }
+  };
+
+  const fetchRooms = async (customFilters = null) => {
+    try {
+      setLoading(true);
+      const filtersToUse = customFilters || filters;
+      const response = await roomService.getAllRooms(filtersToUse);
+      setRooms(response.data || []);
+    } catch (error) {
+      toast.error('Failed to fetch rooms');
+      console.error('Error fetching rooms:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleFilterChange = (field, value) => {
+    setFilters(prev => {
+      const newFilters = { ...prev, [field]: value };
+      
+      // If campus is changed, automatically sort by distance
+      if (field === 'campusId' && value) {
+        newFilters.sortBy = 'campusDistance';
+        newFilters.order = 'asc';
+        // Auto-fetch with new filters
+        fetchRooms(newFilters);
+      }
+      
+      return newFilters;
+    });
+  };
+
+  const handleApplyFilters = () => {
+    fetchRooms();
+    setShowFilters(false);
+  };
+
+  const handleResetFilters = () => {
+    setFilters({
+      area: '',
+      minRent: '',
+      maxRent: '',
+      roomType: '',
+      gender: '',
+      availability: 'AVAILABLE',
+      wifi: false,
+      parking: false,
+      attachedBathroom: false,
+      campusId: '',
+      moveInDate: '',
+      sortBy: 'createdAt',
+      order: 'desc',
+    });
+  };
+
+  const handleSortByDistance = () => {
+    setFilters(prev => ({ ...prev, sortBy: 'campusDistance', order: 'asc' }));
+    setTimeout(fetchRooms, 100);
+  };
+
+  const handleDateSelection = () => {
+    if (selectedDates.moveIn) {
+      setFilters(prev => ({ ...prev, moveInDate: selectedDates.moveIn }));
+      setTimeout(() => fetchRooms(), 100);
+      setShowDatePicker(false);
+      toast.success(`Showing rooms available from ${new Date(selectedDates.moveIn).toLocaleDateString()}`);
+    }
+  };
+
+  const handleClearDates = () => {
+    setSelectedDates({ moveIn: '', moveOut: '' });
+    setFilters(prev => ({ ...prev, moveInDate: '' }));
+    setTimeout(() => fetchRooms(), 100);
+    setShowDatePicker(false);
+  };
+
+  const handleViewDetails = (roomId) => {
+    const room = rooms.find(r => r._id === roomId);
+    setSelectedRoom(room);
+  };
+
+  const calculateMatchScore = (room) => {
+    if (!showMatchFilter) return null;
+
+    let score = 0;
+    let totalCriteria = 0;
+
+    // Budget match (40%)
+    if (matchFilters.maxBudget) {
+      totalCriteria += 40;
+      if (room.monthlyRent <= Number(matchFilters.maxBudget)) {
+        score += 40;
+      } else {
+        const diff = Math.abs(room.monthlyRent - Number(matchFilters.maxBudget));
+        if (diff / Number(matchFilters.maxBudget) <= 0.2) {
+          score += 20;
+        }
+      }
+    }
+
+    // Facilities match (60%)
+    const requiredFacilities = Object.keys(matchFilters.requiredFacilities).filter(
+      key => matchFilters.requiredFacilities[key]
+    );
+
+    if (requiredFacilities.length > 0) {
+      totalCriteria += 60;
+      const matchedFacilities = requiredFacilities.filter(
+        fac => room.facilities[fac]
+      );
+      score += (matchedFacilities.length / requiredFacilities.length) * 60;
+    }
+
+    return totalCriteria > 0 ? Math.round(score) : null;
+  };
+
+  // Calendar helper functions
+  const getDaysInMonth = (date) => {
+    const year = date.getFullYear();
+    const month = date.getMonth();
+    const firstDay = new Date(year, month, 1);
+    const lastDay = new Date(year, month + 1, 0);
+    const daysInMonth = lastDay.getDate();
+    const startingDayOfWeek = firstDay.getDay();
+    
+    const days = [];
+    
+    // Add empty cells for days before month starts
+    for (let i = 0; i < startingDayOfWeek; i++) {
+      days.push(null);
+    }
+    
+    // Add all days in month
+    for (let day = 1; day <= daysInMonth; day++) {
+      days.push(new Date(year, month, day));
+    }
+    
+    return days;
+  };
+
+  const isSameDay = (date1, date2) => {
+    if (!date1 || !date2) return false;
+    return date1.toDateString() === date2.toDateString();
+  };
+
+  const isInRange = (date, start, end) => {
+    if (!start || !end || !date) return false;
+    return date >= start && date <= end;
+  };
+
+  const handleDateClick = (date) => {
+    if (!date) return;
+    
+    const dateStr = date.toISOString().split('T')[0];
+    
+    if (!selectedDates.moveIn || (selectedDates.moveIn && selectedDates.moveOut)) {
+      // Start new selection
+      setSelectedDates({ moveIn: dateStr, moveOut: '' });
+    } else {
+      // Set end date
+      const moveInDate = new Date(selectedDates.moveIn);
+      if (date < moveInDate) {
+        // If clicked date is before start, make it the new start
+        setSelectedDates({ moveIn: dateStr, moveOut: selectedDates.moveIn });
+      } else {
+        setSelectedDates(prev => ({ ...prev, moveOut: dateStr }));
+      }
+    }
+  };
+
+  const getFilteredRoomsWithMatch = () => {
+    if (!showMatchFilter) return rooms;
+
+    return rooms
+      .map(room => ({
+        ...room,
+        matchScore: calculateMatchScore(room),
+      }))
+      .filter(room => room.matchScore !== null && room.matchScore >= 40) // Only show rooms with 40%+ match
+      .sort((a, b) => (b.matchScore || 0) - (a.matchScore || 0));
+  };
+
+  const filteredRooms = getFilteredRoomsWithMatch();
+
+  const getMapCenter = () => {
+    if (rooms.length === 0) return [6.9271, 79.8612];
+
+    const lats = rooms
+      .filter(r => r.location?.coordinates?.coordinates)
+      .map(r => r.location.coordinates.coordinates[1]);
+    const lngs = rooms
+      .filter(r => r.location?.coordinates?.coordinates)
+      .map(r => r.location.coordinates.coordinates[0]);
+
+    if (lats.length === 0) return [6.9271, 79.8612];
+
+    return [
+      lats.reduce((a, b) => a + b, 0) / lats.length,
+      lngs.reduce((a, b) => a + b, 0) / lngs.length,
+    ];
+  };
+
+  const dummyAccommodations = [
+    // Keep old data for reference, but use rooms state for rendering
   ];
 
   return (
-    <div className="min-h-screen bg-background dark:bg-background-dark">
-      {/* Header Section */}
-      <div className="bg-primary text-white py-16">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center">
-            <Building2 className="h-16 w-16 mx-auto mb-4" />
-            <h1 className="text-4xl font-bold mb-4">Student Accommodation</h1>
-            <p className="text-xl text-gray-100 max-w-3xl mx-auto">
-              Find your perfect home away from home. Explore various accommodation options
-              designed specifically for student needs, from on-campus dorms to nearby apartments.
-            </p>
-          </div>
+    <div className="min-h-screen bg-background dark:bg-background-dark py-8">
+      <div className="container mx-auto px-4">
+        {/* Header */}
+        <div className="mb-6">
+          <h1 className="text-3xl font-bold text-primary dark:text-gray-100 mb-2">
+            Find Your Perfect Room
+          </h1>
+          <p className="text-secondary dark:text-gray-400">
+            Browse available accommodations near your campus
+          </p>
         </div>
-      </div>
 
-      {/* Main Content */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-        {/* Introduction */}
-        <Card className="mb-8 shadow-soft">
-          <CardContent className="p-6">
-            <h2 className="text-2xl font-bold text-primary dark:text-gray-100 mb-4">Housing Options for Students</h2>
-            <p className="text-gray-600 dark:text-gray-300 mb-4">
-              We understand that finding the right accommodation is crucial for your academic success and overall
-              well-being. Whether you prefer the convenience of on-campus housing or the independence of off-campus
-              living, we have options to suit every preference and budget.
-            </p>
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mt-6">
-              <div className="bg-accent/10 dark:bg-accent/5 p-4 rounded-lg">
-                <h3 className="font-semibold text-primary dark:text-accent mb-2">Safe & Secure</h3>
-                <p className="text-sm text-gray-600 dark:text-gray-400">24/7 security and emergency support available</p>
-              </div>
-              <div className="bg-accent/10 dark:bg-accent/5 p-4 rounded-lg">
-                <h3 className="font-semibold text-primary dark:text-accent mb-2">Fully Equipped</h3>
-                <p className="text-sm text-gray-600 dark:text-gray-400">Furnished rooms with essential amenities</p>
-              </div>
-              <div className="bg-accent/10 dark:bg-accent/5 p-4 rounded-lg">
-                <h3 className="font-semibold text-primary dark:text-accent mb-2">Community Living</h3>
-                <p className="text-sm text-gray-600 dark:text-gray-400">Meet and connect with fellow students</p>
-              </div>
-              <div className="bg-accent/10 dark:bg-accent/5 p-4 rounded-lg">
-                <h3 className="font-semibold text-primary dark:text-accent mb-2">Flexible Terms</h3>
-                <p className="text-sm text-gray-600 dark:text-gray-400">Semester or annual lease options available</p>
+        {/* Search & Filter Bar */}
+        <div className="p-4 mb-6">
+          <div className="flex flex-col lg:flex-row gap-4 items-center">
+            {/* Search Input with Integrated Button */}
+            <div className="flex-1 w-full lg:max-w-md">
+              <div className="relative">
+                <input
+                  type="text"
+                  placeholder="Search by area..."
+                  value={filters.area}
+                  onChange={(e) => handleFilterChange('area', e.target.value)}
+                  onKeyPress={(e) => e.key === 'Enter' && fetchRooms()}
+                  className="w-full pl-5 pr-14 py-3 border-2 border-gray-300 dark:border-gray-600 rounded-full dark:bg-surface-dark dark:text-gray-100 focus:outline-none focus:border-primary text-base"
+                />
+                {filters.area && (
+                  <button
+                    onClick={() => handleFilterChange('area', '')}
+                    className="absolute right-14 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                  >
+                    <X className="h-4 w-4" />
+                  </button>
+                )}
+                <button
+                  onClick={fetchRooms}
+                  className="absolute right-1.5 top-1/2 -translate-y-1/2 bg-orange-500 hover:bg-orange-600 text-white rounded-full p-2 transition-colors"
+                >
+                  <Search className="h-5 w-5" />
+                </button>
               </div>
             </div>
-          </CardContent>
-        </Card>
 
-        {/* Accommodation Type Filter Info */}
-        <div className="mb-8">
-          <h2 className="text-3xl font-bold text-primary dark:text-gray-100 mb-4">Browse Accommodation Options</h2>
-          <div className="flex flex-wrap gap-3">
-            <span className="bg-accent/20 dark:bg-accent/10 text-primary dark:text-accent px-4 py-2 rounded-full text-sm font-medium">
-              On-Campus Housing
-            </span>
-            <span className="bg-accent/20 dark:bg-accent/10 text-primary dark:text-accent px-4 py-2 rounded-full text-sm font-medium">
-              Off-Campus Apartments
-            </span>
-            <span className="bg-accent/20 dark:bg-accent/10 text-primary dark:text-accent px-4 py-2 rounded-full text-sm font-medium">
-              Shared Accommodations
-            </span>
-            <span className="bg-accent/20 dark:bg-accent/10 text-primary dark:text-accent px-4 py-2 rounded-full text-sm font-medium">
-              Private Studios
-            </span>
+            {/* Filter Buttons */}
+            <div className="flex flex-wrap gap-2 items-center">
+              <button
+                onClick={() => setShowFilters(!showFilters)}
+                className={`px-4 py-2 rounded-full border text-sm font-medium transition-colors ${
+                  showFilters
+                    ? 'bg-gray-900 text-white border-gray-900 dark:bg-white dark:text-gray-900'
+                    : 'bg-white text-gray-700 border-gray-300 hover:border-gray-400 dark:bg-surface-dark dark:text-gray-300 dark:border-gray-600'
+                }`}
+              >
+                <Filter className="h-4 w-4 inline mr-1" />
+                Filters
+              </button>
+              <button
+                onClick={() => {
+                  if (showMatchFilter) {
+                    setShowMatchFilter(false);
+                    fetchRooms();
+                  } else {
+                    setShowMatchModal(true);
+                  }
+                }}
+                className={`px-4 py-2 rounded-full border text-sm font-medium transition-colors ${
+                  showMatchFilter
+                    ? 'bg-gray-900 text-white border-gray-900 dark:bg-white dark:text-gray-900'
+                    : 'bg-white text-gray-700 border-gray-300 hover:border-gray-400 dark:bg-surface-dark dark:text-gray-300 dark:border-gray-600'
+                }`}
+              >
+                Match My Needs
+              </button>
+              <button
+                onClick={() => setShowDatePicker(!showDatePicker)}
+                className={`px-4 py-2 rounded-full border text-sm font-medium transition-colors ${
+                  selectedDates.moveIn
+                    ? 'bg-gray-900 text-white border-gray-900 dark:bg-white dark:text-gray-900'
+                    : 'bg-white text-gray-700 border-gray-300 hover:border-gray-400 dark:bg-surface-dark dark:text-gray-300 dark:border-gray-600'
+                }`}
+              >
+                <Calendar className="h-4 w-4 inline mr-1" />
+                {selectedDates.moveIn ? new Date(selectedDates.moveIn).toLocaleDateString('en-GB', { day: '2-digit', month: 'short' }) : 'Dates'}
+              </button>
+              <button
+                onClick={() => setShowMap(!showMap)}
+                className={`px-4 py-2 rounded-full border text-sm font-medium transition-colors ${
+                  showMap
+                    ? 'bg-gray-900 text-white border-gray-900 dark:bg-white dark:text-gray-900'
+                    : 'bg-white text-gray-700 border-gray-300 hover:border-gray-400 dark:bg-surface-dark dark:text-gray-300 dark:border-gray-600'
+                }`}
+              >
+                {showMap ? <List className="h-4 w-4" /> : <MapIcon className="h-4 w-4" />}
+              </button>
+              {(filters.area || filters.minRent || filters.maxRent || selectedDates.moveIn) && (
+                <button
+                  onClick={() => {
+                    handleResetFilters();
+                    setSelectedDates({ moveIn: '', moveOut: '' });
+                    setTimeout(() => fetchRooms(), 100);
+                  }}
+                  className="px-4 py-2 rounded-full text-sm font-medium text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 underline"
+                >
+                  Clear all
+                </button>
+              )}
+            </div>
           </div>
         </div>
 
-        {/* Accommodation Listings */}
-        <div className="space-y-6">
-          {accommodations.map((accommodation) => (
-            <Card key={accommodation.id} hover className="overflow-hidden shadow-soft">
-              <CardContent className="p-6">
-                <div className="flex justify-between items-start mb-4">
-                  <div>
-                    <h3 className="text-2xl font-bold text-primary dark:text-gray-100 mb-2">{accommodation.name}</h3>
-                    <p className="text-primary dark:text-accent font-medium">{accommodation.type}</p>
+        {/* Date Picker Modal */}
+        {showDatePicker && (
+            <div 
+              className="fixed inset-0 bg-black/50 z-50 flex items-start justify-center pt-20 overflow-y-auto"
+              onClick={() => setShowDatePicker(false)}
+            >
+              <div 
+                className="bg-white dark:bg-surface-dark rounded-lg shadow-2xl max-w-4xl w-full mx-4 mb-20"
+                onClick={(e) => e.stopPropagation()}
+              >
+                {/* Header with tabs and close */}
+                <div className="flex items-center justify-between p-3 border-b">
+                  <div className="flex gap-2">
+                    <button
+                      onClick={() => setIsFlexible(false)}
+                      className={`px-4 py-1.5 rounded-full text-xs font-medium transition ${
+                        !isFlexible
+                          ? 'bg-gray-900 text-white dark:bg-white dark:text-gray-900'
+                          : 'bg-gray-100 text-gray-700 dark:bg-gray-700 dark:text-gray-300'
+                      }`}
+                    >
+                      Choose dates
+                    </button>
+                    <button
+                      onClick={() => setIsFlexible(true)}
+                      className={`px-4 py-1.5 rounded-full text-xs font-medium transition ${
+                        isFlexible
+                          ? 'bg-gray-900 text-white dark:bg-white dark:text-gray-900'
+                          : 'bg-gray-100 text-gray-700 dark:bg-gray-700 dark:text-gray-300'
+                      }`}
+                    >
+                      I'm flexible
+                    </button>
                   </div>
-                  <div className="flex items-center bg-accent/20 dark:bg-accent/10 px-3 py-1 rounded-full">
-                    <Star className="h-4 w-4 text-primary dark:text-accent mr-1 fill-current" />
-                    <span className="font-semibold text-primary dark:text-accent">{accommodation.rating}</span>
-                  </div>
+                  <button
+                    onClick={() => setShowDatePicker(false)}
+                    className="text-gray-500 hover:text-gray-700 p-1"
+                  >
+                    <X className="h-4 w-4" />
+                  </button>
                 </div>
 
-                <p className="text-gray-600 dark:text-gray-300 mb-4">{accommodation.description}</p>
-
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-4">
-                  <div className="flex items-start">
-                    <MapPin className="h-5 w-5 text-gray-500 dark:text-gray-400 mr-2 mt-0.5 flex-shrink-0" />
-                    <div>
-                      <p className="text-sm font-medium text-primary dark:text-gray-200">Location</p>
-                      <p className="text-sm text-gray-600 dark:text-gray-400">{accommodation.location}</p>
+                {/* Date selection boxes - only show in Choose dates tab */}
+                {!isFlexible && (
+                  <div className="p-4 border-b">
+                    <div className="flex items-center gap-3 max-w-md mx-auto">
+                      <div className="flex-1 border-2 border-gray-900 dark:border-white rounded p-2 text-center">
+                        <div className="text-[10px] font-semibold text-gray-600 dark:text-gray-400 mb-0.5">
+                          MOVE IN
+                        </div>
+                        <div className="text-xs font-medium text-gray-900 dark:text-white">
+                          {selectedDates.moveIn
+                            ? new Date(selectedDates.moveIn).toLocaleDateString('en-US', {
+                                month: '2-digit',
+                                day: '2-digit',
+                                year: 'numeric',
+                              })
+                            : 'Select date'}
+                        </div>
+                      </div>
+                      <div className="text-gray-400 text-sm">→</div>
+                      <div className="flex-1 border-2 border-gray-300 dark:border-gray-600 rounded p-2 text-center">
+                        <div className="text-[10px] font-semibold text-gray-600 dark:text-gray-400 mb-0.5">
+                          MOVE OUT
+                        </div>
+                        <div className="text-xs font-medium text-gray-900 dark:text-white">
+                          {selectedDates.moveOut
+                            ? new Date(selectedDates.moveOut).toLocaleDateString('en-US', {
+                                month: '2-digit',
+                                day: '2-digit',
+                                year: 'numeric',
+                              })
+                            : 'Select date'}
+                        </div>
+                      </div>
                     </div>
                   </div>
+                )}
 
-                  <div className="flex items-start">
-                    <DollarSign className="h-5 w-5 text-gray-500 dark:text-gray-400 mr-2 mt-0.5 flex-shrink-0" />
-                    <div>
-                      <p className="text-sm font-medium text-primary dark:text-gray-200">Rent</p>
-                      <p className="text-sm text-gray-600 dark:text-gray-400">{accommodation.price}</p>
+                {/* Calendar Grid */}
+                {!isFlexible && (
+                  <div className="p-4">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      {/* First Month */}
+                      {[0, 1].map((monthOffset) => {
+                        const displayMonth = new Date(
+                          currentMonth.getFullYear(),
+                          currentMonth.getMonth() + monthOffset,
+                          1
+                        );
+                        const days = getDaysInMonth(displayMonth);
+
+                        return (
+                          <div key={monthOffset}>
+                            {/* Month Navigation */}
+                            <div className="flex items-center justify-between mb-2">
+                              {monthOffset === 0 ? (
+                                <button
+                                  onClick={() =>
+                                    setCurrentMonth(
+                                      new Date(
+                                        currentMonth.getFullYear(),
+                                        currentMonth.getMonth() - 1,
+                                        1
+                                      )
+                                    )
+                                  }
+                                  className="p-0.5 hover:bg-gray-100 dark:hover:bg-gray-700 rounded"
+                                >
+                                  <ChevronLeft className="h-4 w-4" />
+                                </button>
+                              ) : (
+                                <div className="w-5" />
+                              )}
+                              <h3 className="text-sm font-semibold flex-1 text-center">
+                                {displayMonth.toLocaleDateString('en-US', {
+                                  month: 'long',
+                                  year: 'numeric',
+                                })}
+                              </h3>
+                              {monthOffset === 1 ? (
+                                <button
+                                  onClick={() =>
+                                    setCurrentMonth(
+                                      new Date(
+                                        currentMonth.getFullYear(),
+                                        currentMonth.getMonth() + 1,
+                                        1
+                                      )
+                                    )
+                                  }
+                                  className="p-0.5 hover:bg-gray-100 dark:hover:bg-gray-700 rounded"
+                                >
+                                  <ChevronRight className="h-4 w-4" />
+                                </button>
+                              ) : (
+                                <div className="w-5" />
+                              )}
+                            </div>
+
+                            {/* Day headers */}
+                            <div className="grid grid-cols-7 gap-0.5 mb-1">
+                              {['SUN', 'MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT'].map((day) => (
+                                <div
+                                  key={day}
+                                  className="text-[10px] font-semibold text-gray-600 dark:text-gray-400 text-center py-1"
+                                >
+                                  {day}
+                                </div>
+                              ))}
+                            </div>
+
+                            {/* Calendar days */}
+                            <div className="grid grid-cols-7 gap-0.5">
+                              {days.map((date, index) => {
+                                if (!date) {
+                                  return <div key={`empty-${index}`} />;
+                                }
+
+                                const isPast = date < new Date(new Date().setHours(0, 0, 0, 0));
+                                const moveInDate = selectedDates.moveIn
+                                  ? new Date(selectedDates.moveIn)
+                                  : null;
+                                const moveOutDate = selectedDates.moveOut
+                                  ? new Date(selectedDates.moveOut)
+                                  : null;
+                                const isSelected =
+                                  isSameDay(date, moveInDate) || isSameDay(date, moveOutDate);
+                                const inRange = isInRange(date, moveInDate, moveOutDate);
+
+                                return (
+                                  <button
+                                    key={index}
+                                    onClick={() => !isPast && handleDateClick(date)}
+                                    disabled={isPast}
+                                    className={`
+                                      aspect-square p-1 text-xs rounded transition
+                                      ${
+                                        isPast
+                                          ? 'text-gray-300 dark:text-gray-600 cursor-not-allowed'
+                                          : 'hover:bg-gray-100 dark:hover:bg-gray-700'
+                                      }
+                                      ${
+                                        isSelected
+                                          ? 'bg-gray-900 text-white dark:bg-white dark:text-gray-900 font-semibold'
+                                          : ''
+                                      }
+                                      ${
+                                        inRange && !isSelected
+                                          ? 'bg-gray-200 dark:bg-gray-700'
+                                          : ''
+                                      }
+                                    `}
+                                  >
+                                    {date.getDate()}
+                                  </button>
+                                );
+                              })}
+                            </div>
+                          </div>
+                        );
+                      })}
                     </div>
                   </div>
+                )}
 
-                  <div className="flex items-start">
-                    <Users className="h-5 w-5 text-gray-500 dark:text-gray-400 mr-2 mt-0.5 flex-shrink-0" />
-                    <div>
-                      <p className="text-sm font-medium text-primary dark:text-gray-200">Capacity</p>
-                      <p className="text-sm text-gray-600 dark:text-gray-400">{accommodation.capacity}</p>
-                    </div>
-                  </div>
-                </div>
+                {/* Flexible dates */}
+                {isFlexible && (
+                  <FlexibleDatesSection
+                    selectedDuration={flexibleDuration}
+                    setSelectedDuration={setFlexibleDuration}
+                    selectedMonths={flexibleSelectedMonths}
+                    onMonthToggle={handleFlexibleMonthToggle}
+                    months={flexibleMonthsDisplay}
+                    onPrevMonth={handlePrevFlexibleMonth}
+                    onNextMonth={handleNextFlexibleMonth}
+                  />
+                )}
 
-                <div className="mb-4">
-                  <p className="text-sm font-medium text-primary dark:text-gray-200 mb-2">Key Features:</p>
-                  <div className="flex flex-wrap gap-2">
-                    {accommodation.features.map((feature, index) => (
-                      <span
-                        key={index}
-                        className="bg-accent/10 dark:bg-accent/5 text-primary dark:text-gray-300 px-3 py-1 rounded-full text-sm font-medium"
-                      >
-                        {feature}
-                      </span>
-                    ))}
-                  </div>
-                </div>
-
-                <div>
-                  <p className="text-sm font-medium text-primary dark:text-gray-200 mb-2">Room Amenities:</p>
-                  <div className="flex flex-wrap gap-2">
-                    {accommodation.amenities.map((amenity, index) => (
-                      <span
-                        key={index}
-                        className="bg-secondary/10 dark:bg-secondary/5 text-secondary dark:text-gray-400 px-3 py-1 rounded-full text-sm"
-                      >
-                        {amenity}
-                      </span>
-                    ))}
-                  </div>
-                </div>
-
-                <div className="mt-4 pt-4 border-t border-secondary/20 dark:border-secondary/10">
-                  <Button>
-                    Request Information
+                {/* Footer buttons */}
+                <div className="flex items-center justify-between p-3 border-t">
+                  <Button variant="secondary" onClick={handleClearDates} className="text-xs py-1.5">
+                    Clear dates
+                  </Button>
+                  <Button
+                    variant="primary"
+                    onClick={() => {
+                      if (isFlexible && flexibleDuration && flexibleSelectedMonths.length > 0) {
+                        setFilters(prev => ({
+                          ...prev,
+                          flexible: true,
+                          flexibleDuration,
+                          flexibleMonths: flexibleSelectedMonths,
+                          moveInDate: '', // clear fixed date
+                        }));
+                        setShowDatePicker(false);
+                        setTimeout(() => fetchRooms(), 100);
+                        const monthsText = flexibleSelectedMonths.length === 1 
+                          ? flexibleSelectedMonths[0] 
+                          : `${flexibleSelectedMonths.length} months`;
+                        toast.success(`Showing rooms for ${flexibleDuration} months from ${monthsText}`);
+                      } else if (!isFlexible) {
+                        handleDateSelection();
+                      }
+                    }}
+                    disabled={(!selectedDates.moveIn && !isFlexible) || (isFlexible && (!flexibleDuration || flexibleSelectedMonths.length === 0))}
+                    className="text-xs py-1.5"
+                  >
+                    Select dates
                   </Button>
                 </div>
-              </CardContent>
-            </Card>
-          ))}
+              </div>
+            </div>
+          )}
+
+          {/* Advanced Filters Modal Overlay */}
+          {showFilters && (
+            <div 
+              className="fixed inset-0 z-50 flex items-start justify-center bg-black/50 pt-20 overflow-y-auto"
+              onClick={() => setShowFilters(false)}
+            >
+              <div 
+                className="bg-white dark:bg-surface-dark rounded-lg shadow-2xl max-w-2xl w-full mx-4 mb-20 p-8 border border-secondary/20"
+                onClick={(e) => e.stopPropagation()}
+              >
+                <div className="flex justify-between items-center mb-4">
+                  <h2 className="text-lg font-bold">Filters</h2>
+                  <button onClick={() => setShowFilters(false)} className="text-gray-500 hover:text-gray-700 p-1"><X className="h-5 w-5" /></button>
+                </div>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div>
+                  <label className="block text-sm font-medium mb-1">Min Rent</label>
+                  <input
+                    type="number"
+                    placeholder="Min"
+                    value={filters.minRent}
+                    onChange={(e) => handleFilterChange('minRent', e.target.value)}
+                    className="w-full px-3 py-2 border rounded-lg dark:bg-surface-dark dark:border-gray-600"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium mb-1">Max Rent</label>
+                  <input
+                    type="number"
+                    placeholder="Max"
+                    value={filters.maxRent}
+                    onChange={(e) => handleFilterChange('maxRent', e.target.value)}
+                    className="w-full px-3 py-2 border rounded-lg dark:bg-surface-dark dark:border-gray-600"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium mb-1">Room Type</label>
+                  <select
+                    value={filters.roomType}
+                    onChange={(e) => handleFilterChange('roomType', e.target.value)}
+                    className="w-full px-3 py-2 border rounded-lg dark:bg-surface-dark dark:border-gray-600"
+                  >
+                    <option value="">All Types</option>
+                    <option value="single">Single</option>
+                    <option value="double">Double</option>
+                    <option value="studio">Studio</option>
+                    <option value="apartment">Apartment</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium mb-1">Gender</label>
+                  <select
+                    value={filters.gender}
+                    onChange={(e) => handleFilterChange('gender', e.target.value)}
+                    className="w-full px-3 py-2 border rounded-lg dark:bg-surface-dark dark:border-gray-600"
+                  >
+                    <option value="">Any</option>
+                    <option value="male">Male</option>
+                    <option value="female">Female</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium mb-1">Campus</label>
+                  <select
+                    value={filters.campusId}
+                    onChange={(e) => handleFilterChange('campusId', e.target.value)}
+                    className="w-full px-3 py-2 border rounded-lg dark:bg-surface-dark dark:border-gray-600"
+                  >
+                    <option value="">All Campuses</option>
+                    {campuses.map(campus => (
+                      <option key={campus.id} value={campus.id}>{campus.name}</option>
+                    ))}
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium mb-1">Move-in Date</label>
+                  <input
+                    type="date"
+                    value={filters.moveInDate}
+                    onChange={(e) => handleFilterChange('moveInDate', e.target.value)}
+                    className="w-full px-3 py-2 border rounded-lg dark:bg-surface-dark dark:border-gray-600"
+                  />
+                </div>
+                <div className="md:col-span-3">
+                  <label className="block text-sm font-medium mb-2">Facilities</label>
+                  <div className="flex flex-wrap gap-4">
+                    <label className="flex items-center gap-2">
+                      <input
+                        type="checkbox"
+                        checked={filters.wifi}
+                        onChange={(e) => handleFilterChange('wifi', e.target.checked)}
+                      />
+                      <span>WiFi</span>
+                    </label>
+                    <label className="flex items-center gap-2">
+                      <input
+                        type="checkbox"
+                        checked={filters.parking}
+                        onChange={(e) => handleFilterChange('parking', e.target.checked)}
+                      />
+                      <span>Parking</span>
+                    </label>
+                    <label className="flex items-center gap-2">
+                      <input
+                        type="checkbox"
+                        checked={filters.attachedBathroom}
+                        onChange={(e) => handleFilterChange('attachedBathroom', e.target.checked)}
+                      />
+                      <span>Attached Bathroom</span>
+                    </label>
+                  </div>
+                </div>
+              </div>
+              <div className="flex gap-2 mt-4">
+                <Button onClick={handleApplyFilters}>Apply Filters</Button>
+                <Button variant="secondary" onClick={handleResetFilters}>Reset</Button>
+                <Button variant="secondary" onClick={handleSortByDistance}>
+                  Sort by Distance
+                </Button>
+              </div>
+            </div>
+          </div>
+        )}
+
+          {/* Match My Needs Modal Overlay */}
+          {showMatchModal && (
+            <div 
+              className="fixed inset-0 z-50 flex items-start justify-center bg-black/50 pt-20 overflow-y-auto"
+              onClick={() => setShowMatchModal(false)}
+            >
+              <div 
+                className="bg-white dark:bg-surface-dark rounded-lg shadow-2xl max-w-xl w-full mx-4 mb-20 p-8 border border-secondary/20"
+                onClick={(e) => e.stopPropagation()}
+              >
+                <div className="flex justify-between items-center mb-4">
+                  <h2 className="text-lg font-bold">Match My Needs</h2>
+                  <button onClick={() => setShowMatchModal(false)} className="text-gray-500 hover:text-gray-700 p-1"><X className="h-5 w-5" /></button>
+                </div>
+                <h3 className="font-semibold mb-3">What are you looking for?</h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium mb-1">Maximum Budget</label>
+                  <input
+                    type="number"
+                    placeholder="e.g., 15000"
+                    value={matchFilters.maxBudget}
+                    onChange={(e) => setMatchFilters(prev => ({ ...prev, maxBudget: e.target.value }))}
+                    className="w-full px-3 py-2 border rounded-lg dark:bg-surface-dark dark:border-gray-600"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium mb-2">Must-Have Facilities</label>
+                  <div className="flex flex-wrap gap-3">
+                    {['wifi', 'parking', 'attachedBathroom', 'furnished', 'kitchen'].map(facility => (
+                      <label key={facility} className="flex items-center gap-2">
+                        <input
+                          type="checkbox"
+                          checked={matchFilters.requiredFacilities[facility]}
+                          onChange={(e) => setMatchFilters(prev => ({
+                            ...prev,
+                            requiredFacilities: {
+                              ...prev.requiredFacilities,
+                              [facility]: e.target.checked,
+                            },
+                          }))}
+                        />
+                        <span className="capitalize">{facility.replace(/([A-Z])/g, ' $1')}</span>
+                      </label>
+                    ))}
+                  </div>
+                </div>
+              </div>
+              <Button 
+                onClick={() => {
+                  setShowMatchFilter(true); // Activate match filtering
+                  setShowMatchModal(false); // Close modal
+                  fetchRooms(); // Refresh with filters
+                }} 
+                className="mt-3"
+              >
+                Show Best Matches
+              </Button>
+              </div>
+            </div>
+        )}
+
+        {/* Results */}
+        <div className="flex items-center justify-between mb-4">
+          <p className="text-secondary dark:text-gray-400">
+            {filteredRooms.length} rooms found
+          </p>
         </div>
 
-        {/* Application Process */}
-        <Card className="mt-12 shadow-soft">
-          <CardContent className="p-6">
-            <h2 className="text-2xl font-bold text-primary dark:text-gray-100 mb-4">How to Apply</h2>
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-              <div className="text-center p-4">
-                <div className="bg-accent/20 dark:bg-accent/10 rounded-full w-12 h-12 flex items-center justify-center mx-auto mb-3">
-                  <span className="text-primary dark:text-accent font-bold text-xl">1</span>
+        {/* Map + List View */}
+        {showMap ? (
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <div className="max-h-[800px] overflow-y-auto pr-2">
+              {loading ? (
+                <p>Loading...</p>
+              ) : filteredRooms.length === 0 ? (
+                <Card className="p-8 text-center">
+                  <p className="text-secondary">No rooms found matching your criteria</p>
+                </Card>
+              ) : (
+                <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+                  {filteredRooms.map(room => (
+                    <RoomCard
+                      key={room._id}
+                      room={room}
+                      onViewDetails={handleViewDetails}
+                      showMatchScore={showMatchFilter}
+                      matchScore={room.matchScore}
+                    />
+                  ))}
                 </div>
-                <h3 className="font-semibold text-primary dark:text-gray-100 mb-2">Browse Options</h3>
-                <p className="text-sm text-secondary dark:text-gray-400">Review available accommodations and select your preference</p>
-              </div>
-              <div className="text-center p-4">
-                <div className="bg-accent/20 dark:bg-accent/10 rounded-full w-12 h-12 flex items-center justify-center mx-auto mb-3">
-                  <span className="text-primary dark:text-accent font-bold text-xl">2</span>
-                </div>
-                <h3 className="font-semibold text-primary dark:text-gray-100 mb-2">Submit Application</h3>
-                <p className="text-sm text-secondary dark:text-gray-400">Complete online application with required documents</p>
-              </div>
-              <div className="text-center p-4">
-                <div className="bg-accent/20 dark:bg-accent/10 rounded-full w-12 h-12 flex items-center justify-center mx-auto mb-3">
-                  <span className="text-primary dark:text-accent font-bold text-xl">3</span>
-                </div>
-                <h3 className="font-semibold text-primary dark:text-gray-100 mb-2">Review & Approval</h3>
-                <p className="text-sm text-secondary dark:text-gray-400">Application reviewed within 3-5 business days</p>
-              </div>
-              <div className="text-center p-4">
-                <div className="bg-accent/20 dark:bg-accent/10 rounded-full w-12 h-12 flex items-center justify-center mx-auto mb-3">
-                  <span className="text-primary dark:text-accent font-bold text-xl">4</span>
-                </div>
-                <h3 className="font-semibold text-primary dark:text-gray-100 mb-2">Move In</h3>
-                <p className="text-sm text-secondary dark:text-gray-400">Sign lease and move into your new home</p>
-              </div>
+              )}
             </div>
-          </CardContent>
-        </Card>
 
-        {/* Important Information */}
-        <Card className="mt-8 shadow-soft">
-          <CardContent className="p-6">
-            <h2 className="text-2xl font-bold text-primary dark:text-gray-100 mb-4">Important Information</h2>
-            <div className="prose max-w-none text-gray-600 dark:text-gray-300">
-              <ul className="list-disc list-inside space-y-2">
-                <li>All accommodations require a refundable security deposit</li>
-                <li>Utilities may be included or charged separately depending on the property</li>
-                <li>Most properties require a minimum 6-month lease commitment</li>
-                <li>Student ID verification required for all bookings</li>
-                <li>Early application recommended - spaces fill up quickly!</li>
-                <li>Financial aid and payment plans available for eligible students</li>
-              </ul>
+            <div className="lg:sticky lg:top-4 h-[800px]">
+              <MapContainer
+                center={getMapCenter()}
+                zoom={12}
+                style={{ height: '100%', width: '100%' }}
+                className="rounded-lg"
+              >
+                <TileLayer
+                  attribution='&copy; OpenStreetMap'
+                  url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+                />
+                {filteredRooms
+                  .filter(room => room.location?.coordinates?.coordinates)
+                  .map(room => {
+                    const [lng, lat] = room.location.coordinates.coordinates;
+                    
+                    // Create custom price marker
+                    const priceIcon = L.divIcon({
+                      className: 'custom-price-marker',
+                      html: `
+                        <div style="
+                          background: white;
+                          padding: 4px 8px;
+                          border-radius: 8px;
+                          font-weight: 600;
+                          font-size: 13px;
+                          box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+                          white-space: nowrap;
+                          border: 2px solid #3B4261;
+                          color: #3B4261;
+                        ">
+                          Rs. ${(room.monthlyRent / 1000).toFixed(0)}k
+                        </div>
+                      `,
+                      iconSize: [60, 30],
+                      iconAnchor: [30, 30],
+                    });
+                    
+                    return (
+                      <Marker key={room._id} position={[lat, lng]} icon={priceIcon}>
+                        <Popup>
+                          <div className="text-sm min-w-[200px]">
+                            <p className="font-semibold text-base mb-1">{room.title}</p>
+                            <p className="text-green-600 font-bold text-lg mb-1">
+                              Rs. {room.monthlyRent.toLocaleString()}/mo
+                            </p>
+                            <p className="text-gray-600 mb-2">{room.location.area}</p>
+                            <button
+                              onClick={() => handleViewDetails(room._id)}
+                              className="w-full bg-primary text-white px-3 py-1.5 rounded hover:bg-primary/90 text-sm font-medium"
+                            >
+                              View Details
+                            </button>
+                          </div>
+                        </Popup>
+                      </Marker>
+                    );
+                  })}
+              </MapContainer>
             </div>
-          </CardContent>
-        </Card>
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {loading ? (
+              <p>Loading...</p>
+            ) : filteredRooms.length === 0 ? (
+              <Card className="p-8 text-center md:col-span-2 lg:col-span-3">
+                <p className="text-secondary">No rooms found matching your criteria</p>
+              </Card>
+            ) : (
+              filteredRooms.map(room => (
+                <RoomCard
+                  key={room._id}
+                  room={room}
+                  onViewDetails={handleViewDetails}
+                  showMatchScore={showMatchFilter}
+                  matchScore={room.matchScore}
+                />
+              ))
+            )}
+          </div>
+        )}
 
-        {/* Contact Section */}
-        <Card className="mt-8 bg-accent/10 dark:bg-accent/5 shadow-soft">
-          <CardContent className="p-6">
-            <h3 className="text-lg font-semibold text-primary dark:text-gray-100 mb-2">Need Help Finding Accommodation?</h3>
-            <p className="text-gray-600 dark:text-gray-300 mb-4">
-              Our housing services team is here to assist you in finding the perfect accommodation.
-              Contact us for personalized recommendations, virtual tours, or any questions about the application process.
-            </p>
-            <div className="flex gap-4">
-              <a href="/contact">
-                <Button>
-                  Contact Housing Services
-                </Button>
-              </a>
-              <a href="/register">
-                <Button variant="outline">
-                  Apply Now
-                </Button>
-              </a>
-            </div>
-          </CardContent>
-        </Card>
+        {/* Room Detail Modal */}
+        {selectedRoom && (
+          <RoomDetailModal
+            room={selectedRoom}
+            onClose={() => setSelectedRoom(null)}
+            onRequestSent={() => {
+              setSelectedRoom(null);
+              toast.success('Viewing request sent successfully');
+            }}
+          />
+        )}
       </div>
     </div>
   );
 };
+
+// FlexibleDatesSection component
+const FlexibleDatesSection = ({ selectedDuration, setSelectedDuration, selectedMonths, onMonthToggle, months, onPrevMonth, onNextMonth }) => (
+  <div className="p-6">
+    {/* Stay duration */}
+    <div className="mb-6">
+      <h3 className="text-sm font-semibold text-gray-900 dark:text-white mb-3 text-center">
+        How long are you staying?
+      </h3>
+      <div className="flex gap-3 justify-center">
+        {['1-6 months', '6-12 months', '12+ months'].map((label, idx) => {
+          const val = idx === 0 ? '1-6' : idx === 1 ? '6-12' : '12+';
+          return (
+            <button
+              key={val}
+              className={`px-4 py-2 border-2 rounded-full text-xs font-medium transition ${selectedDuration === val ? 'border-gray-900 dark:border-white bg-gray-100 dark:bg-gray-800' : 'border-gray-300 dark:border-gray-600 hover:bg-gray-100 dark:hover:bg-gray-800'}`}
+              onClick={() => setSelectedDuration(val)}
+            >
+              {label}
+            </button>
+          );
+        })}
+      </div>
+    </div>
+    {/* Move-in month selection - MULTIPLE SELECTION */}
+    <div>
+      <h3 className="text-sm font-semibold text-gray-900 dark:text-white mb-3 text-center">
+        When are you moving in? {selectedMonths.length > 0 && <span className="text-xs text-gray-500">({selectedMonths.length} selected)</span>}
+      </h3>
+      <div className="flex items-center gap-2 max-w-3xl mx-auto">
+        <button className="p-1 hover:bg-gray-100 dark:hover:bg-gray-700 rounded" onClick={onPrevMonth}>
+          <ChevronLeft className="h-5 w-5" />
+        </button>
+        <div className="flex-1 grid grid-cols-6 gap-2">
+          {months.map((month) => {
+            const isSelected = selectedMonths.includes(month);
+            return (
+              <button
+                key={month}
+                className={`flex flex-col items-center justify-center p-3 border-2 rounded-lg transition ${
+                  isSelected 
+                    ? 'border-gray-900 dark:border-white bg-gray-900 dark:bg-white text-white dark:text-gray-900' 
+                    : 'border-gray-200 dark:border-gray-700 hover:border-gray-900 dark:hover:border-white'
+                }`}
+                onClick={() => onMonthToggle(month)}
+              >
+                <Calendar className={`h-5 w-5 mb-1 ${isSelected ? 'text-white dark:text-gray-900' : 'text-gray-600 dark:text-gray-400'}`} />
+                <span className="text-xs font-medium">{month}</span>
+                <span className={`text-[10px] ${isSelected ? 'text-gray-300 dark:text-gray-700' : 'text-gray-500'}`}>2026</span>
+              </button>
+            );
+          })}
+        </div>
+        <button className="p-1 hover:bg-gray-100 dark:hover:bg-gray-700 rounded" onClick={onNextMonth}>
+          <ChevronRight className="h-5 w-5" />
+        </button>
+      </div>
+    </div>
+  </div>
+);
 
 export default AccommodationPage;
