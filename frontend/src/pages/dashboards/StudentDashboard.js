@@ -1,305 +1,167 @@
 import React, { useState, useEffect } from 'react';
-import { Calendar, Heart, ShoppingBag, DollarSign, Star, Utensils } from 'lucide-react';
-import { useSearchParams, useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
+import { BookOpen, Home, Store, MapPin, CheckCircle, XCircle, Clock } from 'lucide-react';
 import Button from '../../components/ui/Button';
 import Card, { CardHeader, CardTitle, CardDescription, CardContent } from '../../components/ui/Card';
-import FavoritesPage from '../../components/student/FavoritesPage';
-import OrderHistory from '../../components/student/OrderHistory';
-import BudgetTracker from '../../components/student/BudgetTracker';
-import api from '../../services/api';
+import { roomRequestService } from '../../services/accommodationService';
 
 const StudentDashboard = () => {
-  const [searchParams] = useSearchParams();
   const navigate = useNavigate();
-  const [activeTab, setActiveTab] = useState('overview');
-  const [stats, setStats] = useState({
-    totalOrders: 0,
-    monthlySpent: 0,
-    favoriteRestaurants: 0,
-    currentOffers: 0
-  });
-  const [recentOrders, setRecentOrders] = useState([]);
-  const [loading, setLoading] = useState(false);
-
-  // Check URL params for active tab
-  useEffect(() => {
-    const tabParam = searchParams.get('tab');
-    if (tabParam && ['overview', 'favorites', 'orders', 'budget'].includes(tabParam)) {
-      setActiveTab(tabParam);
-    }
-  }, [searchParams]);
+  const [requests, setRequests] = useState([]);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    if (activeTab === 'overview') {
-      fetchStats();
-    }
-  }, [activeTab]);
-
-  const fetchStats = async () => {
-    try {
-      setLoading(true);
-      const [ordersRes, favoritesRes, offersRes, budgetRes] = await Promise.all([
-        api.get('/student/orders?limit=3'),
-        api.get('/student/favorites'),
-        api.get('/student/offers'),
-        api.get('/student/budget-tracker?monthlyBudget=500')
-      ]);
-      setStats({
-        totalOrders: ordersRes.data.pagination.totalOrders,
-        monthlySpent: budgetRes.data.budgetTracker.totalSpent,
-        favoriteRestaurants: favoritesRes.data.favorites.length,
-        currentOffers: offersRes.data.offers.length
-      });
-      setRecentOrders(ordersRes.data.orders);
-    } catch (error) {
-      console.error('Error fetching stats:', error);
-      setStats({ totalOrders: 0, monthlySpent: 0, favoriteRestaurants: 0, currentOffers: 0 });
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const getTimeBasedGreeting = () => {
-    const hour = new Date().getHours();
-    const name = 'Student';
-    if (hour < 11) return `Good Morning, ${name}! 🌅`;
-    if (hour < 16) return `Good Afternoon, ${name}! ☀️`;
-    if (hour < 21) return `Good Evening, ${name}! 🌆`;
-    return `Good Night, ${name}! 🌙`;
-  };
-
-  const getSuggestedCategory = () => {
-    const hour = new Date().getHours();
-    if (hour >= 6 && hour < 11) return 'breakfast';
-    if (hour >= 11 && hour < 16) return 'lunch';
-    if (hour >= 16 && hour < 21) return 'dinner';
-    return 'snack';
-  };
-
-  const getCurrentMealMessage = () => {
-    const category = getSuggestedCategory();
-    const messages = {
-      breakfast: 'Start your day right',
-      lunch: 'Fuel your afternoon',
-      dinner: 'Perfect dinner time',
-      snack: 'Late night cravings'
+    const fetchRequests = async () => {
+      try {
+        const response = await roomRequestService.getStudentRequests();
+        setRequests(response.data || []);
+      } catch (error) {
+        console.error('Failed to fetch requests:', error);
+      } finally {
+        setLoading(false);
+      }
     };
-    return messages[category];
+    fetchRequests();
+  }, []);
+
+  const getStatusIcon = (status) => {
+    if (status === 'ACCEPTED') return <CheckCircle className="h-5 w-5 text-green-500" />;
+    if (status === 'REJECTED') return <XCircle className="h-5 w-5 text-red-500" />;
+    return <Clock className="h-5 w-5 text-yellow-500" />;
   };
 
-  const tabs = [
-    { id: 'overview', label: 'Overview', icon: Calendar },
-    { id: 'favorites', label: 'My Favorites', icon: Heart },
-    { id: 'orders', label: 'Order History', icon: ShoppingBag },
-    { id: 'budget', label: 'Budget Tracker', icon: DollarSign }
-  ];
-
-  const renderTabContent = () => {
-    switch (activeTab) {
-      case 'overview':
-        return (
-          <div className="space-y-6">
-            {/* Greeting */}
-            <Card className="bg-gradient-to-r from-blue-500 to-purple-600 text-white">
-              <CardContent className="p-6">
-                <h2 className="text-2xl font-bold mb-2">{getTimeBasedGreeting()}</h2>
-                <p className="opacity-90">
-                  {getCurrentMealMessage()}! Explore delicious options from our campus restaurants - all serving breakfast, lunch, dinner, snacks &amp; drinks.
-                </p>
-              </CardContent>
-            </Card>
-
-            {/* Quick Stats */}
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-              <Card>
-                <CardContent className="p-6">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <p className="text-sm text-secondary dark:text-gray-400">Total Orders</p>
-                      <p className="text-2xl font-bold text-primary dark:text-gray-100">{stats.totalOrders}</p>
-                    </div>
-                    <div className="bg-blue-100 dark:bg-blue-900/30 p-3 rounded-lg">
-                      <ShoppingBag className="h-8 w-8 text-blue-600 dark:text-blue-400" />
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-              <Card>
-                <CardContent className="p-6">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <p className="text-sm text-secondary dark:text-gray-400">Monthly Spent</p>
-                      <p className="text-2xl font-bold text-primary dark:text-gray-100">LKR {stats.monthlySpent.toFixed(2)}</p>
-                    </div>
-                    <div className="bg-green-100 dark:bg-green-900/30 p-3 rounded-lg">
-                      <DollarSign className="h-8 w-8 text-green-600 dark:text-green-400" />
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-              <Card>
-                <CardContent className="p-6">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <p className="text-sm text-secondary dark:text-gray-400">Favorite Places</p>
-                      <p className="text-2xl font-bold text-primary dark:text-gray-100">{stats.favoriteRestaurants}</p>
-                    </div>
-                    <div className="bg-red-100 dark:bg-red-900/30 p-3 rounded-lg">
-                      <Heart className="h-8 w-8 text-red-600 dark:text-red-400" />
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-              <Card>
-                <CardContent className="p-6">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <p className="text-sm text-secondary dark:text-gray-400">Active Offers</p>
-                      <p className="text-2xl font-bold text-primary dark:text-gray-100">{stats.currentOffers}</p>
-                    </div>
-                    <div className="bg-orange-100 dark:bg-orange-900/30 p-3 rounded-lg">
-                      <Star className="h-8 w-8 text-orange-600 dark:text-orange-400" />
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            </div>
-
-            {/* Quick Actions */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-              <Card className="hover:shadow-soft-lg transition-shadow cursor-pointer" onClick={() => navigate('/restaurants')}>
-                <CardContent className="p-6">
-                  <div className="flex items-center mb-4">
-                    <div className="bg-blue-100 dark:bg-blue-900/30 p-3 rounded-lg">
-                      <Utensils className="h-8 w-8 text-blue-600 dark:text-blue-400" />
-                    </div>
-                    <h3 className="text-lg font-semibold text-primary dark:text-gray-100 ml-3">Find Food</h3>
-                  </div>
-                  <p className="text-secondary dark:text-gray-400 mb-4">Explore restaurants, view menus, and place orders</p>
-                  <Button className="w-full">Browse Restaurants</Button>
-                </CardContent>
-              </Card>
-              <Card className="hover:shadow-soft-lg transition-shadow cursor-pointer" onClick={() => navigate('/restaurants')}>
-                <CardContent className="p-6">
-                  <div className="flex items-center mb-4">
-                    <div className="bg-orange-100 dark:bg-orange-900/30 p-3 rounded-lg">
-                      <Star className="h-8 w-8 text-orange-600 dark:text-orange-400" />
-                    </div>
-                    <h3 className="text-lg font-semibold text-primary dark:text-gray-100 ml-3">Special Offers</h3>
-                  </div>
-                  <p className="text-secondary dark:text-gray-400 mb-4">Discover amazing deals and discounts from all restaurants</p>
-                  <Button className="w-full bg-orange-600 hover:bg-orange-700">View Offers</Button>
-                </CardContent>
-              </Card>
-              <Card className="hover:shadow-soft-lg transition-shadow cursor-pointer" onClick={() => setActiveTab('budget')}>
-                <CardContent className="p-6">
-                  <div className="flex items-center mb-4">
-                    <div className="bg-green-100 dark:bg-green-900/30 p-3 rounded-lg">
-                      <DollarSign className="h-8 w-8 text-green-600 dark:text-green-400" />
-                    </div>
-                    <h3 className="text-lg font-semibold text-primary dark:text-gray-100 ml-3">Budget Tracker</h3>
-                  </div>
-                  <p className="text-secondary dark:text-gray-400 mb-4">Track your monthly food spending and stay on budget</p>
-                  <Button className="w-full bg-green-600 hover:bg-green-700">Manage Budget</Button>
-                </CardContent>
-              </Card>
-            </div>
-
-            {/* Recent Orders */}
-            {recentOrders.length > 0 && (
-              <Card>
-                <CardHeader>
-                  <CardTitle>Recent Orders</CardTitle>
-                  <CardDescription>Your latest food orders</CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <div className="space-y-3">
-                    {recentOrders.map(order => (
-                      <div key={order._id} className="flex justify-between items-center p-3 bg-gray-50 dark:bg-gray-800 rounded-lg">
-                        <div>
-                          <p className="font-medium text-primary dark:text-gray-100">{order.restaurantId.shopName}</p>
-                          <p className="text-sm text-secondary dark:text-gray-400">
-                            {new Date(order.createdAt).toLocaleDateString()} • {order.status}
-                          </p>
-                        </div>
-                        <span className="font-semibold text-green-600 dark:text-green-400">
-                          LKR {order.totalAmount.toFixed(2)}
-                        </span>
-                      </div>
-                    ))}
-                  </div>
-                </CardContent>
-              </Card>
-            )}
-          </div>
-        );
-      case 'favorites':
-        return <FavoritesPage />;
-      case 'orders':
-        return <OrderHistory />;
-      case 'budget':
-        return <BudgetTracker />;
-      default:
-        return (
-          <div className="space-y-6">
-            <Card className="bg-gradient-to-r from-blue-500 to-purple-600 text-white">
-              <CardContent className="p-6">
-                <h2 className="text-2xl font-bold mb-2">{getTimeBasedGreeting()}</h2>
-              </CardContent>
-            </Card>
-          </div>
-        );
-    }
+  const getStatusBadge = (status) => {
+    if (status === 'ACCEPTED') return 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400';
+    if (status === 'REJECTED') return 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400';
+    return 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400';
   };
 
   return (
     <div className="min-h-screen bg-background dark:bg-background-dark py-8">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="mb-8">
-            <div className="mb-6">
-              <h1 className="text-3xl font-bold text-primary dark:text-gray-100">Student Dashboard</h1>
-              <p className="text-secondary dark:text-gray-400 mt-2">View your overview, manage favorites, budget and track your food orders</p>
-            </div>
+            <h1 className="text-3xl font-bold text-primary dark:text-gray-100">Student Dashboard</h1>
+            <p className="text-secondary dark:text-gray-400 mt-2">Explore services and opportunities</p>
         </div>
 
-        {/* Tab Navigation */}
-        <div className="mb-8">
-          <div className="border-b border-gray-200 dark:border-gray-700">
-            <nav className="-mb-px flex space-x-8 overflow-x-auto">
-              {tabs.map((tab) => {
-                const Icon = tab.icon;
-                return (
-                  <button
-                    key={tab.id}
-                    onClick={() => setActiveTab(tab.id)}
-                    className={`whitespace-nowrap py-2 px-1 border-b-2 font-medium text-sm flex items-center gap-2 relative ${
-                      activeTab === tab.id
-                        ? 'border-primary text-primary dark:text-primary-light'
-                        : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 dark:text-gray-400 dark:hover:text-gray-200'
-                    }`}
+        {/* Quick Actions */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+          <Card className="hover:shadow-soft-lg transition-shadow">
+            <CardContent className="p-6">
+              <div className="flex items-center mb-4">
+                <div className="bg-accent/20 p-3 rounded-lg">
+                  <BookOpen className="h-8 w-8 text-primary dark:text-accent" />
+                </div>
+                <h3 className="text-lg font-semibold text-primary dark:text-gray-100 ml-3">Education Programs</h3>
+              </div>
+              <p className="text-secondary dark:text-gray-400 mb-4">Discover courses and learning opportunities</p>
+              <Button className="w-full" onClick={() => navigate('/education-programs')}>
+                Browse Programs
+              </Button>
+            </CardContent>
+          </Card>
+          
+          <Card className="hover:shadow-soft-lg transition-shadow">
+            <CardContent className="p-6">
+              <div className="flex items-center mb-4">
+                <div className="bg-green-100 dark:bg-green-900/30 p-3 rounded-lg">
+                  <Home className="h-8 w-8 text-green-600 dark:text-green-400" />
+                </div>
+                <h3 className="text-lg font-semibold text-primary dark:text-gray-100 ml-3">Accommodation</h3>
+              </div>
+              <p className="text-secondary dark:text-gray-400 mb-4">Find student housing near campus</p>
+              <Button 
+                className="w-full bg-green-600 hover:bg-green-700 dark:bg-green-600 dark:hover:bg-green-700"
+                onClick={() => navigate('/accommodation')}
+              >
+                Find Housing
+              </Button>
+            </CardContent>
+          </Card>
+          
+          <Card className="hover:shadow-soft-lg transition-shadow">
+            <CardContent className="p-6">
+              <div className="flex items-center mb-4">
+                <div className="bg-accent/20 p-3 rounded-lg">
+                  <Store className="h-8 w-8 text-primary dark:text-accent" />
+                </div>
+                <h3 className="text-lg font-semibold text-primary dark:text-gray-100 ml-3">Campus Shops</h3>
+              </div>
+              <p className="text-secondary dark:text-gray-400 mb-4">Explore local businesses and services</p>
+              <Button className="w-full" onClick={() => navigate('/restaurants')}>
+                Browse Shops
+              </Button>
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* Recent Activity */}
+        <Card>
+          <CardHeader>
+            <CardTitle>Recent Activity</CardTitle>
+          </CardHeader>
+          <CardContent>
+            {loading ? (
+              <div className="flex justify-center py-6">
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+              </div>
+            ) : requests.length === 0 ? (
+              <p className="text-secondary dark:text-gray-400">Your recent activity and recommendations will appear here.</p>
+            ) : (
+              <div className="space-y-4">
+                {requests.slice(0, 5).map((request) => (
+                  <div
+                    key={request._id}
+                    className="flex items-start gap-4 p-4 rounded-lg border border-secondary/20 dark:border-gray-700 hover:bg-accent/5 transition-colors"
                   >
-                    <Icon className="h-4 w-4" />
-                    {tab.label}
-                    {tab.count > 0 && (
-                      <span className="bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center font-semibold">
-                        {tab.count > 99 ? '99+' : tab.count}
-                      </span>
-                    )}
-                  </button>
-                );
-              })}
-            </nav>
-          </div>
-        </div>
-
-        {/* Tab Content */}
-        {loading && activeTab === 'overview' ? (
-          <div className="flex items-center justify-center py-8">
-            <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-primary"></div>
-          </div>
-        ) : (
-          renderTabContent()
-        )}
+                    <div className="flex-shrink-0 mt-0.5">
+                      {getStatusIcon(request.status)}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center justify-between gap-2 flex-wrap">
+                        <p className="font-medium text-primary dark:text-gray-100 truncate">
+                          {request.room?.title || 'Room Inquiry'}
+                        </p>
+                        <span className={`text-xs font-semibold px-2 py-1 rounded-full ${getStatusBadge(request.status)}`}>
+                          {request.status}
+                        </span>
+                      </div>
+                      {request.room?.location?.area && (
+                        <div className="flex items-center text-sm text-secondary dark:text-gray-400 mt-1">
+                          <MapPin className="h-3 w-3 mr-1 flex-shrink-0" />
+                          {request.room.location.area}
+                        </div>
+                      )}
+                      {request.status === 'ACCEPTED' && request.ownerResponse?.responseMessage && (
+                        <p className="text-sm text-green-600 dark:text-green-400 mt-1">
+                          Owner: "{request.ownerResponse.responseMessage}"
+                        </p>
+                      )}
+                      {request.status === 'ACCEPTED' && request.ownerResponse?.availableVisitingTimes && (
+                        <p className="text-sm text-green-600 dark:text-green-400 mt-1">
+                          Visiting times: {request.ownerResponse.availableVisitingTimes}
+                        </p>
+                      )}
+                      {request.status === 'ACCEPTED' && request.ownerResponse?.preferredContactMethod && (
+                        <p className="text-sm text-green-600 dark:text-green-400 mt-1">
+                          Contact via: {request.ownerResponse.preferredContactMethod}
+                        </p>
+                      )}
+                      <p className="text-xs text-secondary dark:text-gray-500 mt-1">
+                        {new Date(request.createdAt).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' })}
+                      </p>
+                    </div>
+                  </div>
+                ))}
+                {requests.length > 5 && (
+                  <p className="text-sm text-secondary dark:text-gray-400 text-center pt-2">
+                    And {requests.length - 5} more inquiry{requests.length - 5 > 1 ? 's' : ''}...
+                  </p>
+                )}
+              </div>
+            )}
+          </CardContent>
+        </Card>
       </div>
     </div>
   );

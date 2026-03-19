@@ -1,7 +1,6 @@
 import React, { useState } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
-import { useCart } from '../../contexts/CartContext';
 import Button from '../ui/Button';
 import ThemeToggle from '../ui/ThemeToggle';
 import { 
@@ -16,16 +15,13 @@ import {
   Info,
   ChevronDown,
   UtensilsCrossed,
-  Building2,
-  MessageSquare,
-  ShoppingCart
+  Building2
 } from 'lucide-react';
 
 const Header = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
   const { isAuthenticated, user, logout } = useAuth();
-  const { getCartCount } = useCart();
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -94,125 +90,84 @@ const Header = () => {
             </Link>
           </div>
 
-          {/* Desktop Navigation - Show for non-authenticated users and students */}
-          {(!isAuthenticated || (isAuthenticated && user?.role === 'student')) && (
-            <nav className="hidden md:flex items-center space-x-8">
-              {publicNavItems.map((item) => (
-                <Link
-                  key={item.name}
-                  to={item.href}
-                  className="flex items-center space-x-1 text-gray-700 dark:text-gray-300 hover:text-primary dark:hover:text-accent transition-colors duration-200 font-medium"
-                >
-                  <item.icon className="h-4 w-4" />
-                  <span>{item.name}</span>
-                </Link>
-              ))}
-            </nav>
-          )}
+          {/* Desktop Navigation */}
+          <nav className="hidden md:flex items-center space-x-8">
+            {publicNavItems.map((item) => (
+              <Link
+                key={item.name}
+                to={item.href}
+                className="flex items-center space-x-1 text-gray-700 dark:text-gray-300 hover:text-primary dark:hover:text-accent transition-colors duration-200 font-medium"
+              >
+                <item.icon className="h-4 w-4" />
+                <span>{item.name}</span>
+              </Link>
+            ))}
+          </nav>
 
           {/* Auth Buttons / User Menu */}
-          <div className="hidden md:flex items-center space-x-3">
+          <div className="hidden md:flex items-center space-x-4">
+            <ThemeToggle />
             {isAuthenticated ? (
-              <div className="flex items-center space-x-3">
-                <ThemeToggle />
-                
-                {/* Cart Icon for Students */}
-                {user?.role === 'student' && (
-                  <Link
-                    to="/student/cart"
-                    className="relative flex items-center justify-center text-gray-700 dark:text-gray-300 hover:text-primary dark:hover:text-accent transition-all duration-200 p-2 rounded-lg hover:bg-primary/10 dark:hover:bg-primary/20 group"
-                    title="Shopping Cart"
-                  >
-                    <ShoppingCart className="h-5 w-5 group-hover:scale-110 transition-transform" />
-                    {getCartCount() > 0 && (
-                      <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center font-bold shadow-md">
-                        {getCartCount() > 99 ? '99+' : getCartCount()}
-                      </span>
-                    )}
-                  </Link>
-                )}
-
-                {/* User Profile Dropdown */}
+              <div className="flex items-center">
+                {/* User Info Dropdown */}
                 <div className="relative">
                   <button
                     onClick={() => setIsUserMenuOpen(!isUserMenuOpen)}
-                    className="flex items-center space-x-2 text-primary dark:text-gray-200 hover:text-primary-hover dark:hover:text-accent focus:outline-none px-3 py-2 rounded-lg hover:bg-primary/10 dark:hover:bg-primary/20 transition-all duration-200"
+                    className="flex items-center space-x-2 text-primary dark:text-gray-200 hover:text-primary-hover dark:hover:text-accent focus:outline-none p-2 rounded-lg hover:bg-primary/10 dark:hover:bg-primary/20 transition-colors duration-200"
                   >
-                    <div className="bg-gradient-to-br from-primary to-primary/80 p-1.5 rounded-full shadow-sm">
-                      <User className="h-4 w-4 text-white" />
+                    <div className="bg-accent/20 p-2 rounded-full">
+                      <User className="h-5 w-5 text-primary dark:text-accent" />
                     </div>
                     <div className="text-left">
-                      <div className="font-semibold text-sm">{user?.fullName}</div>
+                      <div className="font-medium">{user?.fullName}</div>
                       <div className="text-xs text-secondary dark:text-gray-400 capitalize">
                         {user?.role?.replace('-', ' ')}
                       </div>
                     </div>
-                    <ChevronDown className={`h-3 w-3 transition-transform duration-200 ${isUserMenuOpen ? 'rotate-180' : ''}`} />
+                    <ChevronDown className={`h-4 w-4 transition-transform duration-200 ${isUserMenuOpen ? 'rotate-180' : ''}`} />
                   </button>
 
                   {/* User Dropdown Menu */}
                   {isUserMenuOpen && (
-                    <div className="absolute right-0 mt-2 w-56 bg-white dark:bg-gray-800 rounded-xl shadow-xl py-2 border border-gray-200 dark:border-gray-700 z-50">
-                      {/* User Info Header */}
-                      <div className="px-4 py-3 border-b border-gray-100 dark:border-gray-700">
-                        <div className="flex items-center space-x-3">
-                          <div className="bg-gradient-to-br from-primary to-primary/80 p-2 rounded-full">
-                            <User className="h-4 w-4 text-white" />
-                          </div>
-                          <div>
-                            <div className="font-semibold text-gray-900 dark:text-gray-100">{user?.fullName}</div>
-                            <div className="text-sm text-gray-600 dark:text-gray-400 capitalize">
-                              {user?.role?.replace('-', ' ')}
-                            </div>
-                          </div>
+                    <div className="absolute right-0 mt-2 w-56 bg-surface dark:bg-surface-dark rounded-xl shadow-soft-lg py-2 border border-secondary/20 dark:border-secondary/10 z-50">
+                      <div className="px-4 py-2 border-b border-secondary/20 dark:border-secondary/10">
+                        <div className="font-medium text-primary dark:text-gray-100">{user?.fullName}</div>
+                        <div className="text-sm text-secondary dark:text-gray-400 capitalize">
+                          {user?.role?.replace('-', ' ')}
                         </div>
                       </div>
-
-                      {/* Menu Items */}
-                      <div className="py-1">
-                        <Link
-                          to={getDashboardLink()}
-                          className="flex items-center px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
-                          onClick={() => setIsUserMenuOpen(false)}
-                        >
-                          <Settings className="h-4 w-4 mr-3 text-gray-500" />
-                          Dashboard
-                        </Link>
-                        <Link
-                          to="/ai-chat"
-                          className="flex items-center px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
-                          onClick={() => setIsUserMenuOpen(false)}
-                        >
-                          <MessageSquare className="h-4 w-4 mr-3 text-gray-500" />
-                          AI Assistant
-                        </Link>
-                        <hr className="my-1 border-gray-200 dark:border-gray-700" />
-                        <button
-                          onClick={() => {
-                            handleLogout();
-                            setIsUserMenuOpen(false);
-                          }}
-                          className="flex items-center w-full px-4 py-2 text-sm text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors"
-                        >
-                          <LogOut className="h-4 w-4 mr-3" />
-                          Logout
-                        </button>
-                      </div>
+                      <Link
+                        to={getDashboardLink()}
+                        className="flex items-center px-4 py-3 text-sm text-secondary dark:text-gray-300 hover:bg-accent/10 hover:text-primary dark:hover:text-accent transition-colors duration-200"
+                        onClick={() => setIsUserMenuOpen(false)}
+                      >
+                        <Settings className="h-4 w-4 mr-3 text-primary dark:text-accent" />
+                        Dashboard
+                      </Link>
+                      <button
+                        onClick={() => {
+                          handleLogout();
+                          setIsUserMenuOpen(false);
+                        }}
+                        className="flex items-center w-full px-4 py-3 text-sm text-secondary dark:text-gray-300 hover:bg-red-50 dark:hover:bg-red-900/20 hover:text-red-700 dark:hover:text-red-400 transition-colors duration-200"
+                      >
+                        <LogOut className="h-4 w-4 mr-3 text-red-600" />
+                        Logout
+                      </button>
                     </div>
                   )}
                 </div>
               </div>
             ) : (
-              <div className="flex items-center space-x-3">
-                <ThemeToggle />
+              <div className="flex items-center space-x-4">
                 <Link
                   to="/login"
-                  className="text-gray-700 dark:text-gray-300 hover:text-primary dark:hover:text-accent font-medium transition-colors duration-200 px-3 py-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800"
+                  className="text-gray-700 dark:text-gray-300 hover:text-primary dark:hover:text-accent font-semibold transition-colors duration-200"
                 >
                   Login
                 </Link>
                 <Link to="/register">
-                  <Button className="px-4 py-2 text-sm">
+                  <Button>
                     Register
                   </Button>
                 </Link>
@@ -222,25 +177,10 @@ const Header = () => {
 
           {/* Mobile menu button */}
           <div className="md:hidden flex items-center space-x-2">
-            {/* Cart Icon for Students on Mobile */}
-            {isAuthenticated && user?.role === 'student' && (
-              <Link
-                to="/student/cart"
-                className="relative flex items-center justify-center text-gray-700 dark:text-gray-300 hover:text-primary dark:hover:text-accent transition-all duration-200 p-2 rounded-lg hover:bg-primary/10"
-                title="Shopping Cart"
-              >
-                <ShoppingCart className="h-5 w-5" />
-                {getCartCount() > 0 && (
-                  <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full h-4 w-4 flex items-center justify-center font-bold">
-                    {getCartCount() > 9 ? '9+' : getCartCount()}
-                  </span>
-                )}
-              </Link>
-            )}
             <ThemeToggle />
             <button
               onClick={() => setIsMenuOpen(!isMenuOpen)}
-              className="text-secondary dark:text-gray-300 hover:text-primary dark:hover:text-accent focus:outline-none transition-colors duration-200 p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800"
+              className="text-secondary dark:text-gray-300 hover:text-primary dark:hover:text-accent focus:outline-none transition-colors duration-200"
             >
               {isMenuOpen ? (
                 <X className="h-6 w-6" />
@@ -255,89 +195,58 @@ const Header = () => {
         {isMenuOpen && (
           <div className="md:hidden border-t border-secondary/20 dark:border-secondary/10 py-4">
             <div className="flex flex-col space-y-3">
-              {(!isAuthenticated || (isAuthenticated && user?.role === 'student')) && (
-                <>
-                  {publicNavItems.map((item) => (
-                    <Link
-                      key={item.name}
-                      to={item.href}
-                      className="flex items-center space-x-2 text-gray-700 dark:text-gray-300 hover:text-primary dark:hover:text-accent px-2 py-2 rounded-md transition-colors duration-200 font-medium"
-                      onClick={() => setIsMenuOpen(false)}
-                    >
-                      <item.icon className="h-4 w-4" />
-                      <span>{item.name}</span>
-                    </Link>
-                  ))}
-                  {/* Cart Link for Students in Mobile */}
-                  {isAuthenticated && user?.role === 'student' && (
-                    <Link
-                      to="/student/cart"
-                      className="flex items-center justify-between bg-primary/5 dark:bg-primary/10 text-primary dark:text-accent px-3 py-2 rounded-lg transition-colors hover:bg-primary/10 dark:hover:bg-primary/20"
-                      onClick={() => setIsMenuOpen(false)}
-                    >
-                      <div className="flex items-center space-x-2">
-                        <ShoppingCart className="h-4 w-4" />
-                        <span className="font-medium">Cart</span>
-                      </div>
-                      {getCartCount() > 0 && (
-                        <span className="bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center font-bold">
-                          {getCartCount() > 9 ? '9+' : getCartCount()}
-                        </span>
-                      )}
-                    </Link>
-                  )}
-                </>
-              )}
+              {/* Navigation Items */}
+              {publicNavItems.map((item) => (
+                <Link
+                  key={item.name}
+                  to={item.href}
+                  className="flex items-center space-x-2 text-gray-700 dark:text-gray-300 hover:text-primary dark:hover:text-accent px-2 py-2 rounded-md transition-colors duration-200 font-medium"
+                  onClick={() => setIsMenuOpen(false)}
+                >
+                  <item.icon className="h-4 w-4" />
+                  <span>{item.name}</span>
+                </Link>
+              ))}
               
+              {/* User Section */}
               {isAuthenticated ? (
                 <div className="border-t border-secondary/20 dark:border-secondary/10 pt-3 mt-3">
-                  {/* Student Profile Info */}
-                  <div className="bg-primary/5 dark:bg-primary/10 rounded-lg p-3 mb-3">
-                    <div className="flex items-center space-x-3">
-                      <div className="bg-gradient-to-br from-primary to-primary/80 p-2 rounded-full">
-                        <User className="h-4 w-4 text-white" />
-                      </div>
-                      <div className="flex-1">
-                        <div className="font-semibold text-primary dark:text-gray-100">{user?.fullName}</div>
-                        <div className="text-sm text-gray-600 dark:text-gray-400 capitalize">
-                          {user?.role?.replace('-', ' ')}
-                        </div>
+                  <div className="flex items-center space-x-2 px-2 py-2 mb-3">
+                    <div className="bg-accent/20 p-2 rounded-full">
+                      <User className="h-5 w-5 text-primary dark:text-accent" />
+                    </div>
+                    <div>
+                      <div className="font-medium text-primary dark:text-gray-100">{user?.fullName}</div>
+                      <div className="text-sm text-secondary dark:text-gray-400 capitalize">
+                        {user?.role?.replace('-', ' ')}
                       </div>
                     </div>
                   </div>
                   
                   {/* Quick Access Buttons for Mobile */}
-                  <div className="space-y-2">
+                  <div className="grid grid-cols-2 gap-2 mb-3 px-2">
                     <Link
                       to={getDashboardLink()}
-                      className="flex items-center space-x-3 text-gray-700 dark:text-gray-300 hover:text-primary dark:hover:text-accent px-3 py-2 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
+                      className="flex items-center justify-center space-x-1 bg-accent/20 text-primary dark:text-accent py-2 rounded-md hover:bg-accent/30 transition-colors duration-200"
                       onClick={() => setIsMenuOpen(false)}
                     >
                       <Settings className="h-4 w-4" />
-                      <span className="font-medium">Dashboard</span>
-                    </Link>
-                    <Link
-                      to="/ai-chat"
-                      className="flex items-center space-x-3 text-gray-700 dark:text-gray-300 hover:text-primary dark:hover:text-accent px-3 py-2 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
-                      onClick={() => setIsMenuOpen(false)}
-                    >
-                      <MessageSquare className="h-4 w-4" />
-                      <span className="font-medium">AI Assistant</span>
+                      <span className="text-sm font-medium">Dashboard</span>
                     </Link>
                     <button
                       onClick={handleLogout}
-                      className="flex items-center space-x-3 text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 px-3 py-2 rounded-lg transition-colors w-full"
+                      className="flex items-center justify-center space-x-1 bg-red-100 dark:bg-red-900/20 text-red-700 dark:text-red-400 py-2 rounded-md hover:bg-red-200 dark:hover:bg-red-900/30 transition-colors duration-200"
                     >
                       <LogOut className="h-4 w-4" />
-                      <span className="font-medium">Logout</span>
+                      <span className="text-sm font-medium">Logout</span>
                     </button>
                   </div>
                 </div>
               ) : (
-                <div className="border-t border-secondary/20 dark:border-secondary/10 pt-3 mt-3 space-y-2">
+                <div className="border-t border-secondary/20 dark:border-secondary/10 pt-3 mt-3 flex flex-col space-y-2">
                   <Link
                     to="/login"
-                    className="flex items-center justify-center text-gray-700 dark:text-gray-300 hover:text-primary dark:hover:text-accent px-3 py-2 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors font-medium"
+                    className="text-gray-700 dark:text-gray-300 hover:text-primary dark:hover:text-accent px-2 py-2 rounded-md transition-colors duration-200 font-semibold"
                     onClick={() => setIsMenuOpen(false)}
                   >
                     Login
@@ -345,9 +254,8 @@ const Header = () => {
                   <Link
                     to="/register"
                     onClick={() => setIsMenuOpen(false)}
-                    className="block"
                   >
-                    <Button className="w-full justify-center">
+                    <Button className="w-full text-center">
                       Register
                     </Button>
                   </Link>
