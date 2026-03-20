@@ -55,45 +55,42 @@ const MAT_CFG = {
 const EducationProgramsPage = () => {
   const { user } = useAuth();
   const isStudent = user?.role === 'student';
+  const userId = user?._id || user?.id || null;
   const [mode, setMode] = useState('normal');
   const isExamMode = mode === 'exam';
-  const [currentUserId, setCurrentUserId] = useState(null);
 
   // Exam setup modal
-  const storageKey = user?._id ? `examModules_${user._id}` : 'examModules';
+  const storageKey = userId ? `examModules_${userId}` : null;
   const [showExamSetup, setShowExamSetup] = useState(false);
   const [examModules, setExamModules]     = useState([{ ...EMPTY_MODULE }, { ...EMPTY_MODULE }]);
   const [examModules_saved, setExamModules_saved] = useState([]);
+  const hasSavedExamModules = examModules_saved.some((r) => r.module?.trim() || r.date);
 
-  // Comprehensive effect to handle user changes and load correct exam data
+  // Load exam data for the currently logged-in user only
   useEffect(() => {
-    if (!user?._id) {
-      setCurrentUserId(null);
+    if (!storageKey) {
       setExamModules_saved([]);
+      setShowExamSetup(false);
       setMode('normal');
       return;
     }
 
-    // Only update if user has changed
-    if (currentUserId !== user._id) {
-      setCurrentUserId(user._id);
-      try {
-        const key = `examModules_${user._id}`;
-        const stored = localStorage.getItem(key);
-        const examData = stored ? JSON.parse(stored) : [];
-        setExamModules_saved(examData);
-        setMode('normal'); // Reset to normal mode when user changes
-      } catch {
-        setExamModules_saved([]);
-        setMode('normal');
-      }
+    try {
+      const stored = localStorage.getItem(storageKey);
+      const examData = stored ? JSON.parse(stored) : [];
+      setExamModules_saved(Array.isArray(examData) ? examData : []);
+    } catch {
+      setExamModules_saved([]);
     }
-  }, [user?._id, currentUserId]);
+
+    setShowExamSetup(false);
+    setMode('normal');
+  }, [storageKey]);
 
   const openExamSetup = () => {
     // Pre-fill with saved modules when editing; start fresh on first use
     setExamModules(
-      examModules_saved.length > 0
+      hasSavedExamModules
         ? examModules_saved.map((r) => ({ ...r }))
         : [{ ...EMPTY_MODULE }, { ...EMPTY_MODULE }]
     );
@@ -121,7 +118,11 @@ const EducationProgramsPage = () => {
       return;
     }
     setExamModules_saved(filled);
-    try { localStorage.setItem(storageKey, JSON.stringify(filled)); } catch {}
+    try {
+      if (storageKey) {
+        localStorage.setItem(storageKey, JSON.stringify(filled));
+      }
+    } catch {}
     setShowExamSetup(false);
     setMode('exam');
     toast.success('Exam mode activated!');
@@ -221,12 +222,12 @@ const EducationProgramsPage = () => {
 
   return (
     <>
-    <div className="min-h-screen bg-background dark:bg-background-dark py-8">
+    <div className={`min-h-screen py-8 ${isExamMode ? 'bg-rose-50 dark:bg-red-900/20' : 'bg-background dark:bg-background-dark'}`}>
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Top bar — mode toggle + request button for students */}
         <div className="flex items-center justify-between mb-6">
           {/* Mode toggle */}
-          <div className="flex items-center gap-1 p-1 bg-gray-100 dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 shadow-sm">
+          <div className={`flex items-center gap-1 p-1 rounded-xl border shadow-sm ${isExamMode ? 'bg-red-100 dark:bg-red-950/40 border-red-300 dark:border-red-800' : 'bg-gray-100 dark:bg-gray-800 border-gray-200 dark:border-gray-700'}`}>
             <button
               onClick={() => setMode('normal')}
               className={`inline-flex items-center gap-1.5 px-4 py-1.5 rounded-lg text-sm font-semibold transition-all duration-200 ${
@@ -239,10 +240,10 @@ const EducationProgramsPage = () => {
               Normal Mode
             </button>
             <button
-              onClick={() => isExamMode ? null : (examModules_saved.length > 0 ? setMode('exam') : openExamSetup())}
+              onClick={() => isExamMode ? null : (hasSavedExamModules ? setMode('exam') : openExamSetup())}
               className={`inline-flex items-center gap-1.5 px-4 py-1.5 rounded-lg text-sm font-semibold transition-all duration-200 ${
                 isExamMode
-                  ? 'bg-white dark:bg-[#1E2233] text-purple-600 dark:text-purple-400 shadow-sm border border-gray-200 dark:border-gray-600'
+                  ? 'bg-red-50 dark:bg-red-900/20 text-gray-900 dark:text-gray-100 shadow-sm border border-red-400 dark:border-red-700'
                   : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200'
               }`}
             >
@@ -255,7 +256,7 @@ const EducationProgramsPage = () => {
           {isStudent && (
             <button
               onClick={() => setShowModal(true)}
-              className="inline-flex items-center gap-2 bg-accent hover:bg-accent/90 text-white font-semibold px-5 py-1.5 rounded-xl shadow-md transition-all duration-200 hover:shadow-lg hover:-translate-y-0.5"
+              className="inline-flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white font-semibold px-5 py-1.5 rounded-xl shadow-md transition-all duration-200 hover:shadow-lg hover:-translate-y-0.5"
             >
               <Plus className="h-4 w-4" />
               Request Study Material
@@ -264,22 +265,22 @@ const EducationProgramsPage = () => {
         </div>
 
         {/* ── Exam Schedule Banner (shown in exam mode) ────────────── */}
-        {isExamMode && examModules_saved.length > 0 && (
-          <div className="mb-6 rounded-2xl border border-purple-200 dark:border-purple-700 bg-purple-50 dark:bg-purple-900/20 px-5 py-5">
+        {isExamMode && hasSavedExamModules && (
+          <div className="mb-6 rounded-2xl border border-red-400 dark:border-red-700 bg-white dark:bg-gray-800 px-5 py-5">
             {/* header row */}
             <div className="flex items-center justify-between mb-4">
               <div className="flex items-center gap-2.5">
-                <div className="bg-purple-100 dark:bg-purple-900/40 p-2 rounded-lg">
-                  <GraduationCap className="h-5 w-5 text-purple-600 dark:text-purple-400" />
+                <div className="bg-red-100 dark:bg-red-900/40 p-2 rounded-lg">
+                  <GraduationCap className="h-5 w-5 text-gray-900 dark:text-gray-100" />
                 </div>
                 <div>
-                  <p className="text-sm font-bold text-purple-700 dark:text-purple-300">Exam Schedule</p>
-                  <p className="text-xs text-purple-500 dark:text-purple-400">{examModules_saved.length} module{examModules_saved.length > 1 ? 's' : ''} scheduled</p>
+                  <p className="text-sm font-bold text-gray-900 dark:text-gray-100">Exam Schedule</p>
+                  <p className="text-xs text-gray-700 dark:text-gray-300">{examModules_saved.length} module{examModules_saved.length > 1 ? 's' : ''} scheduled</p>
                 </div>
               </div>
               <button
                 onClick={openExamSetup}
-                className="text-xs text-purple-600 dark:text-purple-400 hover:underline font-medium whitespace-nowrap"
+                className="text-xs text-gray-900 dark:text-gray-100 hover:underline font-medium whitespace-nowrap"
               >
                 Edit schedule
               </button>
@@ -287,13 +288,13 @@ const EducationProgramsPage = () => {
             {/* module cards grid */}
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
               {examModules_saved.filter(r => r.module.trim()).map((r, i) => (
-                <div key={i} className="bg-white dark:bg-gray-800 border border-purple-200 dark:border-purple-700 rounded-xl px-4 py-3 flex flex-col gap-1.5">
+                <div key={i} className="bg-white dark:bg-gray-800 border border-red-400 dark:border-red-700 rounded-xl px-4 py-3 flex flex-col gap-1.5">
                   <div className="flex items-center gap-2">
-                    <span className="text-[10px] font-bold text-purple-400 dark:text-purple-500 uppercase tracking-wide">Module {i + 1}</span>
+                    <span className="text-[10px] font-bold text-gray-900 dark:text-gray-100 uppercase tracking-wide">Module {i + 1}</span>
                   </div>
                   <p className="font-semibold text-primary dark:text-gray-100 text-sm leading-snug">{r.module}</p>
                   {r.date ? (
-                    <span className="inline-flex items-center gap-1.5 text-xs text-purple-600 dark:text-purple-400 font-medium">
+                    <span className="inline-flex items-center gap-1.5 text-xs text-gray-800 dark:text-gray-200 font-medium">
                       <CalendarDays className="h-3.5 w-3.5 flex-shrink-0" />
                       {new Date(r.date).toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric', year: 'numeric' })}
                     </span>
@@ -310,15 +311,15 @@ const EducationProgramsPage = () => {
         <div className="mt-14">
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
             <div>
-              <h2 className="text-2xl font-bold text-primary dark:text-gray-100">
+              <h2 className={`text-2xl font-bold ${isExamMode ? 'text-gray-900 dark:text-gray-100' : 'text-primary dark:text-gray-100'}`}>
                 {isExamMode ? 'Important Study Materials' : 'Study Materials'}
                 {isExamMode && (
-                  <span className="ml-2 text-sm font-semibold text-yellow-600 dark:text-yellow-400 bg-yellow-100 dark:bg-yellow-900/30 px-2.5 py-0.5 rounded-full align-middle">
+                  <span className="ml-2 text-sm font-semibold text-gray-900 dark:text-gray-100 bg-red-100 dark:bg-red-900/40 px-2.5 py-0.5 rounded-full align-middle border border-red-200 dark:border-red-700">
                     Exam Mode
                   </span>
                 )}
               </h2>
-              <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
+              <p className={`text-sm mt-1 ${isExamMode ? 'text-gray-800 dark:text-gray-200' : 'text-gray-500 dark:text-gray-400'}`}>
                 {isExamMode
                   ? 'Only materials marked as important by your education provider are shown'
                   : 'Resources uploaded by education providers'}
@@ -333,7 +334,7 @@ const EducationProgramsPage = () => {
                   className={`px-3 py-1.5 rounded-full text-xs font-semibold border transition-all ${
                     selectedMatType === value
                       ? 'bg-accent text-white border-accent shadow-sm'
-                      : 'bg-white dark:bg-gray-800 text-gray-600 dark:text-gray-400 border-gray-200 dark:border-gray-600 hover:border-accent/60'
+                      : `${isExamMode ? 'bg-white dark:bg-gray-800 text-gray-800 dark:text-gray-200 border-red-200 dark:border-red-700 hover:border-red-400' : 'bg-white dark:bg-gray-800 text-gray-600 dark:text-gray-400 border-gray-200 dark:border-gray-600 hover:border-accent/60'}`
                   }`}
                 >
                   {label}
@@ -354,8 +355,8 @@ const EducationProgramsPage = () => {
               {isExamMode ? (
                 <>
                   <Star className="h-12 w-12 text-yellow-300 dark:text-yellow-700 mx-auto mb-3" />
-                  <p className="text-secondary dark:text-gray-400 font-medium">No important materials yet</p>
-                  <p className="text-sm text-gray-400 dark:text-gray-500 mt-1">Your education provider hasn't marked any materials as important.</p>
+                  <p className="text-gray-900 dark:text-gray-100 font-medium">No important materials yet</p>
+                  <p className="text-sm text-gray-700 dark:text-gray-300 mt-1">Your education provider hasn't marked any materials as important.</p>
                 </>
               ) : (
                 <>
@@ -391,7 +392,7 @@ const EducationProgramsPage = () => {
                           {cfg.label}
                         </span>
                         {mat.isImportant && (
-                          <span className="inline-flex items-center gap-0.5 px-2 py-0.5 rounded-full bg-yellow-100 dark:bg-yellow-900/30 text-yellow-700 dark:text-yellow-400 text-[10px] font-bold">
+                          <span className="inline-flex items-center gap-0.5 px-2 py-0.5 rounded-full text-[10px] font-bold bg-yellow-100 dark:bg-yellow-900/30 text-yellow-700 dark:text-yellow-400">
                             <Star className="h-2.5 w-2.5 fill-yellow-500 text-yellow-500" /> Important
                           </span>
                         )}
@@ -400,24 +401,24 @@ const EducationProgramsPage = () => {
 
                     {/* description */}
                     {mat.description && (
-                      <p className="text-xs text-gray-500 dark:text-gray-400 line-clamp-2">{mat.description}</p>
+                      <p className={`text-xs line-clamp-2 ${isExamMode ? 'text-gray-800 dark:text-gray-200' : 'text-gray-500 dark:text-gray-400'}`}>{mat.description}</p>
                     )}
 
                     {/* provider name */}
                     {(mat.uploadedBy?.organizationName || mat.uploadedBy?.fullName) && (
-                      <p className="text-[11px] text-gray-400 dark:text-gray-500">By {mat.uploadedBy.organizationName || mat.uploadedBy.fullName}</p>
+                      <p className={`text-[11px] ${isExamMode ? 'text-gray-700 dark:text-gray-300' : 'text-gray-400 dark:text-gray-500'}`}>By {mat.uploadedBy.organizationName || mat.uploadedBy.fullName}</p>
                     )}
 
                     {/* course tag */}
                     {mat.course && (
-                      <span className="inline-flex w-fit items-center gap-1 px-2.5 py-1 bg-accent/10 dark:bg-accent/5 text-accent text-xs font-medium rounded-full">
+                      <span className="inline-flex w-fit items-center gap-1 px-2.5 py-1 text-xs font-medium rounded-full bg-accent/10 dark:bg-accent/5 text-accent">
                         <BookOpen className="h-3 w-3" />{mat.course}
                       </span>
                     )}
 
                     {/* file info */}
                     {mat.fileSize && (
-                      <p className="text-[11px] text-gray-400 dark:text-gray-500">
+                      <p className={`text-[11px] ${isExamMode ? 'text-gray-700 dark:text-gray-300' : 'text-gray-400 dark:text-gray-500'}`}>
                         {(mat.fileSize / (1024 * 1024)).toFixed(2)} MB
                       </p>
                     )}
@@ -429,7 +430,7 @@ const EducationProgramsPage = () => {
                           href={mat.linkUrl}
                           target="_blank"
                           rel="noopener noreferrer"
-                          className="inline-flex items-center justify-center gap-2 w-full px-4 py-2 rounded-lg bg-accent/10 hover:bg-accent/20 text-accent font-semibold text-sm transition-colors"
+                          className="inline-flex items-center justify-center gap-2 w-full px-4 py-2 rounded-lg font-semibold text-sm transition-colors bg-accent/10 hover:bg-accent/20 text-accent"
                         >
                           <ExternalLink className="h-4 w-4" />
                           Open {cfg.label}
@@ -440,7 +441,7 @@ const EducationProgramsPage = () => {
                           target="_blank"
                           rel="noopener noreferrer"
                           download
-                          className="inline-flex items-center justify-center gap-2 w-full px-4 py-2 rounded-lg bg-accent/10 hover:bg-accent/20 text-accent font-semibold text-sm transition-colors"
+                          className="inline-flex items-center justify-center gap-2 w-full px-4 py-2 rounded-lg font-semibold text-sm transition-colors bg-blue-600 hover:bg-blue-700 text-white"
                         >
                           <Download className="h-4 w-4" />
                           Download
@@ -456,12 +457,12 @@ const EducationProgramsPage = () => {
 
         {/* ── My Study Material Requests (students only) ─────────────── */}
         {isStudent && (
-          <Card className="mt-12">
+          <Card className={`mt-12 ${isExamMode ? 'border-red-200 dark:border-red-700' : ''}`}>
             <CardHeader>
               <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
                 <div className="flex items-center gap-2.5">
                   <Inbox className="h-5 w-5 text-accent" />
-                  <CardTitle>My Study Material Requests</CardTitle>
+                  <CardTitle className={isExamMode ? 'text-gray-900 dark:text-gray-100' : ''}>My Study Material Requests</CardTitle>
                 </div>
                 <div className="flex items-center gap-2 flex-wrap">
                   <span className="inline-flex items-center gap-1.5 px-3 py-1 bg-yellow-50 dark:bg-yellow-900/20 text-yellow-700 dark:text-yellow-400 border border-yellow-200 dark:border-yellow-700 text-xs font-medium rounded-full">
@@ -483,7 +484,7 @@ const EducationProgramsPage = () => {
               ) : requests.length === 0 ? (
                 <div className="text-center py-12">
                   <FileText className="h-12 w-12 text-gray-300 dark:text-gray-600 mx-auto mb-3" />
-                  <p className="text-secondary dark:text-gray-400 text-sm">
+                  <p className={`text-sm ${isExamMode ? 'text-gray-900 dark:text-gray-100' : 'text-secondary dark:text-gray-400'}`}>
                     No requests yet. Click <strong>Request Study Material</strong> above to get started.
                   </p>
                 </div>
@@ -492,11 +493,11 @@ const EducationProgramsPage = () => {
                   <table className="w-full text-sm min-w-[560px]">
                     <thead>
                       <tr className="border-b border-gray-200 dark:border-gray-700">
-                        <th className="text-left py-3 px-4 text-xs font-semibold text-secondary dark:text-gray-400 uppercase tracking-wide">Title</th>
-                        <th className="text-left py-3 px-4 text-xs font-semibold text-secondary dark:text-gray-400 uppercase tracking-wide">Type</th>
-                        <th className="text-left py-3 px-4 text-xs font-semibold text-secondary dark:text-gray-400 uppercase tracking-wide">Course</th>
-                        <th className="text-left py-3 px-4 text-xs font-semibold text-secondary dark:text-gray-400 uppercase tracking-wide">Status</th>
-                        <th className="text-left py-3 px-4 text-xs font-semibold text-secondary dark:text-gray-400 uppercase tracking-wide">Date</th>
+                        <th className={`text-left py-3 px-4 text-xs font-semibold uppercase tracking-wide ${isExamMode ? 'text-gray-900 dark:text-gray-100' : 'text-secondary dark:text-gray-400'}`}>Title</th>
+                        <th className={`text-left py-3 px-4 text-xs font-semibold uppercase tracking-wide ${isExamMode ? 'text-gray-900 dark:text-gray-100' : 'text-secondary dark:text-gray-400'}`}>Type</th>
+                        <th className={`text-left py-3 px-4 text-xs font-semibold uppercase tracking-wide ${isExamMode ? 'text-gray-900 dark:text-gray-100' : 'text-secondary dark:text-gray-400'}`}>Course</th>
+                        <th className={`text-left py-3 px-4 text-xs font-semibold uppercase tracking-wide ${isExamMode ? 'text-gray-900 dark:text-gray-100' : 'text-secondary dark:text-gray-400'}`}>Status</th>
+                        <th className={`text-left py-3 px-4 text-xs font-semibold uppercase tracking-wide ${isExamMode ? 'text-gray-900 dark:text-gray-100' : 'text-secondary dark:text-gray-400'}`}>Date</th>
                         <th className="py-3 px-4" />
                       </tr>
                     </thead>
@@ -506,27 +507,27 @@ const EducationProgramsPage = () => {
                           <td className="py-3.5 px-4">
                             <p className="font-medium text-primary dark:text-gray-100 line-clamp-1">{req.title}</p>
                             {req.description && (
-                              <p className="text-xs text-secondary dark:text-gray-500 mt-0.5 line-clamp-1">{req.description}</p>
+                              <p className={`text-xs mt-0.5 line-clamp-1 ${isExamMode ? 'text-gray-800 dark:text-gray-200' : 'text-secondary dark:text-gray-500'}`}>{req.description}</p>
                             )}
                           </td>
-                          <td className="py-3.5 px-4 text-secondary dark:text-gray-400 whitespace-nowrap">
+                          <td className={`py-3.5 px-4 whitespace-nowrap ${isExamMode ? 'text-gray-900 dark:text-gray-100' : 'text-secondary dark:text-gray-400'}`}>
                             {MATERIAL_TYPES.find(t => t.value === req.materialType)?.label || req.materialType}
                           </td>
-                          <td className="py-3.5 px-4 text-secondary dark:text-gray-400">
+                          <td className={`py-3.5 px-4 ${isExamMode ? 'text-gray-900 dark:text-gray-100' : 'text-secondary dark:text-gray-400'}`}>
                             {req.course || <span className="text-gray-300 dark:text-gray-600">—</span>}
                           </td>
                           <td className="py-3.5 px-4">
                             <div className="flex flex-col gap-1">
                               <StatusBadge status={req.status} />
                               {req.adminNote && (
-                                <span className="flex items-center gap-1 text-xs text-secondary dark:text-gray-400">
+                                <span className={`flex items-center gap-1 text-xs ${isExamMode ? 'text-gray-800 dark:text-gray-200' : 'text-secondary dark:text-gray-400'}`}>
                                   <MessageSquare className="h-3 w-3 flex-shrink-0" />
                                   <span className="line-clamp-1">{req.adminNote}</span>
                                 </span>
                               )}
                             </div>
                           </td>
-                          <td className="py-3.5 px-4 text-secondary dark:text-gray-500 whitespace-nowrap text-xs">
+                          <td className={`py-3.5 px-4 whitespace-nowrap text-xs ${isExamMode ? 'text-gray-800 dark:text-gray-200' : 'text-secondary dark:text-gray-500'}`}>
                             {new Date(req.createdAt).toLocaleDateString()}
                           </td>
                           <td className="py-3.5 px-4">
@@ -672,12 +673,12 @@ const EducationProgramsPage = () => {
         className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm"
         onClick={(e) => { if (e.target === e.currentTarget) setShowExamSetup(false); }}
       >
-        <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl w-full max-w-lg max-h-[92vh] overflow-y-auto">
+        <div className="bg-rose-50 dark:bg-red-900/20 rounded-2xl shadow-2xl w-full max-w-lg max-h-[92vh] overflow-y-auto border border-red-200 dark:border-red-800">
           {/* Header */}
-          <div className="flex items-center justify-between px-6 py-4 border-b border-gray-200 dark:border-gray-700 sticky top-0 bg-white dark:bg-gray-800 z-10 rounded-t-2xl">
+          <div className="flex items-center justify-between px-6 py-4 border-b border-red-200 dark:border-red-800 sticky top-0 bg-rose-50 dark:bg-red-900/20 z-10 rounded-t-2xl">
             <div className="flex items-center gap-2.5">
-              <div className="bg-purple-100 dark:bg-purple-900/40 p-2 rounded-lg">
-                <FlaskConical className="h-5 w-5 text-purple-600 dark:text-purple-400" />
+              <div className="bg-red-100 dark:bg-red-900/40 p-2 rounded-lg">
+                <FlaskConical className="h-5 w-5 text-gray-900 dark:text-gray-100" />
               </div>
               <div>
                 <h2 className="text-base font-bold text-primary dark:text-gray-100">Enter Exam Mode</h2>
@@ -697,9 +698,9 @@ const EducationProgramsPage = () => {
             {/* Module rows */}
             <div className="space-y-3">
               {examModules.map((row, idx) => (
-                <div key={idx} className="rounded-xl border border-gray-200 dark:border-gray-600 bg-gray-50 dark:bg-gray-700/40 p-3">
+                <div key={idx} className="rounded-xl border border-red-200 dark:border-red-800 bg-white/80 dark:bg-red-950/20 p-3">
                   <div className="flex items-center justify-between mb-2">
-                    <span className="text-xs font-bold text-purple-600 dark:text-purple-400 uppercase tracking-wide">
+                    <span className="text-xs font-bold text-gray-900 dark:text-gray-100 uppercase tracking-wide">
                       Module {idx + 1}
                     </span>
                     <button
@@ -719,7 +720,7 @@ const EducationProgramsPage = () => {
                         value={row.module}
                         onChange={(e) => handleModuleChange(idx, 'module', e.target.value)}
                         placeholder={`e.g. Data Structures`}
-                        className="w-full px-3 py-2.5 rounded-xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-primary dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-purple-400/50 focus:border-purple-400 transition text-sm"
+                        className="w-full px-3 py-2.5 rounded-xl border border-red-200 dark:border-red-800 bg-white dark:bg-red-950/20 text-primary dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-red-300/60 focus:border-red-400 transition text-sm"
                       />
                     </div>
                     <div>
@@ -728,7 +729,7 @@ const EducationProgramsPage = () => {
                         type="date"
                         value={row.date}
                         onChange={(e) => handleModuleChange(idx, 'date', e.target.value)}
-                        className="w-full px-3 py-2.5 rounded-xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-primary dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-purple-400/50 focus:border-purple-400 transition text-sm"
+                        className="w-full px-3 py-2.5 rounded-xl border border-red-200 dark:border-red-800 bg-white dark:bg-red-950/20 text-primary dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-red-300/60 focus:border-red-400 transition text-sm"
                       />
                     </div>
                   </div>
@@ -740,7 +741,7 @@ const EducationProgramsPage = () => {
             <button
               type="button"
               onClick={handleAddModule}
-              className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl border-2 border-dashed border-purple-300 dark:border-purple-700 text-purple-600 dark:text-purple-400 text-sm font-semibold hover:border-purple-400 hover:bg-purple-50 dark:hover:bg-purple-900/20 transition w-full justify-center"
+              className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl border-2 border-dashed border-red-300 dark:border-red-700 text-gray-900 dark:text-gray-100 text-sm font-semibold hover:border-red-400 hover:bg-red-100/60 dark:hover:bg-red-900/20 transition w-full justify-center"
             >
               <Plus className="h-4 w-4" />
               Add Module
@@ -764,7 +765,7 @@ const EducationProgramsPage = () => {
               </button>
               <button
                 type="submit"
-                className="flex-1 flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-purple-600 hover:bg-purple-700 text-white font-semibold transition text-sm"
+                className="flex-1 flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-red-600 hover:bg-red-700 text-white font-semibold transition text-sm"
               >
                 <FlaskConical className="h-4 w-4" />
                 Start Exam Mode
