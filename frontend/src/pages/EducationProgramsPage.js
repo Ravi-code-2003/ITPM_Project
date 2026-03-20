@@ -57,18 +57,38 @@ const EducationProgramsPage = () => {
   const isStudent = user?.role === 'student';
   const [mode, setMode] = useState('normal');
   const isExamMode = mode === 'exam';
+  const [currentUserId, setCurrentUserId] = useState(null);
 
   // Exam setup modal
   const storageKey = user?._id ? `examModules_${user._id}` : 'examModules';
   const [showExamSetup, setShowExamSetup] = useState(false);
   const [examModules, setExamModules]     = useState([{ ...EMPTY_MODULE }, { ...EMPTY_MODULE }]);
-  const [examModules_saved, setExamModules_saved] = useState(() => {
-    try {
-      const key = user?._id ? `examModules_${user._id}` : 'examModules';
-      const stored = localStorage.getItem(key);
-      return stored ? JSON.parse(stored) : [];
-    } catch { return []; }
-  });
+  const [examModules_saved, setExamModules_saved] = useState([]);
+
+  // Comprehensive effect to handle user changes and load correct exam data
+  useEffect(() => {
+    if (!user?._id) {
+      setCurrentUserId(null);
+      setExamModules_saved([]);
+      setMode('normal');
+      return;
+    }
+
+    // Only update if user has changed
+    if (currentUserId !== user._id) {
+      setCurrentUserId(user._id);
+      try {
+        const key = `examModules_${user._id}`;
+        const stored = localStorage.getItem(key);
+        const examData = stored ? JSON.parse(stored) : [];
+        setExamModules_saved(examData);
+        setMode('normal'); // Reset to normal mode when user changes
+      } catch {
+        setExamModules_saved([]);
+        setMode('normal');
+      }
+    }
+  }, [user?._id, currentUserId]);
 
   const openExamSetup = () => {
     // Pre-fill with saved modules when editing; start fresh on first use
