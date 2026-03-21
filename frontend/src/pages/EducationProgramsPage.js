@@ -55,6 +55,31 @@ const STUDENT_NOTICE_STORAGE_KEY = 'student_material_notices';
 const STUDENT_NOTICE_SEEN_AT_KEY = 'student_material_notices_seen_at';
 const PINNED_MATERIALS_STORAGE_PREFIX = 'student_pinned_materials';
 
+const formatDuration = (ms) => {
+  const totalSeconds = Math.max(0, Math.floor(ms / 1000));
+  const days = Math.floor(totalSeconds / 86400);
+  const hours = Math.floor((totalSeconds % 86400) / 3600);
+  const minutes = Math.floor((totalSeconds % 3600) / 60);
+  const seconds = totalSeconds % 60;
+
+  if (days > 0) return `${days}d ${hours}h ${minutes}m`;
+  if (hours > 0) return `${hours}h ${minutes}m ${seconds}s`;
+  return `${minutes}m ${seconds}s`;
+};
+
+const getExamCountdown = (examDate, nowMs) => {
+  if (!examDate) return { label: 'No date set', started: false };
+
+  const examMs = new Date(examDate).getTime();
+  if (!Number.isFinite(examMs)) return { label: 'Invalid date', started: false };
+
+  if (nowMs < examMs) {
+    return { label: `Starts in ${formatDuration(examMs - nowMs)}`, started: false };
+  }
+
+  return { label: `Started ${formatDuration(nowMs - examMs)} ago`, started: true };
+};
+
 const EducationProgramsPage = () => {
   const { user } = useAuth();
   const isStudent = user?.role === 'student';
@@ -67,7 +92,18 @@ const EducationProgramsPage = () => {
   const [showExamSetup, setShowExamSetup] = useState(false);
   const [examModules, setExamModules]     = useState([{ ...EMPTY_MODULE }, { ...EMPTY_MODULE }]);
   const [examModules_saved, setExamModules_saved] = useState([]);
+  const [examNowMs, setExamNowMs] = useState(Date.now());
   const hasSavedExamModules = examModules_saved.some((r) => r.module?.trim() || r.date);
+
+  useEffect(() => {
+    if (!isExamMode) return;
+
+    const intervalId = setInterval(() => {
+      setExamNowMs(Date.now());
+    }, 1000);
+
+    return () => clearInterval(intervalId);
+  }, [isExamMode]);
 
   // Load exam data for the currently logged-in user only
   useEffect(() => {
@@ -398,41 +434,55 @@ const EducationProgramsPage = () => {
 
         {/* ── Exam Schedule Banner (shown in exam mode) ────────────── */}
         {isExamMode && hasSavedExamModules && (
-          <div className="mb-6 rounded-2xl border border-red-400 dark:border-red-700 bg-white dark:bg-gray-800 px-5 py-5">
+          <div className="mb-8 rounded-2xl border-2 border-red-400 dark:border-red-700 bg-white dark:bg-gray-800 p-6 sm:p-7 shadow-sm">
             {/* header row */}
-            <div className="flex items-center justify-between mb-4">
+            <div className="flex items-center justify-between mb-5">
               <div className="flex items-center gap-2.5">
-                <div className="bg-red-100 dark:bg-red-900/40 p-2 rounded-lg">
-                  <GraduationCap className="h-5 w-5 text-gray-900 dark:text-gray-100" />
+                <div className="bg-red-100 dark:bg-red-900/40 p-2.5 rounded-lg">
+                  <GraduationCap className="h-6 w-6 text-gray-900 dark:text-gray-100" />
                 </div>
                 <div>
-                  <p className="text-sm font-bold text-gray-900 dark:text-gray-100">Exam Schedule</p>
-                  <p className="text-xs text-gray-700 dark:text-gray-300">{examModules_saved.length} module{examModules_saved.length > 1 ? 's' : ''} scheduled</p>
+                  <p className="text-base sm:text-lg font-bold text-gray-900 dark:text-gray-100">Exam Schedule</p>
+                  <p className="text-sm text-gray-700 dark:text-gray-300">{examModules_saved.length} module{examModules_saved.length > 1 ? 's' : ''} scheduled</p>
                 </div>
               </div>
               <button
                 onClick={openExamSetup}
-                className="text-xs text-gray-900 dark:text-gray-100 hover:underline font-medium whitespace-nowrap"
+                className="text-sm text-gray-900 dark:text-gray-100 hover:underline font-medium whitespace-nowrap"
               >
                 Edit schedule
               </button>
             </div>
             {/* module cards grid */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
               {examModules_saved.filter(r => r.module.trim()).map((r, i) => (
-                <div key={i} className="bg-white dark:bg-gray-800 border border-red-400 dark:border-red-700 rounded-xl px-4 py-3 flex flex-col gap-1.5">
+                <div key={i} className="bg-white dark:bg-gray-800 border border-red-400 dark:border-red-700 rounded-xl px-5 py-4 flex flex-col gap-2">
                   <div className="flex items-center gap-2">
-                    <span className="text-[10px] font-bold text-gray-900 dark:text-gray-100 uppercase tracking-wide">Module {i + 1}</span>
+                    <span className="text-[11px] font-bold text-gray-900 dark:text-gray-100 uppercase tracking-wide">Module {i + 1}</span>
                   </div>
-                  <p className="font-semibold text-primary dark:text-gray-100 text-sm leading-snug">{r.module}</p>
+                  <p className="font-semibold text-primary dark:text-gray-100 text-base leading-snug">{r.module}</p>
                   {r.date ? (
-                    <span className="inline-flex items-center gap-1.5 text-xs text-gray-800 dark:text-gray-200 font-medium">
-                      <CalendarDays className="h-3.5 w-3.5 flex-shrink-0" />
+                    <span className="inline-flex items-center gap-1.5 text-sm text-gray-800 dark:text-gray-200 font-medium">
+                      <CalendarDays className="h-4 w-4 flex-shrink-0" />
                       {new Date(r.date).toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric', year: 'numeric' })}
                     </span>
                   ) : (
                     <span className="text-xs text-gray-400 dark:text-gray-500">No date set</span>
                   )}
+
+                  {(() => {
+                    const countdown = getExamCountdown(r.date, examNowMs);
+                    return (
+                      <span className={`inline-flex items-center gap-1.5 w-fit px-2.5 py-1 rounded-full text-xs font-semibold border ${
+                        countdown.started
+                          ? 'bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-300 border-red-200 dark:border-red-700'
+                          : 'bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-300 border-amber-200 dark:border-amber-700'
+                      }`}>
+                        <Clock className="h-3.5 w-3.5" />
+                        {countdown.label}
+                      </span>
+                    );
+                  })()}
                 </div>
               ))}
             </div>
@@ -820,12 +870,12 @@ const EducationProgramsPage = () => {
         className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm"
         onClick={(e) => { if (e.target === e.currentTarget) { setShowModal(false); setForm(EMPTY_FORM); } }}
       >
-        <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl w-full max-w-lg max-h-[92vh] overflow-y-auto">
+        <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl border border-gray-200 dark:border-gray-700 w-full max-w-lg max-h-[92vh] overflow-y-auto">
           {/* header */}
-          <div className="flex items-center justify-between px-6 py-4 border-b border-gray-200 dark:border-gray-700 sticky top-0 bg-white dark:bg-gray-800 z-10 rounded-t-2xl">
+          <div className="flex items-center justify-between px-6 py-4 border-b border-gray-200 dark:border-gray-700 sticky top-0 bg-gray-50 dark:bg-gray-800 z-10 rounded-t-2xl">
             <div className="flex items-center gap-2.5">
-              <div className="bg-accent/10 p-2 rounded-lg">
-                <Send className="h-5 w-5 text-accent" />
+              <div className="bg-primary/10 dark:bg-primary/20 p-2 rounded-lg">
+                <Send className="h-5 w-5 text-primary dark:text-accent" />
               </div>
               <h2 className="text-lg font-bold text-primary dark:text-gray-100">Request Study Material</h2>
             </div>
@@ -850,8 +900,8 @@ const EducationProgramsPage = () => {
                     onClick={() => setForm(f => ({ ...f, materialType: value }))}
                     className={`px-3 py-2 rounded-xl border-2 text-sm font-medium transition-all ${
                       form.materialType === value
-                        ? 'border-accent bg-accent/10 text-accent'
-                        : 'border-gray-200 dark:border-gray-600 text-secondary dark:text-gray-400 hover:border-accent/50'
+                        ? 'border-primary bg-primary/10 dark:bg-primary/20 text-primary dark:text-accent'
+                        : 'border-gray-200 dark:border-gray-600 text-secondary dark:text-gray-400 hover:border-primary/40 hover:text-primary dark:hover:text-accent'
                     }`}
                   >
                     {label}
@@ -870,7 +920,7 @@ const EducationProgramsPage = () => {
                 value={form.title}
                 onChange={(e) => setForm(f => ({ ...f, title: e.target.value }))}
                 placeholder="e.g. Database Systems – Week 4 Lecture Notes"
-                className="w-full px-4 py-2.5 rounded-xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-primary dark:text-gray-100 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-accent/50 focus:border-accent transition"
+                className="w-full px-4 py-2.5 rounded-xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-primary dark:text-gray-100 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary transition"
               />
             </div>
 
@@ -884,7 +934,7 @@ const EducationProgramsPage = () => {
                 value={form.course}
                 onChange={(e) => setForm(f => ({ ...f, course: e.target.value }))}
                 placeholder="e.g. CS301 – Database Systems"
-                className="w-full px-4 py-2.5 rounded-xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-primary dark:text-gray-100 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-accent/50 focus:border-accent transition"
+                className="w-full px-4 py-2.5 rounded-xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-primary dark:text-gray-100 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary transition"
               />
             </div>
 
@@ -898,7 +948,7 @@ const EducationProgramsPage = () => {
                 onChange={(e) => setForm(f => ({ ...f, description: e.target.value }))}
                 placeholder="Any specific topics, chapters, or notes for the provider…"
                 rows={3}
-                className="w-full px-4 py-2.5 rounded-xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-primary dark:text-gray-100 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-accent/50 focus:border-accent transition resize-none"
+                className="w-full px-4 py-2.5 rounded-xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-primary dark:text-gray-100 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary transition resize-none"
               />
             </div>
 
@@ -914,7 +964,7 @@ const EducationProgramsPage = () => {
               <button
                 type="submit"
                 disabled={submitting}
-                className="flex-1 flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-accent text-white font-semibold hover:bg-accent/90 disabled:opacity-60 transition"
+                className="flex-1 flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-primary text-white font-semibold hover:bg-primary-hover disabled:opacity-60 transition"
               >
                 {submitting
                   ? <div className="animate-spin h-4 w-4 border-2 border-white border-t-transparent rounded-full" />

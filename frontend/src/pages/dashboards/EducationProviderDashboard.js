@@ -2,7 +2,6 @@ import React, { useState, useRef, useEffect, useCallback } from 'react';
 import {
   GraduationCap,
   Users,
-  BookOpen,
   X,
   Upload,
   FileText,
