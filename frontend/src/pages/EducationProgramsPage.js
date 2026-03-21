@@ -149,6 +149,7 @@ const EducationProgramsPage = () => {
   const [materials, setMaterials]         = useState([]);
   const [loadingMat, setLoadingMat]       = useState(false);
   const [selectedMatType, setSelectedMatType] = useState('all');
+  const [moduleSearch, setModuleSearch] = useState('');
 
   const fetchMaterials = useCallback(async () => {
     setLoadingMat(true);
@@ -164,10 +165,23 @@ const EducationProgramsPage = () => {
 
   useEffect(() => { fetchMaterials(); }, [fetchMaterials]);
 
+  const normalizedModuleSearch = moduleSearch.trim().toLowerCase();
+
   const filteredMaterials = (selectedMatType === 'all'
     ? materials
     : materials.filter(m => m.type === selectedMatType)
-  ).filter(m => isExamMode ? m.isImportant : true);
+  ).filter(m => {
+    const examModeMatch = isExamMode ? m.isImportant : true;
+    const moduleName = (m.course || '').toLowerCase();
+    const titleName = (m.title || '').toLowerCase();
+    const searchMatch = !normalizedModuleSearch
+      ? true
+      : moduleName.includes(normalizedModuleSearch) || titleName.includes(normalizedModuleSearch);
+
+    return examModeMatch && searchMatch;
+  });
+
+  const shouldScrollMaterials = filteredMaterials.length > 6;
 
   const [showModal, setShowModal] = useState(false);
   const [form, setForm]           = useState(EMPTY_FORM);
@@ -336,6 +350,16 @@ const EducationProgramsPage = () => {
                   : 'Resources uploaded by education providers'}
               </p>
             </div>
+
+            <div className="w-full sm:w-80 sm:ml-auto">
+              <input
+                type="text"
+                value={moduleSearch}
+                onChange={(e) => setModuleSearch(e.target.value)}
+                placeholder="Search by module name..."
+                className="w-full px-4 py-2.5 rounded-xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-primary dark:text-gray-100 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-accent/50 focus:border-accent transition"
+              />
+            </div>
           </div>
 
           <div className={`rounded-2xl p-4 border ${isExamMode ? 'bg-white/90 dark:bg-gray-900/40 border-red-200 dark:border-red-800' : 'bg-gray-50/80 dark:bg-gray-900/30 border-gray-200 dark:border-gray-700'}`}>
@@ -375,30 +399,33 @@ const EducationProgramsPage = () => {
                   <>
                     <FileText className="h-12 w-12 text-gray-300 dark:text-gray-600 mx-auto mb-3" />
                     <p className="text-secondary dark:text-gray-400">
-                      {selectedMatType === 'all' ? 'No study materials uploaded yet.' : `No ${MAT_TYPES.find(t=>t.value===selectedMatType)?.label} materials yet.`}
+                      {normalizedModuleSearch
+                        ? 'No study materials match that module name.'
+                        : (selectedMatType === 'all' ? 'No study materials uploaded yet.' : `No ${MAT_TYPES.find(t=>t.value===selectedMatType)?.label} materials yet.`)}
                     </p>
                   </>
                 )}
               </div>
             ) : (
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
-                {filteredMaterials.map((mat) => {
-                  const cfg = MAT_CFG[mat.type] || MAT_CFG.pdf;
-                  const { Icon } = cfg;
-                  const isLink = mat.type === 'youtube' || mat.type === 'drive';
-                  return (
-                    <Card
-                      key={mat._id}
-                      className="bg-white dark:bg-[#1E2233] border border-gray-300 dark:border-gray-600 shadow-sm hover:shadow-md transition-all duration-200"
-                    >
-                      <CardContent className="p-5 flex flex-col gap-3">
+              <div className={shouldScrollMaterials ? 'max-h-[560px] overflow-y-auto pr-1' : ''}>
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
+                  {filteredMaterials.map((mat) => {
+                    const cfg = MAT_CFG[mat.type] || MAT_CFG.pdf;
+                    const { Icon } = cfg;
+                    const isLink = mat.type === 'youtube' || mat.type === 'drive';
+                    return (
+                      <Card
+                        key={mat._id}
+                        className="h-full bg-white dark:bg-[#1E2233] border border-gray-300 dark:border-gray-600 shadow-sm hover:shadow-md transition-all duration-200"
+                      >
+                        <CardContent className="h-full p-5 flex flex-col gap-3">
                     {/* top row */}
                     <div className="flex items-start justify-between gap-2">
                       <div className="flex items-center gap-2.5 min-w-0">
                         <div className={`p-2 rounded-lg flex-shrink-0 ${cfg.bg}`}>
                           <Icon className={`h-4 w-4 ${cfg.text}`} />
                         </div>
-                        <p className="font-semibold text-primary dark:text-gray-100 text-sm leading-snug line-clamp-2">{mat.title}</p>
+                        <p className="font-bold text-base text-primary dark:text-accent leading-snug line-clamp-2">{mat.title}</p>
                       </div>
                       <div className="flex flex-col items-end gap-1 flex-shrink-0">
                         <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${cfg.bg} ${cfg.text}`}>
@@ -437,13 +464,13 @@ const EducationProgramsPage = () => {
                     )}
 
                     {/* action button */}
-                    <div className="mt-auto">
+                    <div className="mt-auto pt-1">
                       {isLink ? (
                         <a
                           href={mat.linkUrl}
                           target="_blank"
                           rel="noopener noreferrer"
-                          className="inline-flex items-center justify-center gap-2 w-full px-4 py-2 rounded-lg font-semibold text-sm transition-colors bg-accent/10 hover:bg-accent/20 text-accent"
+                          className="inline-flex items-center justify-center gap-2 w-full h-10 px-4 rounded-lg font-semibold text-sm transition-colors bg-primary hover:bg-primary-hover text-white"
                         >
                           <ExternalLink className="h-4 w-4" />
                           Open {cfg.label}
@@ -454,17 +481,18 @@ const EducationProgramsPage = () => {
                           target="_blank"
                           rel="noopener noreferrer"
                           download
-                          className="inline-flex items-center justify-center gap-2 w-full px-4 py-2 rounded-lg font-semibold text-sm transition-colors bg-blue-600 hover:bg-blue-700 text-white"
+                          className="inline-flex items-center justify-center gap-2 w-full h-10 px-4 rounded-lg font-semibold text-sm transition-colors bg-primary hover:bg-primary-hover text-white"
                         >
                           <Download className="h-4 w-4" />
                           Download
                         </a>
                       )}
                     </div>
-                      </CardContent>
-                    </Card>
-                  );
-                })}
+                        </CardContent>
+                      </Card>
+                    );
+                  })}
+                </div>
               </div>
             )}
           </div>
