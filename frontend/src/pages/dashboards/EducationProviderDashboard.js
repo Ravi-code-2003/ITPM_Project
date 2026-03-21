@@ -277,7 +277,7 @@ const EducationProviderDashboard = () => {
 
   /* ── render ─────────────────────────────────────────────────────────── */
   return (
-    <div className="min-h-screen bg-background dark:bg-background-dark py-8">
+    <div className="min-h-screen bg-white dark:bg-background-dark py-8">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
 
         {/* ── Header ─────────────────────────────────────────────────── */}
@@ -294,7 +294,7 @@ const EducationProviderDashboard = () => {
           {/* ── CTA button ─── */}
           <button
             onClick={() => setShowModal(true)}
-            className="inline-flex items-center gap-2 bg-accent hover:bg-accent/90 text-white font-semibold px-5 py-2.5 rounded-xl shadow-md transition-all duration-200 hover:shadow-lg hover:-translate-y-0.5 whitespace-nowrap self-start sm:self-auto"
+            className="inline-flex items-center gap-2 bg-primary hover:bg-primary-hover text-white font-semibold px-5 py-2.5 rounded-xl shadow-md transition-all duration-200 hover:shadow-lg hover:-translate-y-0.5 whitespace-nowrap self-start sm:self-auto"
           >
             <Plus className="h-5 w-5" />
             Upload Study Material
@@ -338,7 +338,7 @@ const EducationProviderDashboard = () => {
                     onClick={() => setFilter(key)}
                     className={`px-3 py-1 rounded-full text-xs font-medium transition-colors ${
                       filter === key
-                        ? 'bg-accent text-white'
+                        ? 'bg-primary text-white'
                         : 'bg-gray-100 dark:bg-gray-700 text-secondary dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-600'
                     }`}
                   >
@@ -372,14 +372,11 @@ const EducationProviderDashboard = () => {
                   const info = typeInfo(mat.type);
                   const Icon = info.icon;
                   return (
-                    <div
+                    <Card
                       key={mat._id}
-                      className={`border rounded-xl p-4 hover:shadow-md transition-shadow group bg-white dark:bg-gray-800 ${
-                        mat.isImportant
-                          ? 'border-yellow-300 dark:border-yellow-700'
-                          : 'border-gray-200 dark:border-gray-700'
-                      }`}
+                      className="hover:shadow-md transition-shadow group bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 shadow-sm"
                     >
+                      <CardContent className="p-4">
                       {/* top row */}
                       <div className="flex items-start justify-between gap-2">
                         <div className="flex items-center gap-2">
@@ -445,7 +442,7 @@ const EducationProviderDashboard = () => {
                               href={`${process.env.REACT_APP_API_URL?.replace('/api', '') || 'http://localhost:5000'}${mat.fileUrl}`}
                               target="_blank"
                               rel="noreferrer"
-                              className="text-xs text-accent hover:underline flex items-center gap-1"
+                              className="text-xs text-primary dark:text-accent hover:underline flex items-center gap-1"
                             >
                               <Download className="h-3 w-3" /> View
                             </a>
@@ -455,14 +452,15 @@ const EducationProviderDashboard = () => {
                               href={mat.linkUrl}
                               target="_blank"
                               rel="noreferrer"
-                              className="text-xs text-accent hover:underline flex items-center gap-1"
+                              className="text-xs text-primary dark:text-accent hover:underline flex items-center gap-1"
                             >
                               <Eye className="h-3 w-3" /> Open
                             </a>
                           )}
                         </div>
                       </div>
-                    </div>
+                      </CardContent>
+                    </Card>
                   );
                 })}
               </div>
@@ -485,7 +483,7 @@ const EducationProviderDashboard = () => {
                     onClick={() => setReqFilter(key)}
                     className={`px-3 py-1 rounded-full text-xs font-medium transition-colors capitalize ${
                       reqFilter === key
-                        ? 'bg-accent text-white'
+                        ? 'bg-primary text-white'
                         : 'bg-gray-100 dark:bg-gray-700 text-secondary dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-600'
                     }`}
                   >
@@ -556,7 +554,7 @@ const EducationProviderDashboard = () => {
                         <td className="py-3.5 px-4">
                           <button
                             onClick={() => openStatusModal(req)}
-                            className="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg bg-accent/10 text-accent hover:bg-accent/20 text-xs font-medium transition-colors whitespace-nowrap"
+                            className="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg bg-accent/10 text-primary dark:text-accent hover:bg-accent/20 text-xs font-medium transition-colors whitespace-nowrap"
                           >
                             Update <ChevronDown className="h-3 w-3" />
                           </button>
@@ -645,7 +643,7 @@ const EducationProviderDashboard = () => {
                 <button
                   type="submit"
                   disabled={updatingStatus}
-                  className="flex-1 flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-accent text-white font-semibold hover:bg-accent/90 disabled:opacity-60 transition text-sm"
+                  className="flex-1 flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-primary text-white font-semibold hover:bg-primary-hover disabled:opacity-60 transition text-sm"
                 >
                   {updatingStatus ? <div className="animate-spin h-4 w-4 border-2 border-white border-t-transparent rounded-full" /> : null}
                   {updatingStatus ? 'Saving…' : 'Save Status'}
@@ -668,7 +666,7 @@ const EducationProviderDashboard = () => {
             <div className="flex items-center justify-between px-6 py-4 border-b border-gray-200 dark:border-gray-700 sticky top-0 bg-white dark:bg-gray-800 z-10 rounded-t-2xl">
               <div className="flex items-center gap-2.5">
                 <div className="bg-accent/10 p-2 rounded-lg">
-                  <Upload className="h-5 w-5 text-accent" />
+                  <Upload className="h-5 w-5 text-primary dark:text-accent" />
                 </div>
                 <h2 className="text-lg font-bold text-primary dark:text-gray-100">
                   Upload Study Material
@@ -698,8 +696,8 @@ const EducationProviderDashboard = () => {
                       onClick={() => handleTypeChange(value)}
                       className={`flex items-center gap-2 px-3 py-2.5 rounded-xl border-2 text-sm font-medium transition-all ${
                         form.type === value
-                          ? 'border-accent bg-accent/10 text-accent'
-                          : 'border-gray-200 dark:border-gray-600 text-secondary dark:text-gray-400 hover:border-accent/50'
+                          ? 'border-primary bg-accent/10 text-primary dark:text-accent'
+                          : 'border-gray-200 dark:border-gray-600 text-secondary dark:text-gray-400 hover:border-primary/50'
                       }`}
                     >
                       <Icon className="h-4 w-4 flex-shrink-0" />

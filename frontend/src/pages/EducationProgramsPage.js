@@ -194,6 +194,11 @@ const EducationProgramsPage = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    if (!isStudent) {
+      toast.error('Only student accounts can request study materials.');
+      setShowModal(false);
+      return;
+    }
     if (!form.title.trim()) { toast.error('Please enter a title'); return; }
     setSubmitting(true);
     try {
@@ -222,17 +227,17 @@ const EducationProgramsPage = () => {
 
   return (
     <>
-    <div className={`min-h-screen py-8 ${isExamMode ? 'bg-rose-50 dark:bg-red-900/20' : 'bg-background dark:bg-background-dark'}`}>
+    <div className={`min-h-screen py-8 ${isExamMode ? 'bg-rose-50 dark:bg-red-900/20' : 'bg-white dark:bg-background-dark'}`}>
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Top bar — mode toggle + request button for students */}
         <div className="flex items-center justify-between mb-6">
           {/* Mode toggle */}
-          <div className={`flex items-center gap-1 p-1 rounded-xl border shadow-sm ${isExamMode ? 'bg-red-100 dark:bg-red-950/40 border-red-300 dark:border-red-800' : 'bg-gray-100 dark:bg-gray-800 border-gray-200 dark:border-gray-700'}`}>
+          <div className={`flex items-center gap-1 p-1 rounded-xl border shadow-sm ${isExamMode ? 'bg-amber-100 dark:bg-amber-900/30 border-amber-300 dark:border-amber-700' : 'bg-gray-100 dark:bg-gray-800 border-gray-200 dark:border-gray-700'}`}>
             <button
               onClick={() => setMode('normal')}
               className={`inline-flex items-center gap-1.5 px-4 py-1.5 rounded-lg text-sm font-semibold transition-all duration-200 ${
                 !isExamMode
-                  ? 'bg-white dark:bg-[#1E2233] text-accent shadow-sm border border-gray-200 dark:border-gray-600'
+                  ? 'bg-primary text-white shadow-sm border border-primary'
                   : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200'
               }`}
             >
@@ -243,7 +248,7 @@ const EducationProgramsPage = () => {
               onClick={() => isExamMode ? null : (hasSavedExamModules ? setMode('exam') : openExamSetup())}
               className={`inline-flex items-center gap-1.5 px-4 py-1.5 rounded-lg text-sm font-semibold transition-all duration-200 ${
                 isExamMode
-                  ? 'bg-red-50 dark:bg-red-900/20 text-gray-900 dark:text-gray-100 shadow-sm border border-red-400 dark:border-red-700'
+                  ? 'bg-amber-50 dark:bg-amber-900/25 text-gray-900 dark:text-gray-100 shadow-sm border border-amber-300 dark:border-amber-700'
                   : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200'
               }`}
             >
@@ -255,8 +260,14 @@ const EducationProgramsPage = () => {
           {/* Request button — students only */}
           {isStudent && (
             <button
-              onClick={() => setShowModal(true)}
-              className="inline-flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white font-semibold px-5 py-1.5 rounded-xl shadow-md transition-all duration-200 hover:shadow-lg hover:-translate-y-0.5"
+              onClick={() => {
+                if (!isStudent) {
+                  toast.error('Please sign in with a student account to request materials.');
+                  return;
+                }
+                setShowModal(true);
+              }}
+              className="inline-flex items-center gap-2 bg-primary hover:bg-primary-hover text-white font-semibold px-5 py-1.5 rounded-xl shadow-md transition-all duration-200 hover:shadow-lg hover:-translate-y-0.5"
             >
               <Plus className="h-4 w-4" />
               Request Study Material
@@ -325,8 +336,11 @@ const EducationProgramsPage = () => {
                   : 'Resources uploaded by education providers'}
               </p>
             </div>
+          </div>
+
+          <div className={`rounded-2xl p-4 border ${isExamMode ? 'bg-white/90 dark:bg-gray-900/40 border-red-200 dark:border-red-800' : 'bg-gray-50/80 dark:bg-gray-900/30 border-gray-200 dark:border-gray-700'}`}>
             {/* type filter pills */}
-            <div className="flex flex-wrap gap-2">
+            <div className="flex flex-wrap gap-2 mb-4">
               {MAT_TYPES.map(({ value, label }) => (
                 <button
                   key={value}
@@ -344,41 +358,40 @@ const EducationProgramsPage = () => {
                 </button>
               ))}
             </div>
-          </div>
 
-          {loadingMat ? (
-            <div className="flex items-center justify-center py-16">
-              <div className="animate-spin h-8 w-8 border-4 border-accent border-t-transparent rounded-full" />
-            </div>
-          ) : filteredMaterials.length === 0 ? (
-            <div className="text-center py-12 border-2 border-dashed border-gray-200 dark:border-gray-700 rounded-2xl">
-              {isExamMode ? (
-                <>
-                  <Star className="h-12 w-12 text-yellow-300 dark:text-yellow-700 mx-auto mb-3" />
-                  <p className="text-gray-900 dark:text-gray-100 font-medium">No important materials yet</p>
-                  <p className="text-sm text-gray-700 dark:text-gray-300 mt-1">Your education provider hasn't marked any materials as important.</p>
-                </>
-              ) : (
-                <>
-                  <FileText className="h-12 w-12 text-gray-300 dark:text-gray-600 mx-auto mb-3" />
-                  <p className="text-secondary dark:text-gray-400">
-                    {selectedMatType === 'all' ? 'No study materials uploaded yet.' : `No ${MAT_TYPES.find(t=>t.value===selectedMatType)?.label} materials yet.`}
-                  </p>
-                </>
-              )}
-            </div>
-          ) : (
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
-              {filteredMaterials.map((mat) => {
-                const cfg = MAT_CFG[mat.type] || MAT_CFG.pdf;
-                const { Icon } = cfg;
-                const isLink = mat.type === 'youtube' || mat.type === 'drive';
-                return (
-                  <div key={mat._id} className={`bg-white dark:bg-[#1E2233] rounded-xl border shadow-sm hover:shadow-md transition-all duration-200 p-5 flex flex-col gap-3 ${
-                    mat.isImportant
-                      ? 'border-yellow-300 dark:border-yellow-700'
-                      : 'border-gray-100 dark:border-gray-700'
-                  }`}>
+            {loadingMat ? (
+              <div className="flex items-center justify-center py-16">
+                <div className="animate-spin h-8 w-8 border-4 border-accent border-t-transparent rounded-full" />
+              </div>
+            ) : filteredMaterials.length === 0 ? (
+              <div className="text-center py-12 border-2 border-dashed border-gray-200 dark:border-gray-700 rounded-2xl">
+                {isExamMode ? (
+                  <>
+                    <Star className="h-12 w-12 text-yellow-300 dark:text-yellow-700 mx-auto mb-3" />
+                    <p className="text-gray-900 dark:text-gray-100 font-medium">No important materials yet</p>
+                    <p className="text-sm text-gray-700 dark:text-gray-300 mt-1">Your education provider hasn't marked any materials as important.</p>
+                  </>
+                ) : (
+                  <>
+                    <FileText className="h-12 w-12 text-gray-300 dark:text-gray-600 mx-auto mb-3" />
+                    <p className="text-secondary dark:text-gray-400">
+                      {selectedMatType === 'all' ? 'No study materials uploaded yet.' : `No ${MAT_TYPES.find(t=>t.value===selectedMatType)?.label} materials yet.`}
+                    </p>
+                  </>
+                )}
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
+                {filteredMaterials.map((mat) => {
+                  const cfg = MAT_CFG[mat.type] || MAT_CFG.pdf;
+                  const { Icon } = cfg;
+                  const isLink = mat.type === 'youtube' || mat.type === 'drive';
+                  return (
+                    <Card
+                      key={mat._id}
+                      className="bg-white dark:bg-[#1E2233] border border-gray-300 dark:border-gray-600 shadow-sm hover:shadow-md transition-all duration-200"
+                    >
+                      <CardContent className="p-5 flex flex-col gap-3">
                     {/* top row */}
                     <div className="flex items-start justify-between gap-2">
                       <div className="flex items-center gap-2.5 min-w-0">
@@ -448,11 +461,13 @@ const EducationProgramsPage = () => {
                         </a>
                       )}
                     </div>
-                  </div>
-                );
-              })}
-            </div>
-          )}
+                      </CardContent>
+                    </Card>
+                  );
+                })}
+              </div>
+            )}
+          </div>
         </div>
 
         {/* ── My Study Material Requests (students only) ─────────────── */}
@@ -555,7 +570,7 @@ const EducationProgramsPage = () => {
     </div>
 
     {/* ── Request Study Material Modal ──────────────────────────────── */}
-    {showModal && (
+    {showModal && isStudent && (
       <div
         className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm"
         onClick={(e) => { if (e.target === e.currentTarget) { setShowModal(false); setForm(EMPTY_FORM); } }}
