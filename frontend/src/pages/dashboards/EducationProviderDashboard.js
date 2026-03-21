@@ -3,7 +3,6 @@ import {
   GraduationCap,
   Users,
   BookOpen,
-  Plus,
   X,
   Upload,
   FileText,
@@ -23,6 +22,7 @@ import {
   MessageSquare,
   ChevronDown,
   Star,
+  Bell,
 } from 'lucide-react';
 import Card, { CardHeader, CardTitle, CardContent } from '../../components/ui/Card';
 import api from '../../services/api';
@@ -47,6 +47,8 @@ const FILTERS = [
   { key: 'youtube',   label: 'YouTube' },
   { key: 'drive',     label: 'Drive' },
 ];
+
+const STUDENT_NOTICE_STORAGE_KEY = 'student_material_notices';
 
 const EMPTY_FORM = {
   type: 'pdf',
@@ -113,6 +115,11 @@ const EducationProviderDashboard = () => {
   const [statusForm, setStatusForm]       = useState({ status: 'pending', adminNote: '' });
   const [updatingStatus, setUpdatingStatus] = useState(false);
   const [reqFilter, setReqFilter]         = useState('all');
+  const [activeNav, setActiveNav]         = useState('materials');
+
+  const materialsSectionRef = useRef(null);
+  const requestsSectionRef = useRef(null);
+  const noticesSectionRef = useRef(null);
 
   const isFileType = ['pdf', 'tute', 'pastpaper'].includes(form.type);
   const isLinkType = ['youtube', 'drive'].includes(form.type);
@@ -226,6 +233,7 @@ const EducationProviderDashboard = () => {
 
     setSubmitting(true);
     try {
+      const materialTypeLabel = MATERIAL_TYPES.find((item) => item.value === form.type)?.label || 'Study Material';
       const fd = new FormData();
       fd.append('title',       form.title.trim());
       fd.append('description', form.description.trim());
@@ -236,6 +244,20 @@ const EducationProviderDashboard = () => {
       else            fd.append('linkUrl', form.linkUrl.trim());
 
       await api.post('/education/materials', fd);
+
+      try {
+        const existingNotices = JSON.parse(localStorage.getItem(STUDENT_NOTICE_STORAGE_KEY) || '[]');
+        const notice = {
+          id: Date.now().toString(),
+          title: 'New study material added',
+          message: `${form.title.trim()} (${materialTypeLabel}) was added to the dashboard${form.course.trim() ? ` for ${form.course.trim()}` : ''}.`,
+          createdAt: new Date().toISOString(),
+        };
+        localStorage.setItem(STUDENT_NOTICE_STORAGE_KEY, JSON.stringify([notice, ...existingNotices].slice(0, 50)));
+      } catch {
+        // Ignore notice storage issues; upload already succeeded.
+      }
+
       toast.success('Material uploaded successfully!');
       setShowModal(false);
       resetForm();
@@ -275,13 +297,22 @@ const EducationProviderDashboard = () => {
   const filteredMaterials =
     filter === 'all' ? materials : materials.filter((m) => m.type === filter);
 
+  const scrollToSection = (sectionRef) => {
+    sectionRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  };
+
+  const goToSection = (key, sectionRef) => {
+    setActiveNav(key);
+    scrollToSection(sectionRef);
+  };
+
   /* ── render ─────────────────────────────────────────────────────────── */
   return (
     <div className="min-h-screen bg-white dark:bg-background-dark py-8">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
 
         {/* ── Header ─────────────────────────────────────────────────── */}
-        <div className="mb-8 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+        <div className="mb-6">
           <div>
             <h1 className="text-2xl sm:text-3xl font-bold text-primary dark:text-gray-100">
               Education Provider Dashboard
@@ -290,16 +321,58 @@ const EducationProviderDashboard = () => {
               Manage your courses and study materials
             </p>
           </div>
-
-          {/* ── CTA button ─── */}
-          <button
-            onClick={() => setShowModal(true)}
-            className="inline-flex items-center gap-2 bg-primary hover:bg-primary-hover text-white font-semibold px-5 py-2.5 rounded-xl shadow-md transition-all duration-200 hover:shadow-lg hover:-translate-y-0.5 whitespace-nowrap self-start sm:self-auto"
-          >
-            <Plus className="h-5 w-5" />
-            Upload Study Material
-          </button>
         </div>
+
+        {/* ── Section Navigation ───────────────────────────────────── */}
+        <Card className="mb-8">
+          <CardContent className="p-4">
+            <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-3">
+              <div className="flex flex-wrap items-center gap-2">
+                <button
+                  onClick={() => goToSection('materials', materialsSectionRef)}
+                  className={`inline-flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-semibold transition-colors ${
+                    activeNav === 'materials'
+                      ? 'bg-primary text-white'
+                      : 'bg-gray-100 dark:bg-gray-700 text-secondary dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600'
+                  }`}
+                >
+                  <Upload className="h-4 w-4" />
+                  Student Materials
+                </button>
+                <button
+                  onClick={() => goToSection('requests', requestsSectionRef)}
+                  className={`inline-flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-semibold transition-colors ${
+                    activeNav === 'requests'
+                      ? 'bg-primary text-white'
+                      : 'bg-gray-100 dark:bg-gray-700 text-green-700 dark:text-green-300 hover:bg-gray-200 dark:hover:bg-gray-600'
+                  }`}
+                >
+                  <Inbox className="h-4 w-4" />
+                  Student Requests
+                </button>
+                <button
+                  onClick={() => goToSection('notices', noticesSectionRef)}
+                  className={`inline-flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-semibold transition-colors ${
+                    activeNav === 'notices'
+                      ? 'bg-primary text-white'
+                      : 'bg-gray-100 dark:bg-gray-700 text-blue-700 dark:text-blue-300 hover:bg-gray-200 dark:hover:bg-gray-600'
+                  }`}
+                >
+                  <Bell className="h-4 w-4" />
+                  Notices
+                </button>
+              </div>
+
+              <button
+                onClick={() => setShowModal(true)}
+                className="inline-flex items-center justify-center gap-2 px-4 py-2 rounded-lg bg-primary hover:bg-primary-hover text-white text-sm font-semibold transition-colors lg:ml-auto"
+              >
+                <Upload className="h-4 w-4" />
+                Upload Student Material
+              </button>
+            </div>
+          </CardContent>
+        </Card>
 
         {/* ── Stats ──────────────────────────────────────────────────── */}
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
@@ -326,7 +399,8 @@ const EducationProviderDashboard = () => {
         </div>
 
         {/* ── Materials section ──────────────────────────────────────── */}
-        <Card className="mb-8">
+        <div ref={materialsSectionRef}>
+          <Card className="mb-8">
           <CardHeader>
             <div className="flex flex-col sm:flex-row sm:items-center gap-3 flex-wrap">
               <CardTitle>Study Materials</CardTitle>
@@ -466,14 +540,21 @@ const EducationProviderDashboard = () => {
               </div>
             )}
           </CardContent>
-        </Card>
+          </Card>
+        </div>
         {/* ── Student Requests Table ──────────────────────────────────── */}
-        <Card>
+        <div ref={requestsSectionRef}>
+          <Card>
           <CardHeader>
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 flex-wrap">
-              <div className="flex items-center gap-2.5">
-                <Inbox className="h-5 w-5 text-accent" />
-                <CardTitle>Student Material Requests</CardTitle>
+              <div>
+                <div className="flex items-center gap-2.5">
+                  <Inbox className="h-5 w-5 text-accent" />
+                  <CardTitle className="text-primary dark:text-accent">Student Material Requests</CardTitle>
+                </div>
+                <p className="text-xs text-blue-700 dark:text-blue-300 mt-1">
+                  Review requests, update status, and add a short note to guide students.
+                </p>
               </div>
               {/* filter pills */}
               <div className="flex flex-wrap gap-2">
@@ -492,6 +573,21 @@ const EducationProviderDashboard = () => {
                 ))}
               </div>
             </div>
+
+            <div className="mt-3 flex flex-wrap gap-2">
+              <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-medium bg-yellow-50 dark:bg-yellow-900/20 text-yellow-700 dark:text-yellow-300 border border-yellow-200 dark:border-yellow-700">
+                <Clock className="h-3 w-3" />
+                Pending: waiting for provider response
+              </span>
+              <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-medium bg-green-50 dark:bg-green-900/20 text-green-700 dark:text-green-300 border border-green-200 dark:border-green-700">
+                <CheckCircle className="h-3 w-3" />
+                Fulfilled: material is available
+              </span>
+              <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-medium bg-red-50 dark:bg-red-900/20 text-red-700 dark:text-red-300 border border-red-200 dark:border-red-700">
+                <XCircle className="h-3 w-3" />
+                Rejected: cannot provide currently
+              </span>
+            </div>
           </CardHeader>
 
           <CardContent>
@@ -502,20 +598,21 @@ const EducationProviderDashboard = () => {
             ) : requests.length === 0 ? (
               <div className="text-center py-14">
                 <Inbox className="h-12 w-12 text-gray-300 dark:text-gray-600 mx-auto mb-3" />
-                <p className="text-secondary dark:text-gray-400 text-sm">No student requests yet.</p>
+                <p className="text-primary dark:text-accent text-sm font-medium">No student requests yet.</p>
+                <p className="text-xs text-gray-400 dark:text-gray-500 mt-1">When students request materials, they will appear here for review.</p>
               </div>
             ) : (
               <div className="overflow-x-auto -mx-4 sm:mx-0">
                 <table className="w-full text-sm min-w-[640px]">
                   <thead>
                     <tr className="border-b border-gray-200 dark:border-gray-700">
-                      <th className="text-left py-3 px-4 text-xs font-semibold text-secondary dark:text-gray-400 uppercase tracking-wide">Student</th>
-                      <th className="text-left py-3 px-4 text-xs font-semibold text-secondary dark:text-gray-400 uppercase tracking-wide">Request</th>
-                      <th className="text-left py-3 px-4 text-xs font-semibold text-secondary dark:text-gray-400 uppercase tracking-wide">Type</th>
-                      <th className="text-left py-3 px-4 text-xs font-semibold text-secondary dark:text-gray-400 uppercase tracking-wide">Course</th>
-                      <th className="text-left py-3 px-4 text-xs font-semibold text-secondary dark:text-gray-400 uppercase tracking-wide">Status</th>
-                      <th className="text-left py-3 px-4 text-xs font-semibold text-secondary dark:text-gray-400 uppercase tracking-wide">Date</th>
-                      <th className="py-3 px-4 text-xs font-semibold text-secondary dark:text-gray-400 uppercase tracking-wide">Action</th>
+                      <th className="text-left py-3 px-4 text-xs font-semibold text-primary dark:text-accent uppercase tracking-wide">Student</th>
+                      <th className="text-left py-3 px-4 text-xs font-semibold text-primary dark:text-accent uppercase tracking-wide">Request</th>
+                      <th className="text-left py-3 px-4 text-xs font-semibold text-primary dark:text-accent uppercase tracking-wide">Type</th>
+                      <th className="text-left py-3 px-4 text-xs font-semibold text-primary dark:text-accent uppercase tracking-wide">Course</th>
+                      <th className="text-left py-3 px-4 text-xs font-semibold text-primary dark:text-accent uppercase tracking-wide">Status</th>
+                      <th className="text-left py-3 px-4 text-xs font-semibold text-primary dark:text-accent uppercase tracking-wide">Date</th>
+                      <th className="py-3 px-4 text-xs font-semibold text-primary dark:text-accent uppercase tracking-wide">Action</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-gray-100 dark:divide-gray-700/50">
@@ -556,7 +653,7 @@ const EducationProviderDashboard = () => {
                             onClick={() => openStatusModal(req)}
                             className="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg bg-accent/10 text-primary dark:text-accent hover:bg-accent/20 text-xs font-medium transition-colors whitespace-nowrap"
                           >
-                            Update <ChevronDown className="h-3 w-3" />
+                            Review &amp; Update <ChevronDown className="h-3 w-3" />
                           </button>
                         </td>
                       </tr>
@@ -566,7 +663,38 @@ const EducationProviderDashboard = () => {
               </div>
             )}
           </CardContent>
-        </Card>
+          </Card>
+        </div>
+
+        {/* ── Notices ───────────────────────────────────────────────── */}
+        <div ref={noticesSectionRef} className="mt-8">
+          <Card>
+            <CardHeader>
+              <div>
+                <div className="flex items-center gap-2.5">
+                  <Bell className="h-5 w-5 text-blue-600 dark:text-blue-400" />
+                  <CardTitle className="text-blue-700 dark:text-blue-300">Notices</CardTitle>
+                </div>
+                <p className="text-xs text-blue-700 dark:text-blue-300 mt-1">
+                  Share important announcements for students, such as deadlines, updates, and resources.
+                </p>
+              </div>
+            </CardHeader>
+            <CardContent>
+              <div className="rounded-xl border border-dashed border-gray-300 dark:border-gray-700 p-5 text-center lg:text-left">
+                <p className="text-sm font-semibold text-primary dark:text-gray-100">No notices published yet</p>
+                <p className="text-xs text-secondary dark:text-gray-400 mt-1">Create notices here to keep students informed about important updates.</p>
+                <button
+                  type="button"
+                  className="mt-3 inline-flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-semibold bg-primary text-white hover:bg-primary-hover transition-colors"
+                >
+                  <Bell className="h-3.5 w-3.5" />
+                  Create Notice
+                </button>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
       </div>
 
       {/* ── Status Update Modal ─────────────────────────────────────────── */}

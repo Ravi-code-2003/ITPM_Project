@@ -1,7 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { BookOpen, Clock, Users, Star, Plus, X, Send, Inbox, CheckCircle, XCircle, Trash2, MessageSquare, FileText, ExternalLink, Download, Youtube, HardDrive, FlaskConical, LayoutDashboard, CalendarDays, GraduationCap } from 'lucide-react';
-import Button from '../components/ui/Button';
-import Card, { CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from '../components/ui/Card';
+import { BookOpen, Clock, Star, Plus, X, Send, Inbox, CheckCircle, XCircle, Trash2, MessageSquare, FileText, ExternalLink, Download, Youtube, HardDrive, FlaskConical, LayoutDashboard, CalendarDays, GraduationCap, Bell } from 'lucide-react';
+import Card, { CardHeader, CardTitle, CardContent } from '../components/ui/Card';
 import { useAuth } from '../contexts/AuthContext';
 import api from '../services/api';
 import toast from 'react-hot-toast';
@@ -51,6 +50,10 @@ const MAT_CFG = {
   youtube:   { label: 'YouTube',   bg: 'bg-red-100 dark:bg-red-900/30',     text: 'text-red-700 dark:text-red-400',     Icon: Youtube },
   drive:     { label: 'Drive',     bg: 'bg-green-100 dark:bg-green-900/30', text: 'text-green-700 dark:text-green-400', Icon: HardDrive },
 };
+
+const STUDENT_NOTICE_STORAGE_KEY = 'student_material_notices';
+const STUDENT_NOTICE_SEEN_AT_KEY = 'student_material_notices_seen_at';
+const PINNED_MATERIALS_STORAGE_PREFIX = 'student_pinned_materials';
 
 const EducationProgramsPage = () => {
   const { user } = useAuth();
@@ -128,23 +131,6 @@ const EducationProgramsPage = () => {
     toast.success('Exam mode activated!');
   };
 
-  // Programs from API
-  const [programs, setPrograms]       = useState([]);
-  const [loadingProg, setLoadingProg] = useState(false);
-
-  const fetchPrograms = useCallback(async () => {
-    setLoadingProg(true);
-    try {
-      const res = await api.get('/education/programs');
-      setPrograms(res.data.programs || []);
-    } catch {
-      setPrograms([]);
-    } finally {
-      setLoadingProg(false);
-    }
-  }, []);
-
-  useEffect(() => { fetchPrograms(); }, [fetchPrograms]);
   // Study materials from API
   const [materials, setMaterials]         = useState([]);
   const [loadingMat, setLoadingMat]       = useState(false);
@@ -181,11 +167,14 @@ const EducationProgramsPage = () => {
     return examModeMatch && searchMatch;
   });
 
-  const shouldScrollMaterials = filteredMaterials.length > 6;
-
   const [showModal, setShowModal] = useState(false);
   const [form, setForm]           = useState(EMPTY_FORM);
   const [submitting, setSubmitting] = useState(false);
+  const [notices, setNotices] = useState([]);
+  const [showNotices, setShowNotices] = useState(false);
+  const [noticesSeenAt, setNoticesSeenAt] = useState(0);
+  const [pinnedMaterialIds, setPinnedMaterialIds] = useState([]);
+  const pinnedStorageKey = userId ? `${PINNED_MATERIALS_STORAGE_PREFIX}_${userId}` : null;
 
   // My requests state
   const [requests, setRequests]   = useState([]);
@@ -205,6 +194,67 @@ const EducationProgramsPage = () => {
   }, [isStudent]);
 
   useEffect(() => { fetchRequests(); }, [fetchRequests]);
+
+  useEffect(() => {
+    if (!isStudent) {
+      setNotices([]);
+      setShowNotices(false);
+      setNoticesSeenAt(0);
+      return;
+    }
+
+    try {
+      const stored = JSON.parse(localStorage.getItem(STUDENT_NOTICE_STORAGE_KEY) || '[]');
+      setNotices(Array.isArray(stored) ? stored : []);
+      const seenAt = Number(localStorage.getItem(STUDENT_NOTICE_SEEN_AT_KEY) || '0');
+      setNoticesSeenAt(Number.isFinite(seenAt) ? seenAt : 0);
+    } catch {
+      setNotices([]);
+      setNoticesSeenAt(0);
+    }
+  }, [isStudent]);
+
+  useEffect(() => {
+    if (!isStudent || !pinnedStorageKey) {
+      setPinnedMaterialIds([]);
+      return;
+    }
+
+    try {
+      const stored = JSON.parse(localStorage.getItem(pinnedStorageKey) || '[]');
+      setPinnedMaterialIds(Array.isArray(stored) ? stored : []);
+    } catch {
+      setPinnedMaterialIds([]);
+    }
+  }, [isStudent, pinnedStorageKey]);
+
+  const markNoticesAsSeen = () => {
+    const seenAtNow = Date.now();
+    setNoticesSeenAt(seenAtNow);
+    localStorage.setItem(STUDENT_NOTICE_SEEN_AT_KEY, String(seenAtNow));
+  };
+
+  const unreadNoticeCount = notices.filter((notice) => {
+    const createdAt = new Date(notice.createdAt).getTime();
+    return Number.isFinite(createdAt) && createdAt > noticesSeenAt;
+  }).length;
+
+  const togglePinnedMaterial = (materialId) => {
+    if (!isStudent || !pinnedStorageKey) return;
+
+    setPinnedMaterialIds((prev) => {
+      const next = prev.includes(materialId)
+        ? prev.filter((id) => id !== materialId)
+        : [...prev, materialId];
+
+      localStorage.setItem(pinnedStorageKey, JSON.stringify(next));
+      return next;
+    });
+  };
+
+  const pinnedMaterials = filteredMaterials.filter((mat) => pinnedMaterialIds.includes(mat._id));
+  const otherMaterials = filteredMaterials.filter((mat) => !pinnedMaterialIds.includes(mat._id));
+  const shouldScrollMaterials = otherMaterials.length > 6;
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -271,21 +321,78 @@ const EducationProgramsPage = () => {
             </button>
           </div>
 
-          {/* Request button — students only */}
+          {/* Request button + notices — students only */}
           {isStudent && (
-            <button
-              onClick={() => {
-                if (!isStudent) {
-                  toast.error('Please sign in with a student account to request materials.');
-                  return;
-                }
-                setShowModal(true);
-              }}
-              className="inline-flex items-center gap-2 bg-primary hover:bg-primary-hover text-white font-semibold px-5 py-1.5 rounded-xl shadow-md transition-all duration-200 hover:shadow-lg hover:-translate-y-0.5"
-            >
-              <Plus className="h-4 w-4" />
-              Request Study Material
-            </button>
+            <div className="flex items-center gap-2">
+              <div className="relative">
+                <button
+                  onClick={() => {
+                    setShowNotices((prev) => {
+                      const nextValue = !prev;
+                      if (nextValue) {
+                        markNoticesAsSeen();
+                      }
+                      return nextValue;
+                    });
+                  }}
+                  className="relative inline-flex items-center justify-center h-10 w-10 rounded-xl bg-accent/10 hover:bg-accent/20 text-primary dark:text-accent transition-colors"
+                  title="Student notices"
+                >
+                  <Bell className="h-5 w-5" />
+                  {unreadNoticeCount > 0 && (
+                    <span className="absolute -top-1.5 -right-1.5 min-w-[18px] h-[18px] px-1 rounded-full bg-red-500 text-white text-[10px] font-bold flex items-center justify-center">
+                      {unreadNoticeCount > 9 ? '9+' : unreadNoticeCount}
+                    </span>
+                  )}
+                </button>
+
+                {showNotices && (
+                  <div className="absolute right-0 mt-2 w-[320px] max-w-[85vw] bg-white dark:bg-surface-dark border border-gray-200 dark:border-gray-700 rounded-xl shadow-lg z-30">
+                    <div className="flex items-center justify-between px-4 py-3 border-b border-gray-200 dark:border-gray-700">
+                      <p className="text-sm font-semibold text-primary dark:text-gray-100">Student Notices</p>
+                      <button
+                        onClick={() => setShowNotices(false)}
+                        className="p-1 rounded-md hover:bg-gray-100 dark:hover:bg-gray-700 text-secondary dark:text-gray-400"
+                      >
+                        <X className="h-4 w-4" />
+                      </button>
+                    </div>
+                    <div className="max-h-72 overflow-y-auto">
+                      {notices.length === 0 ? (
+                        <p className="px-4 py-4 text-xs text-secondary dark:text-gray-400">No notices yet.</p>
+                      ) : (
+                        notices.map((notice) => (
+                          <button
+                            key={notice.id}
+                            type="button"
+                            onClick={markNoticesAsSeen}
+                            className="w-full text-left px-4 py-3 border-b border-gray-100 dark:border-gray-700 last:border-b-0 hover:bg-gray-50 dark:hover:bg-gray-700/30 transition-colors"
+                          >
+                            <p className="text-xs font-semibold text-primary dark:text-gray-100">{notice.title}</p>
+                            <p className="text-xs text-secondary dark:text-gray-400 mt-1">{notice.message}</p>
+                            <p className="text-[11px] text-gray-400 dark:text-gray-500 mt-1">{new Date(notice.createdAt).toLocaleString()}</p>
+                          </button>
+                        ))
+                      )}
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              <button
+                onClick={() => {
+                  if (!isStudent) {
+                    toast.error('Please sign in with a student account to request materials.');
+                    return;
+                  }
+                  setShowModal(true);
+                }}
+                className="inline-flex items-center gap-2 bg-primary hover:bg-primary-hover text-white font-semibold px-5 py-1.5 rounded-xl shadow-md transition-all duration-200 hover:shadow-lg hover:-translate-y-0.5"
+              >
+                <Plus className="h-4 w-4" />
+                Request Study Material
+              </button>
+            </div>
           )}
         </div>
 
@@ -407,12 +514,106 @@ const EducationProgramsPage = () => {
                 )}
               </div>
             ) : (
-              <div className={shouldScrollMaterials ? 'max-h-[560px] overflow-y-auto pr-1' : ''}>
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
-                  {filteredMaterials.map((mat) => {
+              <>
+                {isStudent && pinnedMaterials.length > 0 && (
+                  <div className="mb-6">
+                    <div className="flex items-center gap-2 mb-3">
+                      <Star className="h-4 w-4 fill-yellow-500 text-yellow-500" />
+                      <p className="text-sm font-bold text-primary dark:text-gray-100">Pinned Materials</p>
+                    </div>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
+                      {pinnedMaterials.map((mat) => {
+                        const cfg = MAT_CFG[mat.type] || MAT_CFG.pdf;
+                        const { Icon } = cfg;
+                        const isLink = mat.type === 'youtube' || mat.type === 'drive';
+                        const isPinned = pinnedMaterialIds.includes(mat._id);
+                        return (
+                          <Card
+                            key={mat._id}
+                            className="h-full bg-white dark:bg-[#1E2233] border border-gray-300 dark:border-gray-600 shadow-sm hover:shadow-md transition-all duration-200"
+                          >
+                            <CardContent className="h-full p-5 flex flex-col gap-3">
+                              <div className="flex items-start justify-between gap-2">
+                                <div className="flex items-center gap-2.5 min-w-0">
+                                  <div className={`p-2 rounded-lg flex-shrink-0 ${cfg.bg}`}>
+                                    <Icon className={`h-4 w-4 ${cfg.text}`} />
+                                  </div>
+                                  <p className="font-bold text-base text-primary dark:text-accent leading-snug line-clamp-2">{mat.title}</p>
+                                </div>
+                                <div className="flex flex-col items-end gap-1 flex-shrink-0">
+                                  <button
+                                    type="button"
+                                    onClick={() => togglePinnedMaterial(mat._id)}
+                                    className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold border transition-colors ${
+                                      isPinned
+                                        ? 'bg-yellow-100 dark:bg-yellow-900/30 text-yellow-700 dark:text-yellow-400 border-yellow-300 dark:border-yellow-700'
+                                        : 'bg-gray-100 dark:bg-gray-700 text-gray-500 dark:text-gray-300 border-gray-200 dark:border-gray-600 hover:bg-yellow-50 dark:hover:bg-yellow-900/20'
+                                    }`}
+                                    title={isPinned ? 'Unpin material' : 'Pin material'}
+                                  >
+                                    <Star className={`h-2.5 w-2.5 ${isPinned ? 'fill-yellow-500 text-yellow-500' : 'text-gray-400'}`} />
+                                    {isPinned ? 'Pinned' : 'Pin'}
+                                  </button>
+                                  <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${cfg.bg} ${cfg.text}`}>
+                                    {cfg.label}
+                                  </span>
+                                </div>
+                              </div>
+                              {mat.description && (
+                                <p className={`text-xs line-clamp-2 ${isExamMode ? 'text-gray-800 dark:text-gray-200' : 'text-gray-500 dark:text-gray-400'}`}>{mat.description}</p>
+                              )}
+                              {(mat.uploadedBy?.organizationName || mat.uploadedBy?.fullName) && (
+                                <p className={`text-[11px] ${isExamMode ? 'text-gray-700 dark:text-gray-300' : 'text-gray-400 dark:text-gray-500'}`}>By {mat.uploadedBy.organizationName || mat.uploadedBy.fullName}</p>
+                              )}
+                              {mat.course && (
+                                <span className="inline-flex w-fit items-center gap-1 px-2.5 py-1 text-xs font-medium rounded-full bg-accent/10 dark:bg-accent/5 text-accent">
+                                  <BookOpen className="h-3 w-3" />{mat.course}
+                                </span>
+                              )}
+                              {mat.fileSize && (
+                                <p className={`text-[11px] ${isExamMode ? 'text-gray-700 dark:text-gray-300' : 'text-gray-400 dark:text-gray-500'}`}>
+                                  {(mat.fileSize / (1024 * 1024)).toFixed(2)} MB
+                                </p>
+                              )}
+                              <div className="mt-auto pt-1">
+                                {isLink ? (
+                                  <a
+                                    href={mat.linkUrl}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="inline-flex items-center justify-center gap-2 w-full h-10 px-4 rounded-lg font-semibold text-sm transition-colors bg-primary hover:bg-primary-hover text-white"
+                                  >
+                                    <ExternalLink className="h-4 w-4" />
+                                    Open {cfg.label}
+                                  </a>
+                                ) : (
+                                  <a
+                                    href={`${process.env.REACT_APP_API_URL?.replace('/api', '') || 'http://localhost:5000'}${mat.fileUrl}`}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    download
+                                    className="inline-flex items-center justify-center gap-2 w-full h-10 px-4 rounded-lg font-semibold text-sm transition-colors bg-primary hover:bg-primary-hover text-white"
+                                  >
+                                    <Download className="h-4 w-4" />
+                                    Download
+                                  </a>
+                                )}
+                              </div>
+                            </CardContent>
+                          </Card>
+                        );
+                      })}
+                    </div>
+                  </div>
+                )}
+
+                <div className={shouldScrollMaterials ? 'max-h-[560px] overflow-y-auto pr-1' : ''}>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
+                    {otherMaterials.map((mat) => {
                     const cfg = MAT_CFG[mat.type] || MAT_CFG.pdf;
                     const { Icon } = cfg;
                     const isLink = mat.type === 'youtube' || mat.type === 'drive';
+                    const isPinned = pinnedMaterialIds.includes(mat._id);
                     return (
                       <Card
                         key={mat._id}
@@ -428,6 +629,21 @@ const EducationProgramsPage = () => {
                         <p className="font-bold text-base text-primary dark:text-accent leading-snug line-clamp-2">{mat.title}</p>
                       </div>
                       <div className="flex flex-col items-end gap-1 flex-shrink-0">
+                        {isStudent && (
+                          <button
+                            type="button"
+                            onClick={() => togglePinnedMaterial(mat._id)}
+                            className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold border transition-colors ${
+                              isPinned
+                                ? 'bg-yellow-100 dark:bg-yellow-900/30 text-yellow-700 dark:text-yellow-400 border-yellow-300 dark:border-yellow-700'
+                                : 'bg-gray-100 dark:bg-gray-700 text-gray-500 dark:text-gray-300 border-gray-200 dark:border-gray-600 hover:bg-yellow-50 dark:hover:bg-yellow-900/20'
+                            }`}
+                            title={isPinned ? 'Unpin material' : 'Pin material'}
+                          >
+                            <Star className={`h-2.5 w-2.5 ${isPinned ? 'fill-yellow-500 text-yellow-500' : 'text-gray-400'}`} />
+                            {isPinned ? 'Pinned' : 'Pin'}
+                          </button>
+                        )}
                         <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${cfg.bg} ${cfg.text}`}>
                           {cfg.label}
                         </span>
@@ -494,6 +710,7 @@ const EducationProgramsPage = () => {
                   })}
                 </div>
               </div>
+              </>
             )}
           </div>
         </div>
