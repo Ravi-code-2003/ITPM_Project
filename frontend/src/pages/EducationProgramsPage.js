@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { BookOpen, Clock, Star, Plus, X, Send, Inbox, CheckCircle, XCircle, Trash2, MessageSquare, FileText, ExternalLink, Download, Youtube, HardDrive, FlaskConical, LayoutDashboard, CalendarDays, GraduationCap, Bell } from 'lucide-react';
+import { BookOpen, Clock, Star, Plus, X, Send, Inbox, CheckCircle, XCircle, Trash2, MessageSquare, FileText, ExternalLink, Download, Youtube, HardDrive, FlaskConical, LayoutDashboard, CalendarDays, GraduationCap, Bell, Timer } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 import Card, { CardHeader, CardTitle, CardContent } from '../components/ui/Card';
 import { useAuth } from '../contexts/AuthContext';
 import api from '../services/api';
@@ -81,6 +82,7 @@ const getExamCountdown = (examDate, nowMs) => {
 };
 
 const EducationProgramsPage = () => {
+  const navigate = useNavigate();
   const { user } = useAuth();
   const isStudent = user?.role === 'student';
   const userId = user?._id || user?.id || null;
@@ -327,7 +329,7 @@ const EducationProgramsPage = () => {
 
   return (
     <>
-    <div className={`min-h-screen py-8 ${isExamMode ? 'bg-rose-50 dark:bg-red-900/20' : 'bg-white dark:bg-background-dark'}`}>
+    <div className={`min-h-screen py-8 ${isExamMode ? 'bg-gradient-to-b from-amber-50 via-white to-white dark:bg-red-900/20' : 'bg-gradient-to-b from-amber-50 via-white to-white dark:bg-background-dark'}`}>
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Top bar — mode toggle + request button for students */}
         <div className="flex items-center justify-between mb-6">
@@ -485,6 +487,28 @@ const EducationProgramsPage = () => {
                   })()}
                 </div>
               ))}
+            </div>
+          </div>
+        )}
+
+        {isStudent && !isExamMode && (
+          <div className="mb-8 rounded-2xl border border-accent/30 dark:border-accent/20 bg-gradient-to-r from-accent/5 to-accent/10 dark:from-accent/10 dark:to-accent/5 p-5 sm:p-6">
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+              <div>
+                <p className="text-sm font-semibold uppercase tracking-wide text-primary dark:text-accent">Study productivity</p>
+                <h3 className="text-lg font-bold text-gray-900 dark:text-gray-100 mt-1">Track your focused study time</h3>
+                <p className="text-sm text-gray-700 dark:text-gray-300 mt-1">
+                  Start, pause, resume study sessions and analyze your weekly progress with detailed reports.
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={() => navigate('/student/study-tracker')}
+                className="inline-flex items-center justify-center gap-2 bg-primary hover:bg-primary-hover text-white font-semibold px-5 py-2.5 rounded-xl shadow-sm transition-colors"
+              >
+                <Timer className="h-4 w-4" />
+                Study Tracker
+              </button>
             </div>
           </div>
         )}

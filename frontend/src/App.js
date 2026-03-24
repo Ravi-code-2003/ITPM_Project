@@ -33,6 +33,7 @@ import StudentDashboard from './pages/dashboards/StudentDashboard';
 import ShopOwnerDashboard from './pages/dashboards/ShopOwnerDashboard';
 import HouseOwnerDashboard from './pages/dashboards/HouseOwnerDashboard';
 import EducationProviderDashboard from './pages/dashboards/EducationProviderDashboard';
+import ExamStudyTrackerPage from './pages/ExamStudyTrackerPage';
 
 // Status Pages
 import PendingApproval from './pages/status/PendingApproval';
@@ -191,6 +192,16 @@ function App() {
                 <RoleRoute roles={['student']}>
                   <Layout showFooter={false}>
                     <StudentDashboard />
+                  </Layout>
+                </RoleRoute>
+              } 
+            />
+            <Route 
+              path="/student/study-tracker" 
+              element={
+                <RoleRoute roles={['student']}>
+                  <Layout showFooter={false}>
+                    <ExamStudyTrackerPage />
                   </Layout>
                 </RoleRoute>
               } 
