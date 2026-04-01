@@ -239,4 +239,26 @@ export const aiAPI = {
   },
 };
 
+export const notificationAPI = {
+  getMyNotifications: async (limit = 20, unreadOnly = false) => {
+    const params = new URLSearchParams({
+      limit: String(limit),
+      unreadOnly: String(unreadOnly)
+    });
+
+    const response = await api.get(`/notifications?${params.toString()}`);
+    return response.data;
+  },
+
+  markAsRead: async (notificationId) => {
+    const response = await api.patch(`/notifications/${notificationId}/read`);
+    return response.data;
+  },
+
+  markAllAsRead: async () => {
+    const response = await api.patch('/notifications/read-all');
+    return response.data;
+  }
+};
+
 export default api;

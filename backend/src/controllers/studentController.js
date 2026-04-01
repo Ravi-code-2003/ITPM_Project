@@ -7,6 +7,7 @@ const FavoriteRestaurant = require("../models/FavoriteRestaurant");
 const Rating = require("../models/Rating");
 const Poll = require("../models/Poll");
 const PollProposal = require("../models/PollProposal");
+const { createOrderNotification } = require("../services/notificationService");
 
 /**
  * GET /api/student/restaurants
@@ -270,6 +271,19 @@ const createOrder = async (req, res) => {
       { path: 'items.foodItemId', select: 'name price category' },
       { path: 'items.comboMealId', select: 'name totalPrice' }
     ]);
+
+    try {
+      await createOrderNotification({
+        recipientId: restaurant.shopOwnerId,
+        recipientRole: "shop-owner",
+        orderId: order._id,
+        type: "new-order",
+        title: "New order received",
+        message: `Order ${order.orderNumber} was placed. Amount: LKR ${totalAmount.toFixed(2)}.`
+      });
+    } catch (notificationError) {
+      console.error("Failed to create shop-owner notification:", notificationError.message);
+    }
     
     res.status(201).json({
       success: true,

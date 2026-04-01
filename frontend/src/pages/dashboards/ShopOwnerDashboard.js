@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Store, BarChart, Package, Plus, TrendingUp, Vote, ShoppingBag } from 'lucide-react';
+import { useSearchParams } from 'react-router-dom';
 import Button from '../../components/ui/Button';
 import Card, { CardContent } from '../../components/ui/Card';
 import FoodMenuCRUD from '../../components/restaurant/FoodMenuCRUD';
@@ -11,6 +12,7 @@ import OrdersManagement from '../../components/restaurant/OrdersManagement';
 import api from '../../services/api';
 
 const ShopOwnerDashboard = () => {
+  const [searchParams] = useSearchParams();
   const [activeTab, setActiveTab] = useState('overview');
   const [stats, setStats] = useState({
     totalOrders: 0,
@@ -23,6 +25,13 @@ const ShopOwnerDashboard = () => {
   useEffect(() => {
     fetchStats();
   }, []);
+
+  useEffect(() => {
+    const tabParam = searchParams.get('tab');
+    if (tabParam && ['overview', 'orders', 'menu', 'offers', 'polls', 'combos', 'analytics'].includes(tabParam)) {
+      setActiveTab(tabParam);
+    }
+  }, [searchParams]);
 
   const fetchStats = async () => {
     try {
