@@ -4,6 +4,7 @@ import { useAuth } from '../../contexts/AuthContext';
 import Button from '../ui/Button';
 import ThemeToggle from '../ui/ThemeToggle';
 import NotificationBell from './NotificationBell';
+import { useCart } from '../../contexts/CartContext';
 import { 
   Menu, 
   X, 
@@ -16,13 +17,15 @@ import {
   Info,
   ChevronDown,
   UtensilsCrossed,
-  Building2
+  Building2,
+  ShoppingCart
 } from 'lucide-react';
 
 const Header = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
   const { isAuthenticated, user, logout } = useAuth();
+  const { getCartCount } = useCart();
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -110,32 +113,29 @@ const Header = () => {
               </Link>
             ))}
           </nav>
-          {/* Desktop Navigation - Show for non-authenticated users and students */}
-          {(!isAuthenticated || (isAuthenticated && user?.role === 'student')) && (
-            <nav className="hidden md:flex items-center space-x-10 lg:space-x-12">
-              {publicNavItems.map((item) => (
-                <Link
-                  key={item.name}
-                  to={item.href}
-                  className="flex items-center space-x-1 text-gray-700 dark:text-gray-300 hover:text-primary dark:hover:text-accent transition-colors duration-200 font-medium"
-                >
-                  <item.icon className="h-4 w-4" />
-                  <span>{item.name}</span>
-                </Link>
-              ))}
-            </nav>
-          )}
 
           {/* Auth Buttons / User Menu */}
           <div className="hidden md:flex items-center space-x-4">
             <ThemeToggle />
             {isAuthenticated ? (
-              <div className="flex items-center">
-                {/* User Info Dropdown */}
               <div className="flex items-center space-x-3">
-                <ThemeToggle />
+                {user?.role === 'student' && (
+                  <Link
+                    to="/student/cart"
+                    className="relative flex items-center justify-center text-gray-700 dark:text-gray-300 hover:text-primary dark:hover:text-accent transition-all duration-200 p-2 rounded-lg hover:bg-primary/10 dark:hover:bg-primary/20 group"
+                    title="Shopping Cart"
+                  >
+                    <ShoppingCart className="h-5 w-5 group-hover:scale-110 transition-transform" />
+                    {getCartCount() > 0 && (
+                      <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center font-bold shadow-md">
+                        {getCartCount() > 99 ? '99+' : getCartCount()}
+                      </span>
+                    )}
+                  </Link>
+                )}
 
-                {/* User Profile Dropdown */}
+                <NotificationBell />
+
                 <div className="relative">
                   <button
                     onClick={() => setIsUserMenuOpen(!isUserMenuOpen)}
@@ -183,24 +183,6 @@ const Header = () => {
                     </div>
                   )}
                 </div>
-
-                <NotificationBell />
-
-                {/* Cart Icon for Students */}
-                {user?.role === 'student' && (
-                  <Link
-                    to="/student/cart"
-                    className="relative flex items-center justify-center text-gray-700 dark:text-gray-300 hover:text-primary dark:hover:text-accent transition-all duration-200 p-2 rounded-lg hover:bg-primary/10 dark:hover:bg-primary/20 group"
-                    title="Shopping Cart"
-                  >
-                    <ShoppingCart className="h-5 w-5 group-hover:scale-110 transition-transform" />
-                    {getCartCount() > 0 && (
-                      <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center font-bold shadow-md">
-                        {getCartCount() > 99 ? '99+' : getCartCount()}
-                      </span>
-                    )}
-                  </Link>
-                )}
               </div>
             ) : (
               <div className="flex items-center space-x-4">
