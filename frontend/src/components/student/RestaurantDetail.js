@@ -312,7 +312,7 @@ const RestaurantDetail = () => {
         </div>
 
         {/* Restaurant Hero Section */}
-        <div className="bg-white dark:bg-gray-800 rounded-xl shadow-md overflow-hidden mb-8 border border-gray-200 dark:border-gray-700">
+        <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm overflow-hidden mb-8 border border-gray-100 dark:border-gray-700">
           <div className="px-6 py-5">
             <div className="flex items-center justify-between">
               {/* Restaurant Info - Left Side */}
@@ -367,14 +367,15 @@ const RestaurantDetail = () => {
                 
                 <Button
                   onClick={toggleFavorite}
-                  className={`flex items-center gap-2 px-4 py-2 rounded-lg shadow-sm transition-all text-sm ${
+                  variant="ghost"
+                  className={`flex items-center gap-2 px-4 py-2 rounded-lg shadow-sm transition-all text-sm font-semibold ring-1 ${
                     isFavorite 
-                      ? 'bg-red-50 hover:bg-red-100 text-red-600 border border-red-200 dark:bg-red-900/20 dark:hover:bg-red-900/30 dark:text-red-400 dark:border-red-800' 
-                      : 'bg-gray-50 hover:bg-gray-100 text-gray-600 border border-gray-200 dark:bg-gray-700 dark:hover:bg-gray-600 dark:text-gray-300 dark:border-gray-600'
+                      ? 'bg-rose-100 hover:bg-rose-200 text-rose-700 border border-rose-400 ring-rose-200 shadow-none hover:shadow-none dark:bg-rose-900/35 dark:hover:bg-rose-900/45 dark:text-rose-200 dark:border-rose-600 dark:ring-rose-800/60' 
+                      : 'bg-gray-100 hover:bg-gray-200 text-gray-800 border border-gray-300 ring-gray-200 shadow-none hover:shadow-none dark:bg-gray-800 dark:hover:bg-gray-700 dark:text-gray-200 dark:border-gray-500 dark:ring-gray-700/70'
                   }`}
                   title={isFavorite ? 'Remove from Favorites' : 'Add to Favorites'}
                 >
-                  <Heart className={`h-4 w-4 ${isFavorite ? 'fill-current' : ''}`} />
+                  <Heart className={`h-5 w-5 ${isFavorite ? 'fill-current' : ''}`} />
                   <span className="font-medium">
                     {isFavorite ? 'Favorited' : 'Favorite'}
                   </span>
@@ -618,7 +619,7 @@ const RestaurantDetail = () => {
         )}
 
         {/* Category Navigation */}
-        <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6 mb-8">
+        <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 p-6 mb-8">
           <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
             {/* Header */}
             <div className="flex items-center gap-3">
@@ -738,7 +739,7 @@ const RestaurantDetail = () => {
           {/* Food Items by Category */}
           {activeCategory !== 'combos' && (
             <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm overflow-hidden">
-              <div className="bg-gradient-to-r from-gray-50 to-gray-100 dark:from-gray-700 dark:to-gray-800 px-8 py-6 border-b border-gray-200 dark:border-gray-700">
+              <div className="bg-gradient-to-r from-white to-gray-50 dark:from-gray-800 dark:to-gray-900 px-8 py-6 border-b border-gray-100 dark:border-gray-700">
                 <h2 className="text-2xl font-bold capitalize text-gray-900 dark:text-white flex items-center gap-3">
                   <div className="bg-primary/10 p-3 rounded-xl">
                     <span className="text-2xl">
