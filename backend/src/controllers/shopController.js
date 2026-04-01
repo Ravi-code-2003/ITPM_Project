@@ -524,19 +524,47 @@ const updateOrderStatus = async (req, res) => {
   try {
     const restaurant = await ensureRestaurantExists(req.user.id);
     const { status } = req.body;
-    
-    const order = await Order.findOneAndUpdate(
-      { _id: req.params.id, restaurantId: restaurant._id },
-      { status },
-      { new: true }
-    ).populate('studentId', 'fullName email');
-    
+
+    const allowedStatuses = ['pending', 'confirmed', 'ready', 'completed', 'cancelled'];
+    if (!allowedStatuses.includes(status)) {
+      return res.status(400).json({
+        success: false,
+        message: 'Invalid order status'
+      });
+    }
+
+    const order = await Order.findOne({
+      _id: req.params.id,
+      restaurantId: restaurant._id
+    });
+
     if (!order) {
       return res.status(404).json({
         success: false,
         message: 'Order not found'
       });
     }
+
+    const transitionMap = {
+      pending: ['confirmed', 'cancelled'],
+      confirmed: ['ready', 'cancelled'],
+      ready: ['completed', 'cancelled'],
+      completed: [],
+      cancelled: []
+    };
+
+    const allowedNextStatuses = transitionMap[order.status] || [];
+    if (!allowedNextStatuses.includes(status)) {
+      return res.status(400).json({
+        success: false,
+        message: `Cannot change order status from ${order.status} to ${status}`
+      });
+    }
+
+    order.status = status;
+    await order.save();
+
+    await order.populate('studentId', 'fullName email');
     
     res.json({
       success: true,
