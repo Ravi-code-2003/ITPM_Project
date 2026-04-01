@@ -237,6 +237,29 @@ export const aiAPI = {
     const response = await api.post("/ai/chat", { message }, { timeout: AI_REQUEST_TIMEOUT_MS });
     return response.data;
   },
+
+  getBudgetAdvice: async () => {
+    const response = await api.post("/ai/budget-advice", {}, { timeout: AI_REQUEST_TIMEOUT_MS });
+    return response.data;
+  },
+};
+
+// Transactions API calls
+export const transactionsAPI = {
+  create: async (payload) => {
+    const response = await api.post("/transactions", payload);
+    return response.data;
+  },
+
+  getByUser: async (userId) => {
+    const response = await api.get(`/transactions/${userId}`);
+    return response.data;
+  },
+
+  getSummary: async (userId) => {
+    const response = await api.get(`/transactions/summary/${userId}`);
+    return response.data;
+  },
 };
 
 // Notes API calls
@@ -262,6 +285,11 @@ export const notesAPI = {
   },
 
   updateTodo: async (id, payload) => {
+    const response = await api.patch(`/notes/${id}`, payload);
+    return response.data;
+  },
+
+  updateNote: async (id, payload) => {
     const response = await api.patch(`/notes/${id}`, payload);
     return response.data;
   },

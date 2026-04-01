@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { StickyNote, Trash2 } from "lucide-react";
+import { Pencil, StickyNote, Trash2 } from "lucide-react";
 import toast from "react-hot-toast";
 import { useAuth } from "../../contexts/AuthContext";
 import { notesAPI } from "../../services/api";
@@ -21,6 +21,8 @@ const StickyNotesBoard = () => {
   const [notes, setNotes] = useState([]);
   const [loading, setLoading] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [editingNote, setEditingNote] = useState(null);
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
 
   useEffect(() => {
     if (!isAuthenticated) return;
@@ -59,6 +61,17 @@ const StickyNotesBoard = () => {
     }
   };
 
+  const handleEditClick = (note) => {
+    setEditingNote(note);
+    setIsEditModalOpen(true);
+  };
+
+  const handleUpdated = (updatedNote) => {
+    if (updatedNote?.type === "sticky") {
+      setNotes((prev) => prev.map((note) => (note._id === updatedNote._id ? updatedNote : note)));
+    }
+  };
+
   if (!isAuthenticated) {
     return null;
   }
@@ -84,14 +97,24 @@ const StickyNotesBoard = () => {
               <div key={note._id} className={`note-card ${colorClassMap[note.color] || "note-card-yellow"}`}>
                 <div className="flex justify-between items-start gap-2">
                   <h4 className="font-semibold text-sm text-gray-900">{note.title}</h4>
-                  <button
-                    type="button"
-                    onClick={() => handleDelete(note._id)}
-                    className="text-gray-700 hover:text-red-600 transition-colors"
-                    title="Delete"
-                  >
-                    <Trash2 className="h-4 w-4" />
-                  </button>
+                  <div className="flex items-center gap-2">
+                    <button
+                      type="button"
+                      onClick={() => handleEditClick(note)}
+                      className="text-gray-700 hover:text-blue-600 transition-colors"
+                      title="Edit"
+                    >
+                      <Pencil className="h-4 w-4" />
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => handleDelete(note._id)}
+                      className="text-gray-700 hover:text-red-600 transition-colors"
+                      title="Delete"
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </button>
+                  </div>
                 </div>
                 {note.description && (
                   <p className="text-sm text-gray-800 mt-2 whitespace-pre-wrap break-words">{note.description}</p>
@@ -109,6 +132,17 @@ const StickyNotesBoard = () => {
           onClose={() => setIsModalOpen(false)}
           onCreated={handleCreated}
           defaultType="sticky"
+        />
+        <NoteFormModal
+          isOpen={isEditModalOpen}
+          onClose={() => {
+            setIsEditModalOpen(false);
+            setEditingNote(null);
+          }}
+          onUpdated={handleUpdated}
+          defaultType="sticky"
+          mode="edit"
+          note={editingNote}
         />
       </div>
     </section>

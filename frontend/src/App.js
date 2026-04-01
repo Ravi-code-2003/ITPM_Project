@@ -51,7 +51,7 @@ function App() {
     <ThemeProvider>
       <AuthProvider>
         <CartProvider>
-        <Router>
+        <Router future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
           <div className="min-h-screen bg-background dark:bg-background-dark transition-colors duration-200">
           <Routes>
             {/* Public Routes */}

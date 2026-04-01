@@ -155,23 +155,22 @@ const toggleTodoCompletion = async (req, res) => {
 
 /**
  * PATCH /api/notes/:id
- * Edit todo fields for the authenticated user.
+ * Edit note fields for the authenticated user.
  */
-const updateTodo = async (req, res) => {
+const updateNote = async (req, res) => {
   try {
     const { id } = req.params;
-    const { title, description, dueDate } = req.body;
+    const { title, description, dueDate, color } = req.body;
 
     const note = await Note.findOne({
       _id: id,
       userId: req.user.id,
-      type: "todo",
     });
 
     if (!note) {
       return res.status(404).json({
         success: false,
-        message: "Todo item not found",
+        message: "Note not found",
       });
     }
 
@@ -189,10 +188,22 @@ const updateTodo = async (req, res) => {
       note.description = description.trim();
     }
 
-    if (dueDate === null || dueDate === "") {
-      note.dueDate = null;
-    } else if (typeof dueDate === "string" || dueDate instanceof Date) {
-      note.dueDate = new Date(dueDate);
+    if (note.type === "todo") {
+      if (dueDate === null || dueDate === "") {
+        note.dueDate = null;
+      } else if (typeof dueDate === "string" || dueDate instanceof Date) {
+        note.dueDate = new Date(dueDate);
+      }
+    }
+
+    if (note.type === "sticky" && typeof color === "string") {
+      if (!STICKY_COLORS.includes(color)) {
+        return res.status(400).json({
+          success: false,
+          message: `Color must be one of: ${STICKY_COLORS.join(", ")}`,
+        });
+      }
+      note.color = color;
     }
 
     note.updatedAt = new Date();
@@ -201,7 +212,7 @@ const updateTodo = async (req, res) => {
     return res.json({
       success: true,
       note,
-      message: "Todo updated successfully",
+      message: `${note.type === "sticky" ? "Sticky note" : "Todo"} updated successfully`,
     });
   } catch (error) {
     return res.status(400).json({
@@ -246,6 +257,6 @@ module.exports = {
   getStickyNotes,
   getTodos,
   toggleTodoCompletion,
-  updateTodo,
+  updateNote,
   deleteNote,
 };

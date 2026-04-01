@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+﻿import React, { useEffect, useState } from "react";
 import {
   Calendar,
   Heart,
@@ -7,6 +7,7 @@ import {
   Star,
   Utensils,
   ShoppingCart,
+  Target,
 } from "lucide-react";
 import { useSearchParams, useNavigate } from "react-router-dom";
 import Button from "../../components/ui/Button";
@@ -22,14 +23,17 @@ import BudgetTracker from "../../components/student/BudgetTracker";
 import CartPage from "../../components/student/CartPage";
 import TodoTable from "../../components/notes/TodoTable";
 import LostFoundSection from "../../components/lostfound/LostFoundSection";
-import api from "../../services/api";
+import api, { transactionsAPI } from "../../services/api";
 import { useCart } from "../../contexts/CartContext";
+import { useAuth } from "../../contexts/AuthContext";
 import toast from "react-hot-toast";
 
 const StudentDashboard = () => {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
   const { getCartCount } = useCart();
+  const { user } = useAuth();
+  const userId = user?._id || JSON.parse(localStorage.getItem("user") || "{}")?._id;
 
   const [activeTab, setActiveTab] = useState("overview");
   const [stats, setStats] = useState({
@@ -42,6 +46,12 @@ const StudentDashboard = () => {
   const [loading, setLoading] = useState(false);
   const [dashboardDataLoading, setDashboardDataLoading] = useState(true);
   const [topRatedFoods, setTopRatedFoods] = useState([]);
+  const [budgetSummary, setBudgetSummary] = useState({
+    totalIncome: 0,
+    totalExpenses: 0,
+    remainingBudget: 0,
+    last10Transactions: [],
+  });
 
   useEffect(() => {
     const tabParam = searchParams.get("tab");
@@ -55,28 +65,56 @@ const StudentDashboard = () => {
     if (activeTab === "overview") {
       fetchStats();
     }
-  }, [activeTab]);
+  }, [activeTab, userId]);
+
+  useEffect(() => {
+    if (activeTab === "budget" && userId) {
+      fetchBudgetSummary();
+    }
+  }, [activeTab, userId]);
 
   useEffect(() => {
     fetchTopRatedFoods();
   }, []);
 
   const fetchStats = async () => {
+    setLoading(true);
+    const requests = [
+      api.get("/student/orders?limit=3", { timeout: 20000 }),
+      api.get("/student/favorites", { timeout: 20000 }),
+      api.get("/student/offers", { timeout: 20000 }),
+    ];
+
     try {
-      setLoading(true);
-      const [ordersRes, favoritesRes, offersRes, budgetRes] = await Promise.all([
-        api.get("/student/orders?limit=3"),
-        api.get("/student/favorites"),
-        api.get("/student/offers"),
-        api.get("/student/budget-tracker?monthlyBudget=500"),
-      ]);
+      const [ordersRes, favoritesRes, offersRes] = await Promise.allSettled(requests);
+
+      const ordersData =
+        ordersRes.status === "fulfilled" ? ordersRes.value?.data : null;
+      const favoritesData =
+        favoritesRes.status === "fulfilled" ? favoritesRes.value?.data : null;
+      const offersData =
+        offersRes.status === "fulfilled" ? offersRes.value?.data : null;
+
+      if (ordersRes.status === "rejected") {
+        console.error("Error fetching orders stats:", ordersRes.reason);
+      }
+      if (favoritesRes.status === "rejected") {
+        console.error("Error fetching favorites stats:", favoritesRes.reason);
+      }
+      if (offersRes.status === "rejected") {
+        console.error("Error fetching offers stats:", offersRes.reason);
+      }
+
       setStats({
-        totalOrders: ordersRes.data.pagination.totalOrders,
-        monthlySpent: budgetRes.data.budgetTracker.totalSpent,
-        favoriteRestaurants: favoritesRes.data.favorites.length,
-        currentOffers: offersRes.data.offers.length,
+        totalOrders: ordersData?.pagination?.totalOrders || 0,
+        monthlySpent: 0,
+        favoriteRestaurants: favoritesData?.favorites?.length || 0,
+        currentOffers: offersData?.offers?.length || 0,
       });
-      setRecentOrders(ordersRes.data.orders);
+
+      if (ordersData?.orders) {
+        setRecentOrders(ordersData.orders);
+      }
     } catch (error) {
       console.error("Error fetching stats:", error);
       setStats({
@@ -87,6 +125,21 @@ const StudentDashboard = () => {
       });
     } finally {
       setLoading(false);
+    }
+  };
+
+  const fetchBudgetSummary = async () => {
+    try {
+      const summaryRes = await transactionsAPI.getSummary(userId);
+      if (summaryRes?.summary) {
+        setBudgetSummary(summaryRes.summary);
+        setStats((prev) => ({
+          ...prev,
+          monthlySpent: summaryRes.summary.totalExpenses || 0,
+        }));
+      }
+    } catch (error) {
+      console.error("Error fetching budget summary:", error);
     }
   };
 
@@ -182,7 +235,7 @@ const StudentDashboard = () => {
                 <CardContent className="p-6">
                   <div className="flex items-center justify-between">
                     <div>
-                      <p className="text-sm text-secondary dark:text-gray-400">Monthly Spent</p>
+                      <p className="text-sm text-secondary dark:text-gray-400">Total Expenses</p>
                       <p className="text-2xl font-bold text-primary dark:text-gray-100">
                         LKR {stats.monthlySpent.toFixed(2)}
                       </p>
@@ -219,6 +272,54 @@ const StudentDashboard = () => {
                     </div>
                     <div className="bg-orange-100 dark:bg-orange-900/30 p-3 rounded-lg">
                       <Star className="h-8 w-8 text-orange-600 dark:text-orange-400" />
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+              <Card>
+                <CardContent className="p-6">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-sm text-secondary dark:text-gray-400">Total Income</p>
+                      <p className="text-2xl font-bold text-primary dark:text-gray-100">
+                        LKR {budgetSummary.totalIncome.toFixed(2)}
+                      </p>
+                    </div>
+                    <div className="bg-green-100 dark:bg-green-900/30 p-3 rounded-lg">
+                      <Target className="h-8 w-8 text-green-600 dark:text-green-400" />
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+              <Card>
+                <CardContent className="p-6">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-sm text-secondary dark:text-gray-400">Remaining Budget</p>
+                      <p className="text-2xl font-bold text-primary dark:text-gray-100">
+                        LKR {budgetSummary.remainingBudget.toFixed(2)}
+                      </p>
+                    </div>
+                    <div className="bg-blue-100 dark:bg-blue-900/30 p-3 rounded-lg">
+                      <DollarSign className="h-8 w-8 text-blue-600 dark:text-blue-400" />
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+              <Card>
+                <CardContent className="p-6">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-sm text-secondary dark:text-gray-400">Recent Transactions</p>
+                      <p className="text-2xl font-bold text-primary dark:text-gray-100">
+                        {budgetSummary.last10Transactions?.length || 0}
+                      </p>
+                    </div>
+                    <div className="bg-purple-100 dark:bg-purple-900/30 p-3 rounded-lg">
+                      <Calendar className="h-8 w-8 text-purple-600 dark:text-purple-400" />
                     </div>
                   </div>
                 </CardContent>
@@ -307,7 +408,7 @@ const StudentDashboard = () => {
                             {order.restaurantId.shopName}
                           </p>
                           <p className="text-sm text-secondary dark:text-gray-400">
-                            {new Date(order.createdAt).toLocaleDateString()} � {order.status}
+                            {new Date(order.createdAt).toLocaleDateString()} • {order.status}
                           </p>
                         </div>
                         <span className="font-semibold text-green-600 dark:text-green-400">

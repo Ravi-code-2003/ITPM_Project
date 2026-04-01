@@ -20,17 +20,11 @@ const CART_ACTIONS = {
 
 // Reducer
 const cartReducer = (state, action) => {
-  console.log('CartReducer action:', action.type, action.payload);
-  console.log('CartReducer current state:', state);
-  
   switch (action.type) {
     case CART_ACTIONS.ADD_ITEM: {
       const { item, isCombo, restaurantId, restaurantName } = action.payload;
-      console.log('Processing ADD_ITEM:', { item, isCombo, restaurantId, restaurantName });
-      
       // If cart has items from different restaurant, clear it first
       if (state.restaurantId && state.restaurantId !== restaurantId) {
-        console.log('Clearing cart due to different restaurant');
         return {
           items: [{
             id: item._id,
@@ -51,7 +45,6 @@ const cartReducer = (state, action) => {
       );
 
       if (existingItemIndex >= 0) {
-        console.log('Updating existing item quantity');
         // Update quantity of existing item
         const updatedItems = [...state.items];
         updatedItems[existingItemIndex] = {
@@ -65,10 +58,8 @@ const cartReducer = (state, action) => {
           restaurantId: restaurantId || state.restaurantId,
           restaurantName: restaurantName || state.restaurantName,
         };
-        console.log('Updated state with existing item:', newState);
         return newState;
       } else {
-        console.log('Adding new item to cart');
         // Add new item
         const newState = {
           ...state,
@@ -83,7 +74,6 @@ const cartReducer = (state, action) => {
           restaurantId: restaurantId || state.restaurantId,
           restaurantName: restaurantName || state.restaurantName,
         };
-        console.log('Updated state with new item:', newState);
         return newState;
       }
     }
@@ -170,25 +160,20 @@ export const CartProvider = ({ children }) => {
 
   // Action creators
   const addToCart = (item, isCombo = false, restaurantId = null, restaurantName = null) => {
-    console.log('CartContext addToCart called:', { item, isCombo, restaurantId, restaurantName });
-    
     // If adding from different restaurant, confirm with user
     if (state.restaurantId && state.restaurantId !== restaurantId && state.items.length > 0) {
       const confirmed = window.confirm(
         `You have items from ${state.restaurantName} in your cart. Adding items from a different restaurant will clear your current cart. Continue?`
       );
       if (!confirmed) {
-        console.log('User declined to clear cart');
         return;
       }
     }
 
-    console.log('Dispatching ADD_ITEM action');
     dispatch({
       type: CART_ACTIONS.ADD_ITEM,
       payload: { item, isCombo, restaurantId, restaurantName }
     });
-    console.log('Cart state after add:', state);
   };
 
   const updateQuantity = (itemId, isCombo, change) => {
@@ -223,11 +208,7 @@ export const CartProvider = ({ children }) => {
     return state.items.reduce((total, item) => total + (item.price * item.quantity), 0);
   };
 
-  const getCartCount = () => {
-    const count = state.items.reduce((total, item) => total + item.quantity, 0);
-    console.log('Cart count calculated:', count, 'from items:', state.items);
-    return count;
-  };
+  const getCartCount = () => state.items.reduce((total, item) => total + item.quantity, 0);
 
   const value = {
     cart: state,
@@ -253,7 +234,6 @@ export const useCart = () => {
   if (!context) {
     throw new Error('useCart must be used within a CartProvider');
   }
-  console.log('useCart called, current cart:', context.cart);
   return context;
 };
 

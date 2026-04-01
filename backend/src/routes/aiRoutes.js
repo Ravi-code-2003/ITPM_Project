@@ -1,5 +1,5 @@
 const express = require("express");
-const { getChatHistory, chatWithAI } = require("../controllers/aiController");
+const { getChatHistory, chatWithAI, budgetAdvice } = require("../controllers/aiController");
 const { protect, authorize } = require("../middleware/auth");
 const aiRateLimiter = require("../middleware/aiRateLimiter");
 
@@ -10,5 +10,6 @@ router.use(authorize("student", "shop-owner", "house-owner", "education-path", "
 
 router.get("/chat", getChatHistory);
 router.post("/chat", aiRateLimiter, chatWithAI);
+router.post("/budget-advice", aiRateLimiter, budgetAdvice);
 
 module.exports = router;

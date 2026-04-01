@@ -16,6 +16,7 @@ const shopRoutes = require("./routes/shopRoutes");
 const studentRoutes = require("./routes/studentRoutes");
 const noteRoutes = require("./routes/noteRoutes");
 const lostFoundRoutes = require("./routes/lostFoundRoutes");
+const transactionRoutes = require("./routes/transactionRoutes");
 
 
 
@@ -78,6 +79,7 @@ app.use("/api/admin", adminRoutes);
 app.use("/api/ai", aiRoutes);
 app.use("/api/shop", shopRoutes);
 app.use("/api/student", studentRoutes);
+app.use("/api/transactions", transactionRoutes);
 app.use("/api/notes", noteRoutes);
 app.use("/api/lostfound", lostFoundRoutes);
 

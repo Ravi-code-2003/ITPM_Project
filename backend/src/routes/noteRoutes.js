@@ -5,7 +5,7 @@ const {
   getStickyNotes,
   getTodos,
   toggleTodoCompletion,
-  updateTodo,
+  updateNote,
   deleteNote,
 } = require("../controllers/noteController");
 
@@ -17,7 +17,7 @@ router.post("/", createNote);
 router.get("/sticky", getStickyNotes);
 router.get("/todos", getTodos);
 router.patch("/:id/complete", toggleTodoCompletion);
-router.patch("/:id", updateTodo);
+router.patch("/:id", updateNote);
 router.delete("/:id", deleteNote);
 
 module.exports = router;

@@ -10,7 +10,10 @@ const NoteFormModal = ({
   isOpen,
   onClose,
   onCreated,
+  onUpdated,
   defaultType = "sticky",
+  mode = "create",
+  note = null,
 }) => {
   const [type, setType] = useState(defaultType);
   const [title, setTitle] = useState("");
@@ -18,16 +21,25 @@ const NoteFormModal = ({
   const [color, setColor] = useState("yellow");
   const [dueDate, setDueDate] = useState("");
   const [submitting, setSubmitting] = useState(false);
+  const isEditing = mode === "edit";
 
   useEffect(() => {
     if (isOpen) {
-      setType(defaultType);
-      setTitle("");
-      setDescription("");
-      setColor("yellow");
-      setDueDate("");
+      if (isEditing && note) {
+        setType(note.type || defaultType);
+        setTitle(note.title || "");
+        setDescription(note.description || "");
+        setColor(note.color || "yellow");
+        setDueDate(note.dueDate ? new Date(note.dueDate).toISOString().split("T")[0] : "");
+      } else {
+        setType(defaultType);
+        setTitle("");
+        setDescription("");
+        setColor("yellow");
+        setDueDate("");
+      }
     }
-  }, [isOpen, defaultType]);
+  }, [isOpen, defaultType, isEditing, note]);
 
   if (!isOpen) {
     return null;
@@ -54,13 +66,23 @@ const NoteFormModal = ({
     }
 
     try {
+      if (isEditing && !note?._id) {
+        toast.error("Missing note to update");
+        return;
+      }
       setSubmitting(true);
-      const response = await notesAPI.createNote(payload);
-      onCreated?.(response.note);
-      toast.success(`${type === "sticky" ? "Sticky note" : "Todo"} added`);
+      if (isEditing) {
+        const response = await notesAPI.updateNote(note._id, payload);
+        onUpdated?.(response.note);
+        toast.success(`${type === "sticky" ? "Sticky note" : "Todo"} updated`);
+      } else {
+        const response = await notesAPI.createNote(payload);
+        onCreated?.(response.note);
+        toast.success(`${type === "sticky" ? "Sticky note" : "Todo"} added`);
+      }
       onClose();
     } catch (error) {
-      toast.error(error.response?.data?.message || "Failed to create note");
+      toast.error(error.response?.data?.message || `Failed to ${isEditing ? "update" : "create"} note`);
     } finally {
       setSubmitting(false);
     }
@@ -71,22 +93,24 @@ const NoteFormModal = ({
       <div className="notes-modal dark:bg-gray-900" onClick={(e) => e.stopPropagation()}>
         <h3 className="text-lg font-semibold text-primary dark:text-gray-100 mb-3">Jot Down</h3>
 
-        <div className="inline-flex rounded-lg border border-gray-300 dark:border-gray-700 p-1 mb-4">
-          <button
-            type="button"
-            onClick={() => setType("sticky")}
-            className={`px-3 py-1.5 text-sm rounded-md ${type === "sticky" ? "bg-primary text-white" : "text-secondary dark:text-gray-300"}`}
-          >
-            Sticky Note
-          </button>
-          <button
-            type="button"
-            onClick={() => setType("todo")}
-            className={`px-3 py-1.5 text-sm rounded-md ${type === "todo" ? "bg-primary text-white" : "text-secondary dark:text-gray-300"}`}
-          >
-            Todo
-          </button>
-        </div>
+        {!isEditing && (
+          <div className="inline-flex rounded-lg border border-gray-300 dark:border-gray-700 p-1 mb-4">
+            <button
+              type="button"
+              onClick={() => setType("sticky")}
+              className={`px-3 py-1.5 text-sm rounded-md ${type === "sticky" ? "bg-primary text-white" : "text-secondary dark:text-gray-300"}`}
+            >
+              Sticky Note
+            </button>
+            <button
+              type="button"
+              onClick={() => setType("todo")}
+              className={`px-3 py-1.5 text-sm rounded-md ${type === "todo" ? "bg-primary text-white" : "text-secondary dark:text-gray-300"}`}
+            >
+              Todo
+            </button>
+          </div>
+        )}
 
         <form onSubmit={handleSubmit} className="space-y-3">
           <div>
@@ -149,7 +173,7 @@ const NoteFormModal = ({
               Cancel
             </Button>
             <Button type="submit" size="sm" disabled={submitting}>
-              Save
+              {isEditing ? "Update" : "Save"}
             </Button>
           </div>
         </form>

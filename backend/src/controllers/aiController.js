@@ -1,5 +1,6 @@
 const joi = require("joi");
 const Chat = require("../models/Chat");
+const Transaction = require("../models/Transaction");
 const { generateChatResponse } = require("../services/groqService");
 const { buildDatabaseContext } = require("../services/databaseContextService");
 
@@ -16,6 +17,10 @@ const ROLE_NAME_MAP = {
 
 const chatSchema = joi.object({
   message: joi.string().min(1).max(2000).required(),
+});
+
+const budgetAdviceSchema = joi.object({
+  userId: joi.string().optional(),
 });
 
 const sanitizeInput = (value) => {
@@ -92,7 +97,10 @@ const buildMessages = ({ user, contextMessages, userMessage, dbContext }) => {
   }
   if (dbContext) {
     systemLines.push(
-      "Priority rule: for food and accommodation questions, use DATABASE_CONTEXT as the primary source of truth."
+      "Priority rule: for food, accommodation, and academics questions, use DATABASE_CONTEXT as the primary source of truth."
+    );
+    systemLines.push(
+      "If DATABASE_CONTEXT includes foodItems or comboMeals, list those first when users ask about available meals (e.g., lunch packs). Do not invent items."
     );
     systemLines.push(
       "If database context has no matching records, clearly say data is unavailable instead of guessing."
@@ -105,6 +113,32 @@ const buildMessages = ({ user, contextMessages, userMessage, dbContext }) => {
     { role: "system", content: systemLines.join("\n") },
     ...normalizedHistory,
     { role: "user", content: userMessage },
+  ];
+};
+
+const buildBudgetAdviceMessages = ({ transactions, summary }) => {
+  const systemPrompt =
+    "You are a financial advisor for university students in Sri Lanka. " +
+    "Analyze the provided transaction history and return practical, actionable budgeting guidance. " +
+    "Respond ONLY in valid JSON with keys: suggestions (array of 3 strings), warnings (array of 2 strings), savingsRecommendation (string).";
+
+  const payload = {
+    summary,
+    recentTransactions: transactions.map((txn) => ({
+      type: txn.type,
+      category: txn.category,
+      amount: txn.amount,
+      date: txn.date,
+      description: txn.description || "",
+    })),
+  };
+
+  return [
+    { role: "system", content: systemPrompt },
+    {
+      role: "user",
+      content: `Analyze this student transaction data:\n${JSON.stringify(payload)}`,
+    },
   ];
 };
 
@@ -214,7 +248,88 @@ const chatWithAI = async (req, res) => {
   }
 };
 
+const budgetAdvice = async (req, res) => {
+  try {
+    const { error, value } = budgetAdviceSchema.validate(req.body || {});
+    if (error) {
+      return res.status(400).json({
+        message: "Validation error",
+        details: error.details[0].message,
+      });
+    }
+
+    const targetUserId =
+      value.userId && req.user.role === "admin" ? value.userId : req.user._id;
+
+    const transactions = await Transaction.find({ userId: targetUserId })
+      .sort({ date: -1, createdAt: -1 })
+      .limit(120)
+      .lean();
+
+    const totalIncome = transactions
+      .filter((t) => t.type === "income")
+      .reduce((sum, t) => sum + t.amount, 0);
+    const totalExpenses = transactions
+      .filter((t) => t.type === "expense")
+      .reduce((sum, t) => sum + t.amount, 0);
+    const remainingBudget = totalIncome - totalExpenses;
+
+    const expenseByCategory = transactions
+      .filter((t) => t.type === "expense")
+      .reduce((acc, txn) => {
+        acc[txn.category] = (acc[txn.category] || 0) + txn.amount;
+        return acc;
+      }, {});
+
+    const summary = {
+      totalIncome,
+      totalExpenses,
+      remainingBudget,
+      expenseByCategory,
+      transactionCount: transactions.length,
+    };
+
+    const messages = buildBudgetAdviceMessages({ transactions, summary });
+    const rawResponse = await generateChatResponse(messages, { temperature: 0.3 });
+
+    let advice = null;
+    try {
+      advice = JSON.parse(rawResponse);
+    } catch (parseError) {
+      advice = {
+        suggestions: [rawResponse],
+        warnings: [],
+        savingsRecommendation: "",
+      };
+    }
+
+    const normalizedAdvice = {
+      suggestions: Array.isArray(advice.suggestions)
+        ? advice.suggestions.slice(0, 3)
+        : [],
+      warnings: Array.isArray(advice.warnings) ? advice.warnings.slice(0, 2) : [],
+      savingsRecommendation: advice.savingsRecommendation || "",
+    };
+
+    return res.json({
+      success: true,
+      advice: normalizedAdvice,
+    });
+  } catch (error) {
+    console.error("AI budget advice error:", error);
+    const status = error.status || 500;
+    return res.status(status).json({
+      message: error.message || "Server error while generating budget advice",
+      error: {
+        code: error.code || "AI_BUDGET_ADVICE_ERROR",
+        details: error.details || null,
+      },
+    });
+  }
+};
+
 module.exports = {
   getChatHistory,
   chatWithAI,
+  budgetAdvice,
 };
