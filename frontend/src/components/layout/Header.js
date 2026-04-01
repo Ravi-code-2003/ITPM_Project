@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
+import { useCart } from '../../contexts/CartContext';
 import Button from '../ui/Button';
 import ThemeToggle from '../ui/ThemeToggle';
 import NotificationBell from './NotificationBell';
@@ -16,13 +17,15 @@ import {
   Info,
   ChevronDown,
   UtensilsCrossed,
-  Building2
+  Building2,
+  ShoppingCart
 } from 'lucide-react';
 
 const Header = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
   const { isAuthenticated, user, logout } = useAuth();
+  const { getCartCount } = useCart();
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -110,32 +113,12 @@ const Header = () => {
               </Link>
             ))}
           </nav>
-          {/* Desktop Navigation - Show for non-authenticated users and students */}
-          {(!isAuthenticated || (isAuthenticated && user?.role === 'student')) && (
-            <nav className="hidden md:flex items-center space-x-10 lg:space-x-12">
-              {publicNavItems.map((item) => (
-                <Link
-                  key={item.name}
-                  to={item.href}
-                  className="flex items-center space-x-1 text-gray-700 dark:text-gray-300 hover:text-primary dark:hover:text-accent transition-colors duration-200 font-medium"
-                >
-                  <item.icon className="h-4 w-4" />
-                  <span>{item.name}</span>
-                </Link>
-              ))}
-            </nav>
-          )}
 
           {/* Auth Buttons / User Menu */}
           <div className="hidden md:flex items-center space-x-4">
             <ThemeToggle />
             {isAuthenticated ? (
-              <div className="flex items-center">
-                {/* User Info Dropdown */}
               <div className="flex items-center space-x-3">
-                <ThemeToggle />
-
-                {/* User Profile Dropdown */}
                 <div className="relative">
                   <button
                     onClick={() => setIsUserMenuOpen(!isUserMenuOpen)}
@@ -153,7 +136,6 @@ const Header = () => {
                     <ChevronDown className={`h-4 w-4 transition-transform duration-200 ${isUserMenuOpen ? 'rotate-180' : ''}`} />
                   </button>
 
-                  {/* User Dropdown Menu */}
                   {isUserMenuOpen && (
                     <div className="absolute right-0 mt-2 w-56 bg-surface dark:bg-surface-dark rounded-xl shadow-soft-lg py-2 border border-secondary/20 dark:border-secondary/10 z-50">
                       <div className="px-4 py-2 border-b border-secondary/20 dark:border-secondary/10">
@@ -186,7 +168,6 @@ const Header = () => {
 
                 <NotificationBell />
 
-                {/* Cart Icon for Students */}
                 {user?.role === 'student' && (
                   <Link
                     to="/student/cart"
