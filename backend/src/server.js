@@ -7,6 +7,9 @@ const connectDB = require("./config/db");
 // Import routes
 const authRoutes = require("./routes/authRoutes");
 const adminRoutes = require("./routes/adminRoutes");
+const educationRoutes = require("./routes/EducationRoute");
+const lectureRequestRoutes = require("./routes/LectureRequestRoute");
+const programRoutes = require("./routes/ProgramRoute");
 const roomRoutes = require("./routes/roomRoutes");
 const roomRequestRoutes = require("./routes/roomRequestRoutes");
 const roomOfferRoutes = require("./routes/roomOfferRoutes");
@@ -56,7 +59,7 @@ app.use("/uploads", express.static(path.join(__dirname, "../uploads")));
 // Routes
 app.get("/", (req, res) => {
   res.json({
-    message: "🚀 Student Connect API is running!",
+    message: "🚀 UniCore API is running!",
     version: "1.0.0",
     environment: process.env.NODE_ENV || "development",
     endpoints: {
@@ -75,6 +78,9 @@ app.get("/", (req, res) => {
 // API Routes
 app.use("/api/auth", authRoutes);
 app.use("/api/admin", adminRoutes);
+app.use("/api/education/materials", educationRoutes);
+app.use("/api/education/requests", lectureRequestRoutes);
+app.use("/api/education/programs", programRoutes);
 app.use("/api/rooms", roomRoutes);
 app.use("/api/room-requests", roomRequestRoutes);
 app.use("/api/room-offers", roomOfferRoutes);

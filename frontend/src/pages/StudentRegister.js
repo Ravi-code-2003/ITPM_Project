@@ -92,7 +92,7 @@ const StudentRegister = () => {
             <GraduationCap className="h-10 w-10 text-white" />
           </div>
           <h1 className="text-4xl font-bold text-primary dark:text-gray-100 mb-3 tracking-tight">Student Registration</h1>
-          <p className="text-lg text-secondary dark:text-gray-400">Join Student Connect and unlock campus opportunities</p>
+          <p className="text-lg text-secondary dark:text-gray-400">Join UniCore and unlock campus opportunities</p>
         </div>
 
         {/* Registration Form */}

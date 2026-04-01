@@ -22,7 +22,7 @@ const Footer = () => {
               <div className="bg-accent text-primary p-2 rounded-lg">
                 <BookOpen className="h-6 w-6" />
               </div>
-              <span className="text-xl font-bold">Student Connect</span>
+              <span className="text-xl font-bold">UniCore</span>
             </div>
             <p className="text-gray-300 text-sm leading-relaxed">
               Connecting students with food, accommodation, and educational opportunities 
@@ -107,7 +107,7 @@ const Footer = () => {
               </div>
               <div className="flex items-center space-x-2">
                 <Mail className="h-5 w-5 text-accent" />
-                <span className="text-gray-300 text-sm">info@studentconnect.lk</span>
+                <span className="text-gray-300 text-sm">info@unicore.lk</span>
               </div>
             </div>
           </div>
@@ -117,7 +117,7 @@ const Footer = () => {
         <div className="border-t border-accent/30 mt-8 pt-8">
           <div className="flex flex-col md:flex-row justify-between items-center">
             <div className="text-gray-300 text-sm">
-              © 2026 Student Connect. All rights reserved.
+              © 2026 UniCore. All rights reserved.
             </div>
             <div className="flex space-x-6 mt-4 md:mt-0">
               <Link to="/privacy" className="text-gray-300 hover:text-accent transition-colors duration-200 text-sm">
