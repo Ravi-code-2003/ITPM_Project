@@ -7,6 +7,9 @@ const connectDB = require("./config/db");
 // Import routes
 const authRoutes = require("./routes/authRoutes");
 const adminRoutes = require("./routes/adminRoutes");
+const educationRoutes = require("./routes/EducationRoute");
+const lectureRequestRoutes = require("./routes/LectureRequestRoute");
+const programRoutes = require("./routes/ProgramRoute");
 const roomRoutes = require("./routes/roomRoutes");
 const roomRequestRoutes = require("./routes/roomRequestRoutes");
 const roomOfferRoutes = require("./routes/roomOfferRoutes");
