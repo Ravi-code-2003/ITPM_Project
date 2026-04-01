@@ -328,6 +328,74 @@ export const downloadOrderPDF = (orderData) => {
   }
 };
 
+export const generateMealPlanPDF = (selectedMealsByCategory = {}) => {
+  const printWindow = window.open("", "_blank");
+  if (!printWindow) {
+    throw new Error("Popup blocked. Please allow popups for this site.");
+  }
+
+  const categories = ["breakfast", "lunch", "dinner"];
+  const formatRow = (meal) => `
+    <div class="meal-token">
+      <div class="meal-name">${meal.name || "Meal"}</div>
+      <div class="meal-meta">
+        <span>Calories: ${meal.nutrition?.calories ?? "-"}</span>
+        <span>Protein: ${meal.nutrition?.protein ?? "-"}g</span>
+        <span>Carbs: ${meal.nutrition?.carbs ?? "-"}g</span>
+        <span>Fats: ${meal.nutrition?.fats ?? "-"}g</span>
+      </div>
+      <div class="meal-tags">${(meal.tags || []).join(", ")}</div>
+    </div>
+  `;
+
+  const html = `
+    <!DOCTYPE html>
+    <html>
+      <head>
+        <meta charset="UTF-8" />
+        <title>Personal Meal Plan</title>
+        <style>
+          body { font-family: Arial, sans-serif; margin: 24px; color: #1f2937; }
+          h1 { margin: 0 0 12px; }
+          h2 { margin: 18px 0 8px; border-bottom: 1px solid #e5e7eb; padding-bottom: 6px; text-transform: capitalize; }
+          .meal-token { border: 1px solid #e5e7eb; border-radius: 10px; padding: 10px; margin-bottom: 8px; }
+          .meal-name { font-weight: 700; margin-bottom: 6px; }
+          .meal-meta { display: grid; grid-template-columns: 1fr 1fr; gap: 4px; font-size: 12px; color: #374151; }
+          .meal-tags { margin-top: 6px; font-size: 12px; color: #2563eb; }
+          .empty { color: #6b7280; font-style: italic; }
+        </style>
+      </head>
+      <body>
+        <h1>Personal Meal Plan</h1>
+        ${categories
+          .map((category) => {
+            const rows = selectedMealsByCategory[category] || [];
+            return `
+              <section>
+                <h2>${category}</h2>
+                ${
+                  rows.length
+                    ? rows.map((meal) => formatRow(meal)).join("")
+                    : `<p class="empty">No meals selected for ${category}.</p>`
+                }
+              </section>
+            `;
+          })
+          .join("")}
+        <script>
+          window.onload = function () {
+            setTimeout(function () { window.print(); }, 300);
+          };
+          window.onafterprint = function () { window.close(); };
+        </script>
+      </body>
+    </html>
+  `;
+
+  printWindow.document.write(html);
+  printWindow.document.close();
+};
+
 const createTextReceipt = (orderData) => {
   const orderNumber = orderData._id ? orderData._id.slice(-8).toUpperCase() : 'N/A';
   const currentDate = new Date().toLocaleDateString();
@@ -371,6 +439,6 @@ const downloadTextReceipt = (text, filename) => {
   document.body.removeChild(element);
 };
 
-const pdfGenerator = { generateOrderPDF, downloadOrderPDF };
+const pdfGenerator = { generateOrderPDF, downloadOrderPDF, generateMealPlanPDF };
 
 export default pdfGenerator;

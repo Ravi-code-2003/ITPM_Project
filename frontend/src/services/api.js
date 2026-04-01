@@ -72,14 +72,16 @@ api.interceptors.response.use(
   (error) => {
     // Debug error response
     if (DEBUG) {
-      console.error('❌ API Error:', {
+      const details = {
         message: error.message,
         status: error.response?.status,
         data: error.response?.data,
         url: error.config?.url,
         baseURL: error.config?.baseURL,
         fullURL: `${error.config?.baseURL}${error.config?.url}`,
-      });
+      };
+      console.error(`❌ API Error [${details.status || "NO_STATUS"}] ${details.fullURL}: ${details.message}`);
+      console.error('❌ API Error Details:', details);
     }
 
     const message = error.response?.data?.message || error.message || 'Network error occurred';
@@ -237,11 +239,6 @@ export const aiAPI = {
     const response = await api.post("/ai/chat", { message }, { timeout: AI_REQUEST_TIMEOUT_MS });
     return response.data;
   },
-
-  getBudgetAdvice: async () => {
-    const response = await api.post("/ai/budget-advice", {}, { timeout: AI_REQUEST_TIMEOUT_MS });
-    return response.data;
-  },
 };
 
 // Transactions API calls
@@ -258,6 +255,61 @@ export const transactionsAPI = {
 
   getSummary: async (userId) => {
     const response = await api.get(`/transactions/summary/${userId}`);
+    return response.data;
+  },
+};
+
+export const budgetAPI = {
+  upsertBudget: async (payload) => {
+    const response = await api.post("/budget", payload);
+    return response.data;
+  },
+  getSummary: async (params = {}) => {
+    const response = await api.get("/budget/summary", { params });
+    return response.data;
+  },
+  getUserBudget: async (userId) => {
+    const response = await api.get(`/budget/${userId}`);
+    return response.data;
+  },
+  updateBudget: async (id, payload) => {
+    const response = await api.put(`/budget/${id}`, payload);
+    return response.data;
+  },
+  deleteBudget: async (id) => {
+    const response = await api.delete(`/budget/${id}`);
+    return response.data;
+  },
+  getMealPlan: async (params = {}) => {
+    const response = await api.get("/budget/meal-plan", { params });
+    return response.data;
+  },
+  getSuggestions: async (params = {}) => {
+    const response = await api.get("/budget/suggestions", { params });
+    return response.data;
+  },
+  getInsights: async (params = {}) => {
+    const response = await api.get("/budget/insights", { params });
+    return response.data;
+  },
+  addExpense: async (payload) => {
+    const response = await api.post("/budget/expenses", payload);
+    return response.data;
+  },
+  getExpenses: async (params = {}) => {
+    const response = await api.get("/budget/expenses", { params });
+    return response.data;
+  },
+  updateExpense: async (id, payload) => {
+    const response = await api.patch(`/budget/expenses/${id}`, payload);
+    return response.data;
+  },
+  deleteExpense: async (id) => {
+    const response = await api.delete(`/budget/expenses/${id}`);
+    return response.data;
+  },
+  getProgression: async (params = {}) => {
+    const response = await api.get("/budget/progression", { params });
     return response.data;
   },
 };
