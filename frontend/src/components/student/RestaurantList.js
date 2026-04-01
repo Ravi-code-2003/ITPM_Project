@@ -231,7 +231,7 @@ const RestaurantList = () => {
                   Owned by {restaurant.shopOwnerId?.fullName || 'Shop Owner'}
                 </p>
               </div>
-
+              
               {/* Action Button */}
               <Link to={`/student/restaurant/${restaurant._id}`}>
                 <Button className="w-full">

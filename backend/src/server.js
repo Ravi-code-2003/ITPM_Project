@@ -13,6 +13,7 @@ const roomOfferRoutes = require("./routes/roomOfferRoutes");
 const studentRoutes = require("./routes/studentRoutes");
 const shopRoutes = require("./routes/shopRoutes");
 const aiRoutes = require("./routes/aiRoutes");
+const notificationRoutes = require("./routes/notificationRoutes");
 
 // Load environment variables
 dotenv.config();
@@ -41,7 +42,7 @@ console.log('🌐 CORS: Allowed origins:', allowedOrigins);
 app.use(cors({
   origin: allowedOrigins,
   credentials: true,
-  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization', 'Origin', 'Accept', 'X-Requested-With'],
   optionsSuccessStatus: 200 // Some legacy browsers choke on 204
 }));
@@ -80,6 +81,7 @@ app.use("/api/room-offers", roomOfferRoutes);
 app.use("/api/student", studentRoutes);
 app.use("/api/shop", shopRoutes);
 app.use("/api/ai", aiRoutes);
+app.use("/api/notifications", notificationRoutes);
 
 // Health check endpoint
 app.get("/api/health", (req, res) => {

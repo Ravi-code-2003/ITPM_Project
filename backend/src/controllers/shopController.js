@@ -6,6 +6,30 @@ const Order = require("../models/Order");
 const Poll = require("../models/Poll");
 const PollProposal = require("../models/PollProposal");
 const User = require("../models/User");
+const { createOrderNotification } = require("../services/notificationService");
+
+const getStudentStatusNotificationContent = (status, orderNumber) => {
+  const statusContent = {
+    confirmed: {
+      title: "Order is being prepared",
+      message: `Order ${orderNumber} is now preparing.`
+    },
+    ready: {
+      title: "Food is ready",
+      message: `Order ${orderNumber} is ready now. You can pick it up.`
+    },
+    cancelled: {
+      title: "Order cancelled",
+      message: `Order ${orderNumber} has been cancelled by the shop owner.`
+    },
+    completed: {
+      title: "Order completed",
+      message: `Order ${orderNumber} was marked as completed.`
+    }
+  };
+
+  return statusContent[status] || null;
+};
 
 /**
  * Auto-create restaurant if it doesn't exist
@@ -524,18 +548,62 @@ const updateOrderStatus = async (req, res) => {
   try {
     const restaurant = await ensureRestaurantExists(req.user.id);
     const { status } = req.body;
-    
-    const order = await Order.findOneAndUpdate(
-      { _id: req.params.id, restaurantId: restaurant._id },
-      { status },
-      { new: true }
-    ).populate('studentId', 'fullName email');
-    
+
+    const allowedStatuses = ['pending', 'confirmed', 'ready', 'completed', 'cancelled'];
+    if (!allowedStatuses.includes(status)) {
+      return res.status(400).json({
+        success: false,
+        message: 'Invalid order status'
+      });
+    }
+
+    const order = await Order.findOne({
+      _id: req.params.id,
+      restaurantId: restaurant._id
+    });
+
     if (!order) {
       return res.status(404).json({
         success: false,
         message: 'Order not found'
       });
+    }
+
+    const transitionMap = {
+      pending: ['confirmed', 'cancelled'],
+      confirmed: ['ready', 'cancelled'],
+      ready: ['completed', 'cancelled'],
+      completed: [],
+      cancelled: []
+    };
+
+    const allowedNextStatuses = transitionMap[order.status] || [];
+    if (!allowedNextStatuses.includes(status)) {
+      return res.status(400).json({
+        success: false,
+        message: `Cannot change order status from ${order.status} to ${status}`
+      });
+    }
+
+    order.status = status;
+    await order.save();
+
+    await order.populate('studentId', 'fullName email');
+
+    const studentNotification = getStudentStatusNotificationContent(status, order.orderNumber);
+    if (studentNotification) {
+      try {
+        await createOrderNotification({
+          recipientId: order.studentId._id || order.studentId,
+          recipientRole: "student",
+          orderId: order._id,
+          type: "order-status",
+          title: studentNotification.title,
+          message: studentNotification.message
+        });
+      } catch (notificationError) {
+        console.error("Failed to create student notification:", notificationError.message);
+      }
     }
     
     res.json({

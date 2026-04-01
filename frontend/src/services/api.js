@@ -6,7 +6,7 @@ const DEBUG = process.env.NODE_ENV === 'development';
 
 // Create axios instance
 const api = axios.create({
-  baseURL: process.env.REACT_APP_API_URL || 'http://localhost:5000/api',
+  baseURL: process.env.REACT_APP_API_URL || 'http://localhost:5001/api',
   headers: {
     'Content-Type': 'application/json',
   },
@@ -237,6 +237,28 @@ export const aiAPI = {
     const response = await api.post("/ai/chat", { message }, { timeout: AI_REQUEST_TIMEOUT_MS });
     return response.data;
   },
+};
+
+export const notificationAPI = {
+  getMyNotifications: async (limit = 20, unreadOnly = false) => {
+    const params = new URLSearchParams({
+      limit: String(limit),
+      unreadOnly: String(unreadOnly)
+    });
+
+    const response = await api.get(`/notifications?${params.toString()}`);
+    return response.data;
+  },
+
+  markAsRead: async (notificationId) => {
+    const response = await api.patch(`/notifications/${notificationId}/read`);
+    return response.data;
+  },
+
+  markAllAsRead: async () => {
+    const response = await api.patch('/notifications/read-all');
+    return response.data;
+  }
 };
 
 export default api;

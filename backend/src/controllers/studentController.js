@@ -7,6 +7,7 @@ const FavoriteRestaurant = require("../models/FavoriteRestaurant");
 const Rating = require("../models/Rating");
 const Poll = require("../models/Poll");
 const PollProposal = require("../models/PollProposal");
+const { createOrderNotification } = require("../services/notificationService");
 
 /**
  * GET /api/student/restaurants
@@ -270,6 +271,19 @@ const createOrder = async (req, res) => {
       { path: 'items.foodItemId', select: 'name price category' },
       { path: 'items.comboMealId', select: 'name totalPrice' }
     ]);
+
+    try {
+      await createOrderNotification({
+        recipientId: restaurant.shopOwnerId,
+        recipientRole: "shop-owner",
+        orderId: order._id,
+        type: "new-order",
+        title: "New order received",
+        message: `Order ${order.orderNumber} was placed. Amount: LKR ${totalAmount.toFixed(2)}.`
+      });
+    } catch (notificationError) {
+      console.error("Failed to create shop-owner notification:", notificationError.message);
+    }
     
     res.status(201).json({
       success: true,
@@ -563,6 +577,21 @@ const voteInPoll = async (req, res) => {
     // Find or create poll for today
     const today = new Date();
     today.setHours(0, 0, 0, 0);
+
+    // One vote per restaurant per day for legacy polls.
+    const existingVoteToday = await Poll.findOne({
+      restaurantId,
+      pollDate: { $gte: today },
+      isActive: true,
+      voters: studentId
+    });
+
+    if (existingVoteToday) {
+      return res.status(400).json({
+        success: false,
+        message: 'You have already voted today and cannot change your vote'
+      });
+    }
     
     let poll = await Poll.findOne({
       restaurantId,
@@ -582,7 +611,7 @@ const voteInPoll = async (req, res) => {
     }
     
     // Check if student already voted for this food item today
-    if (poll.voters.includes(studentId)) {
+    if (poll.hasUserVoted(studentId)) {
       return res.status(400).json({
         success: false,
         message: 'You have already voted for this item today'
@@ -626,9 +655,14 @@ const getPollResults = async (req, res) => {
       .populate('foodItemId', 'name price category')
       .sort({ votes: -1 });
     
+    const pollsWithVoteState = polls.map((poll) => ({
+      ...poll.toObject(),
+      hasUserVoted: poll.hasUserVoted(req.user.id)
+    }));
+
     res.json({
       success: true,
-      polls
+      polls: pollsWithVoteState
     });
   } catch (error) {
     res.status(500).json({
@@ -778,7 +812,8 @@ const voteInPollProposal = async (req, res) => {
     }
 
     // Check if student already voted for this specific proposal
-    if (proposal.voters.includes(studentId)) {
+    const hasVotedProposal = proposal.voters.some(voter => voter.toString() === studentId.toString());
+    if (hasVotedProposal) {
       return res.status(400).json({
         success: false,
         message: 'You have already voted for this proposal'

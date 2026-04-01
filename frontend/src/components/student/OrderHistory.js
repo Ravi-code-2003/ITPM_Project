@@ -236,7 +236,7 @@ const OrderHistory = () => {
                 : 'Start exploring restaurants and place your first order'}
             </p>
             {!statusFilter && (
-              <Link to="/student/restaurants">
+              <Link to="/restaurants">
                 <Button>
                   Browse Restaurants
                 </Button>

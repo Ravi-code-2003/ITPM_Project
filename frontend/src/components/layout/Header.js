@@ -3,6 +3,7 @@ import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
 import Button from '../ui/Button';
 import ThemeToggle from '../ui/ThemeToggle';
+import NotificationBell from './NotificationBell';
 import { 
   Menu, 
   X, 
@@ -71,7 +72,7 @@ const Header = () => {
 
   return (
     <header className="bg-surface dark:bg-surface-dark shadow-soft border-b border-secondary/20 dark:border-secondary/10 sticky top-0 z-50 transition-colors duration-200">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div className="max-w-screen-2xl mx-auto px-4 sm:px-6 lg:px-8 xl:px-12">
         <div className="flex justify-between items-center h-16">
           {/* Logo */}
           <div className="flex items-center">
@@ -103,6 +104,21 @@ const Header = () => {
               </Link>
             ))}
           </nav>
+          {/* Desktop Navigation - Show for non-authenticated users and students */}
+          {(!isAuthenticated || (isAuthenticated && user?.role === 'student')) && (
+            <nav className="hidden md:flex items-center space-x-10 lg:space-x-12">
+              {publicNavItems.map((item) => (
+                <Link
+                  key={item.name}
+                  to={item.href}
+                  className="flex items-center space-x-1 text-gray-700 dark:text-gray-300 hover:text-primary dark:hover:text-accent transition-colors duration-200 font-medium"
+                >
+                  <item.icon className="h-4 w-4" />
+                  <span>{item.name}</span>
+                </Link>
+              ))}
+            </nav>
+          )}
 
           {/* Auth Buttons / User Menu */}
           <div className="hidden md:flex items-center space-x-4">
@@ -110,6 +126,10 @@ const Header = () => {
             {isAuthenticated ? (
               <div className="flex items-center">
                 {/* User Info Dropdown */}
+              <div className="flex items-center space-x-3">
+                <ThemeToggle />
+
+                {/* User Profile Dropdown */}
                 <div className="relative">
                   <button
                     onClick={() => setIsUserMenuOpen(!isUserMenuOpen)}
@@ -157,6 +177,24 @@ const Header = () => {
                     </div>
                   )}
                 </div>
+
+                <NotificationBell />
+
+                {/* Cart Icon for Students */}
+                {user?.role === 'student' && (
+                  <Link
+                    to="/student/cart"
+                    className="relative flex items-center justify-center text-gray-700 dark:text-gray-300 hover:text-primary dark:hover:text-accent transition-all duration-200 p-2 rounded-lg hover:bg-primary/10 dark:hover:bg-primary/20 group"
+                    title="Shopping Cart"
+                  >
+                    <ShoppingCart className="h-5 w-5 group-hover:scale-110 transition-transform" />
+                    {getCartCount() > 0 && (
+                      <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center font-bold shadow-md">
+                        {getCartCount() > 99 ? '99+' : getCartCount()}
+                      </span>
+                    )}
+                  </Link>
+                )}
               </div>
             ) : (
               <div className="flex items-center space-x-4">
@@ -177,6 +215,22 @@ const Header = () => {
 
           {/* Mobile menu button */}
           <div className="md:hidden flex items-center space-x-2">
+            {/* Cart Icon for Students on Mobile */}
+            {isAuthenticated && user?.role === 'student' && (
+              <Link
+                to="/student/cart"
+                className="relative flex items-center justify-center text-gray-700 dark:text-gray-300 hover:text-primary dark:hover:text-accent transition-all duration-200 p-2 rounded-lg hover:bg-primary/10"
+                title="Shopping Cart"
+              >
+                <ShoppingCart className="h-5 w-5" />
+                {getCartCount() > 0 && (
+                  <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full h-4 w-4 flex items-center justify-center font-bold">
+                    {getCartCount() > 9 ? '9+' : getCartCount()}
+                  </span>
+                )}
+              </Link>
+            )}
+            {isAuthenticated && <NotificationBell />}
             <ThemeToggle />
             <button
               onClick={() => setIsMenuOpen(!isMenuOpen)}
