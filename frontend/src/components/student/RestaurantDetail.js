@@ -222,6 +222,11 @@ const RestaurantDetail = () => {
   };
 
   const voteInPoll = async (foodItemId) => {
+    if (polls.some((poll) => poll.hasUserVoted)) {
+      toast.error('You have already voted and cannot change your vote');
+      return;
+    }
+
     try {
       await api.post('/student/poll/vote', {
         restaurantId: id,
@@ -263,6 +268,7 @@ const RestaurantDetail = () => {
   };
 
   const categories = ['all', 'breakfast', 'lunch', 'dinner', 'snack', 'drink'];
+  const hasVotedInLegacyPoll = polls.some((poll) => poll.hasUserVoted);
 
   if (loading) {
     return (
@@ -296,19 +302,6 @@ const RestaurantDetail = () => {
             <ArrowLeft className="h-4 w-4" />
             <span className="text-sm">Back to Restaurants</span>
           </Button>
-        </div>
-
-        {/* Action Buttons - Floating */}
-        <div className="fixed top-20 right-6 z-40 flex flex-col gap-3">
-          {(polls.length > 0 || enhancedPolls.length > 0) && (
-            <Button
-              onClick={() => setShowPollModal(true)}
-              className="bg-purple-500 hover:bg-purple-600 text-white shadow-lg rounded-full w-12 h-12 p-0"
-              title="Vote for Tomorrow's Special"
-            >
-              <Vote className="h-5 w-5" />
-            </Button>
-          )}
         </div>
 
         {/* Restaurant Hero Section */}
@@ -591,8 +584,12 @@ const RestaurantDetail = () => {
                 {polls.filter(poll => poll.foodItemId).map(poll => (
                   <div 
                     key={poll._id}
-                    className="bg-white dark:bg-gray-800 rounded-xl p-5 shadow-md hover:shadow-lg transition-all duration-200 border border-purple-200 dark:border-purple-700 cursor-pointer hover:scale-[1.02]"
-                    onClick={() => voteInPoll(poll.foodItemId._id)}
+                    className={`bg-white dark:bg-gray-800 rounded-xl p-5 shadow-md transition-all duration-200 border border-purple-200 dark:border-purple-700 ${
+                      hasVotedInLegacyPoll
+                        ? 'cursor-not-allowed opacity-70'
+                        : 'cursor-pointer hover:shadow-lg hover:scale-[1.02]'
+                    }`}
+                    onClick={() => !hasVotedInLegacyPoll && voteInPoll(poll.foodItemId._id)}
                   >
                     <div className="flex justify-between items-start mb-3">
                       <div className="flex-1">
@@ -609,7 +606,7 @@ const RestaurantDetail = () => {
                       </div>
                     </div>
                     <p className="text-center text-purple-600 dark:text-purple-400 font-medium text-sm">
-                      Click to vote
+                      {hasVotedInLegacyPoll ? 'You already voted' : 'Click to vote'}
                     </p>
                   </div>
                 ))}
@@ -1207,8 +1204,12 @@ const RestaurantDetail = () => {
                     {polls.filter(poll => poll.foodItemId).map(poll => (
                       <div 
                         key={poll._id}
-                        className="border border-gray-200 dark:border-gray-700 rounded-lg p-3 hover:bg-gray-50 dark:hover:bg-gray-800 cursor-pointer"
-                        onClick={() => voteInPoll(poll.foodItemId._id)}
+                        className={`border border-gray-200 dark:border-gray-700 rounded-lg p-3 ${
+                          hasVotedInLegacyPoll
+                            ? 'cursor-not-allowed opacity-70'
+                            : 'hover:bg-gray-50 dark:hover:bg-gray-800 cursor-pointer'
+                        }`}
+                        onClick={() => !hasVotedInLegacyPoll && voteInPoll(poll.foodItemId._id)}
                       >
                         <div className="flex justify-between items-center">
                           <div>
