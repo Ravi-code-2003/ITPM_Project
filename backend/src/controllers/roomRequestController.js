@@ -49,18 +49,6 @@ const createRoomRequest = async (req, res) => {
       return res.status(400).json({ message: "This room is no longer available" });
     }
 
-    // Check if student already has a pending/accepted request for this room
-    const existingRequest = await RoomRequest.findOne({
-      room: roomId,
-      student: req.user._id,
-    });
-
-    if (existingRequest) {
-      return res.status(400).json({
-        message: "You already have a request for this room",
-      });
-    }
-
     // Create request
     const roomRequest = await RoomRequest.create({
       room: roomId,

@@ -482,9 +482,12 @@ const deleteRoom = async (req, res) => {
       return res.status(403).json({ message: "Not authorized to delete this room" });
     }
 
-    // Soft delete - just mark as inactive
-    room.isActive = false;
-    await room.save();
+    // Hard delete room and related records so it is fully removed.
+    await Promise.all([
+      RoomRequest.deleteMany({ room: room._id }),
+      RoomOffer.deleteMany({ room: room._id }),
+      Room.deleteOne({ _id: room._id }),
+    ]);
 
     res.status(200).json({
       success: true,
@@ -501,7 +504,9 @@ const deleteRoom = async (req, res) => {
 // @access  Private (House Owner only)
 const getMyRooms = async (req, res) => {
   try {
-    const rooms = await Room.find({ owner: req.user._id }).sort({ createdAt: -1 }).lean();
+    const rooms = await Room.find({ owner: req.user._id, isActive: true })
+      .sort({ createdAt: -1 })
+      .lean();
 
     if (rooms.length === 0) {
       return res.status(200).json({
