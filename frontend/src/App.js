@@ -297,34 +297,34 @@ function App() {
                   />
                 </Routes>
 
-                {/* Toast notifications */}
-                <Toaster
-                  position="top-right"
-                  toastOptions={{
-                    duration: 4000,
-                    style: {
-                      background: '#2A3048',
-                      color: '#fff',
-                    },
-                    success: {
-                      duration: 3000,
-                      iconTheme: {
-                        primary: '#CFC6A8',
-                        secondary: '#fff',
-                      },
-                    },
-                    error: {
-                      duration: 5000,
-                      iconTheme: {
-                        primary: '#ef4444',
-                        secondary: '#fff',
-                      },
-                    },
-                  }}
-                />
-                <FloatingAIChat />
-              </div>
-            </Router>
+          {/* Toast notifications */}
+          <Toaster
+            position="top-center"
+            toastOptions={{
+              duration: 4000,
+              style: {
+                background: '#2A3048',
+                color: '#fff',
+              },
+              success: {
+                duration: 3000,
+                iconTheme: {
+                  primary: '#CFC6A8',
+                  secondary: '#fff',
+                },
+              },
+              error: {
+                duration: 5000,
+                iconTheme: {
+                  primary: '#ef4444',
+                  secondary: '#fff',
+                },
+              },
+            }}
+          />
+          <FloatingAIChat />
+          </div>
+        </Router>
           </NotificationProvider>
         </CartProvider>
       </AuthProvider>

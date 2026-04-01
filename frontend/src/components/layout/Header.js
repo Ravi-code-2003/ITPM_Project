@@ -1,10 +1,10 @@
 import React, { useState } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
+import { useCart } from '../../contexts/CartContext';
 import Button from '../ui/Button';
 import ThemeToggle from '../ui/ThemeToggle';
 import NotificationBell from './NotificationBell';
-import { useCart } from '../../contexts/CartContext';
 import { 
   Menu, 
   X, 
@@ -119,23 +119,6 @@ const Header = () => {
             <ThemeToggle />
             {isAuthenticated ? (
               <div className="flex items-center space-x-3">
-                {user?.role === 'student' && (
-                  <Link
-                    to="/student/cart"
-                    className="relative flex items-center justify-center text-gray-700 dark:text-gray-300 hover:text-primary dark:hover:text-accent transition-all duration-200 p-2 rounded-lg hover:bg-primary/10 dark:hover:bg-primary/20 group"
-                    title="Shopping Cart"
-                  >
-                    <ShoppingCart className="h-5 w-5 group-hover:scale-110 transition-transform" />
-                    {getCartCount() > 0 && (
-                      <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center font-bold shadow-md">
-                        {getCartCount() > 99 ? '99+' : getCartCount()}
-                      </span>
-                    )}
-                  </Link>
-                )}
-
-                <NotificationBell />
-
                 <div className="relative">
                   <button
                     onClick={() => setIsUserMenuOpen(!isUserMenuOpen)}
@@ -153,7 +136,6 @@ const Header = () => {
                     <ChevronDown className={`h-4 w-4 transition-transform duration-200 ${isUserMenuOpen ? 'rotate-180' : ''}`} />
                   </button>
 
-                  {/* User Dropdown Menu */}
                   {isUserMenuOpen && (
                     <div className="absolute right-0 mt-2 w-56 bg-surface dark:bg-surface-dark rounded-xl shadow-soft-lg py-2 border border-secondary/20 dark:border-secondary/10 z-50">
                       <div className="px-4 py-2 border-b border-secondary/20 dark:border-secondary/10">
@@ -183,6 +165,23 @@ const Header = () => {
                     </div>
                   )}
                 </div>
+
+                <NotificationBell />
+
+                {user?.role === 'student' && (
+                  <Link
+                    to="/student/cart"
+                    className="relative flex items-center justify-center text-gray-700 dark:text-gray-300 hover:text-primary dark:hover:text-accent transition-all duration-200 p-2 rounded-lg hover:bg-primary/10 dark:hover:bg-primary/20 group"
+                    title="Shopping Cart"
+                  >
+                    <ShoppingCart className="h-5 w-5 group-hover:scale-110 transition-transform" />
+                    {getCartCount() > 0 && (
+                      <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center font-bold shadow-md">
+                        {getCartCount() > 99 ? '99+' : getCartCount()}
+                      </span>
+                    )}
+                  </Link>
+                )}
               </div>
             ) : (
               <div className="flex items-center space-x-4">
