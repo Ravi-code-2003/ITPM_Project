@@ -16,8 +16,49 @@ const RoomDetailModal = ({ room, onClose }) => {
     phone: '',
     whatsapp: '',
   });
+  const [formErrors, setFormErrors] = useState({
+    phone: '',
+    whatsapp: '',
+  });
   const [selectedImage, setSelectedImage] = useState(0);
   const [submitting, setSubmitting] = useState(false);
+
+  const validateSriLankanNumber = (value, required = false) => {
+    const number = value.trim();
+
+    if (!number) {
+      return required ? 'Phone number is required' : '';
+    }
+
+    if (/^0\d{9}$/.test(number)) {
+      return '';
+    }
+
+    if (/^\+94[1-9]\d{8}$/.test(number)) {
+      return '';
+    }
+
+    return 'Use 0XXXXXXXXX (10 digits) or +94XXXXXXXXX (9 digits after +94, not +940...)';
+  };
+
+  const handleContactChange = (field, value) => {
+    setRequestData((prev) => ({ ...prev, [field]: value }));
+
+    if (field === 'phone') {
+      setFormErrors((prev) => ({
+        ...prev,
+        phone: value ? validateSriLankanNumber(value, true) : '',
+      }));
+      return;
+    }
+
+    if (field === 'whatsapp') {
+      setFormErrors((prev) => ({
+        ...prev,
+        whatsapp: value ? validateSriLankanNumber(value, false) : '',
+      }));
+    }
+  };
 
   // Increment view count when modal opens
   useEffect(() => {
@@ -31,6 +72,20 @@ const RoomDetailModal = ({ room, onClose }) => {
 
   const handleSubmitRequest = async (e) => {
     e.preventDefault();
+
+    const phoneError = validateSriLankanNumber(requestData.phone, true);
+    const whatsappError = requestData.whatsapp
+      ? validateSriLankanNumber(requestData.whatsapp, false)
+      : '';
+
+    if (phoneError || whatsappError) {
+      setFormErrors({
+        phone: phoneError,
+        whatsapp: whatsappError,
+      });
+      return;
+    }
+
     setSubmitting(true);
 
     try {
@@ -38,6 +93,7 @@ const RoomDetailModal = ({ room, onClose }) => {
       toast.success('Request sent successfully!');
       setShowRequestForm(false);
       setRequestData({ message: '', phone: '', whatsapp: '' });
+      setFormErrors({ phone: '', whatsapp: '' });
     } catch (error) {
       toast.error(error.response?.data?.message || 'Failed to send request');
     } finally {
@@ -279,13 +335,18 @@ const RoomDetailModal = ({ room, onClose }) => {
                           <input
                             type="tel"
                             value={requestData.phone}
-                            onChange={(e) =>
-                              setRequestData({ ...requestData, phone: e.target.value })
-                            }
+                            onChange={(e) => handleContactChange('phone', e.target.value)}
                             required
-                            className="w-full px-3 py-2 text-sm border border-secondary/30 rounded-lg focus:ring-2 focus:ring-primary dark:bg-surface-dark dark:border-gray-600 dark:text-gray-100"
-                            placeholder="0771234567"
+                            className={`w-full px-3 py-2 text-sm border rounded-lg focus:ring-2 focus:ring-primary dark:bg-surface-dark dark:border-gray-600 dark:text-gray-100 ${
+                              formErrors.phone ? 'border-red-500' : 'border-secondary/30'
+                            }`}
+                            placeholder="0771234567 or +94771234567"
                           />
+                          {formErrors.phone && (
+                            <p className="mt-1 text-xs text-red-600 dark:text-red-400">
+                              {formErrors.phone}
+                            </p>
+                          )}
                         </div>
                         <div>
                           <label className="block text-sm font-medium text-primary dark:text-gray-300 mb-1">
@@ -294,12 +355,17 @@ const RoomDetailModal = ({ room, onClose }) => {
                           <input
                             type="tel"
                             value={requestData.whatsapp}
-                            onChange={(e) =>
-                              setRequestData({ ...requestData, whatsapp: e.target.value })
-                            }
-                            className="w-full px-3 py-2 text-sm border border-secondary/30 rounded-lg focus:ring-2 focus:ring-primary dark:bg-surface-dark dark:border-gray-600 dark:text-gray-100"
-                            placeholder="0771234567"
+                            onChange={(e) => handleContactChange('whatsapp', e.target.value)}
+                            className={`w-full px-3 py-2 text-sm border rounded-lg focus:ring-2 focus:ring-primary dark:bg-surface-dark dark:border-gray-600 dark:text-gray-100 ${
+                              formErrors.whatsapp ? 'border-red-500' : 'border-secondary/30'
+                            }`}
+                            placeholder="0771234567 or +94771234567"
                           />
+                          {formErrors.whatsapp && (
+                            <p className="mt-1 text-xs text-red-600 dark:text-red-400">
+                              {formErrors.whatsapp}
+                            </p>
+                          )}
                         </div>
                         <div>
                           <label className="block text-sm font-medium text-primary dark:text-gray-300 mb-1">

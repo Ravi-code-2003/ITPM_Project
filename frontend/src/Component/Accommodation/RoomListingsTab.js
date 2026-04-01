@@ -45,6 +45,7 @@ const RoomListingsTab = ({ onUpdate }) => {
 
     try {
       await roomService.deleteRoom(roomId);
+      setRooms((prevRooms) => prevRooms.filter((room) => room._id !== roomId));
       toast.success('Room deleted successfully');
       fetchRooms();
     } catch (error) {
