@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Heart, MapPin, Star, Eye, Trash2 } from 'lucide-react';
+import { Heart, MapPin, Star, Eye } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import Button from '../ui/Button';
 import Card from '../ui/Card';
@@ -92,9 +92,9 @@ const FavoritesPage = () => {
                       size="sm"
                       variant="ghost"
                       onClick={() => removeFavorite(restaurant._id)}
-                      className="p-2 text-red-500 hover:text-red-700 hover:bg-red-50 dark:hover:bg-red-900/20"
+                      className="p-2 text-red-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20"
                     >
-                      <Trash2 className="h-4 w-4" />
+                      <Heart className="h-4 w-4 fill-current drop-shadow-[0_0_2px_rgba(248,113,113,0.35)]" />
                     </Button>
                   </div>
 
@@ -135,7 +135,7 @@ const FavoritesPage = () => {
             <p className="mb-6">
               Start exploring restaurants and add them to your favorites for quick access
             </p>
-            <Link to="/student/restaurants">
+            <Link to="/restaurants">
               <Button>
                 Discover Restaurants
               </Button>
