@@ -19,11 +19,11 @@ const Button = ({
   const baseStyles = 'inline-flex items-center justify-center font-semibold rounded-lg transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary dark:focus:ring-accent disabled:opacity-50 disabled:cursor-not-allowed shadow-lg hover:shadow-xl';
 
   const variants = {
-    primary: 'bg-primary hover:bg-primary-hover text-white border-2 border-primary hover:border-primary-hover',
-    secondary: 'bg-accent hover:bg-accent-hover text-primary dark:text-primary border-2 border-accent hover:border-accent-hover',
+    primary: 'bg-primary hover:bg-primary-hover text-white border-2 border-primary hover:border-primary-hover dark:bg-primary dark:hover:bg-primary-hover dark:border-primary',
+    secondary: 'bg-accent hover:bg-accent-hover text-primary dark:text-primary border-2 border-accent hover:border-accent-hover dark:bg-accent dark:hover:bg-accent-hover',
     outline: 'border-2 border-primary dark:border-accent text-primary dark:text-accent hover:bg-primary hover:text-white hover:border-primary dark:hover:bg-accent dark:hover:text-primary dark:hover:border-accent bg-white dark:bg-transparent',
     ghost: 'text-primary dark:text-accent hover:bg-primary/10 dark:hover:bg-accent/10',
-    danger: 'bg-red-600 hover:bg-red-700 text-white border-2 border-red-600 hover:border-red-700',
+    danger: 'bg-red-600 hover:bg-red-700 text-white border-2 border-red-600 hover:border-red-700 dark:bg-red-600 dark:hover:bg-red-700',
   };
 
   const sizes = {

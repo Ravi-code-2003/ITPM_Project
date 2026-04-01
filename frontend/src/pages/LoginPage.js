@@ -210,7 +210,7 @@ const LoginPage = () => {
               </label>
               <div className="relative">
                 <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                  <Mail className="h-5 w-5 text-secondary" />
+                  <Mail className="h-5 w-5 text-secondary dark:text-gray-400" />
                 </div>
                 <input
                   id="email"
@@ -236,7 +236,7 @@ const LoginPage = () => {
               </label>
               <div className="relative">
                 <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                  <Lock className="h-5 w-5 text-secondary" />
+                  <Lock className="h-5 w-5 text-secondary dark:text-gray-400" />
                 </div>
                 <input
                   id="password"
@@ -253,7 +253,7 @@ const LoginPage = () => {
                   <button
                     type="button"
                     onClick={() => setShowPassword(!showPassword)}
-                    className="text-secondary hover:text-primary dark:hover:text-accent transition-colors duration-200"
+                    className="text-secondary dark:text-gray-400 hover:text-primary dark:hover:text-accent transition-colors duration-200"
                   >
                     {showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
                   </button>

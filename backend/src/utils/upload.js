@@ -1,7 +1,7 @@
-const multer = require("multer");
+const multer = require("multer"); //we use these for the uploading of the images to the server and then to cloudinary
 const cloudinary = require("cloudinary").v2;
 const path = require("path");
-const fs = require("fs");
+const fs = require("fs"); 
 
 // Configure Cloudinary
 cloudinary.config({
@@ -49,9 +49,17 @@ const upload = multer({
 // Upload to Cloudinary helper function
 const uploadToCloudinary = async (filePath) => {
   try {
-    if (process.env.CLOUDINARY_CLOUD_NAME) {
+    // Check if Cloudinary is properly configured
+    const isCloudinaryConfigured = 
+      process.env.CLOUDINARY_CLOUD_NAME && 
+      process.env.CLOUDINARY_API_KEY && 
+      process.env.CLOUDINARY_API_SECRET &&
+      process.env.CLOUDINARY_CLOUD_NAME !== 'your-cloud-name' &&
+      process.env.CLOUDINARY_API_KEY !== 'your-api-key';
+    
+    if (isCloudinaryConfigured) {
       const result = await cloudinary.uploader.upload(filePath, {
-        folder: "student-connect/proofs",
+        folder: "student-connect/rooms",
         transformation: [
           { width: 800, height: 600, crop: "limit", quality: "auto:good" }
         ],
@@ -62,7 +70,8 @@ const uploadToCloudinary = async (filePath) => {
       
       return result.secure_url;
     } else {
-      // Return local file path if Cloudinary not configured
+      // Use local file storage when Cloudinary not configured
+      console.log('Cloudinary not configured, using local storage for:', path.basename(filePath));
       return `/uploads/${path.basename(filePath)}`;
     }
   } catch (error) {

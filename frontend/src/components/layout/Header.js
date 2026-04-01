@@ -1,8 +1,10 @@
 import React, { useState } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
+import { useCart } from '../../contexts/CartContext';
 import Button from '../ui/Button';
 import ThemeToggle from '../ui/ThemeToggle';
+import NotificationBell from './NotificationBell';
 import { 
   Menu, 
   X, 
@@ -15,13 +17,15 @@ import {
   Info,
   ChevronDown,
   UtensilsCrossed,
-  Building2
+  Building2,
+  ShoppingCart
 } from 'lucide-react';
 
 const Header = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
   const { isAuthenticated, user, logout } = useAuth();
+  const { getCartCount } = useCart();
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -69,9 +73,15 @@ const Header = () => {
     { name: 'Contact', href: '/contact', icon: Phone },
   ];
 
+  const visibleNavItems = publicNavItems.filter((item) => {
+    if (item.href !== '/restaurants') return true;
+    if (!isAuthenticated) return true;
+    return user?.role === 'student';
+  });
+
   return (
     <header className="bg-surface dark:bg-surface-dark shadow-soft border-b border-secondary/20 dark:border-secondary/10 sticky top-0 z-50 transition-colors duration-200">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div className="max-w-screen-2xl mx-auto px-4 sm:px-6 lg:px-8 xl:px-12">
         <div className="flex justify-between items-center h-16">
           {/* Logo */}
           <div className="flex items-center">
@@ -90,28 +100,25 @@ const Header = () => {
             </Link>
           </div>
 
-          {/* Desktop Navigation - Only show for non-authenticated users */}
-          {!isAuthenticated && (
-            <nav className="hidden md:flex items-center space-x-8">
-              {publicNavItems.map((item) => (
-                <Link
-                  key={item.name}
-                  to={item.href}
-                  className="flex items-center space-x-1 text-gray-700 dark:text-gray-300 hover:text-primary dark:hover:text-accent transition-colors duration-200 font-medium"
-                >
-                  <item.icon className="h-4 w-4" />
-                  <span>{item.name}</span>
-                </Link>
-              ))}
-            </nav>
-          )}
+          {/* Desktop Navigation */}
+          <nav className="hidden md:flex items-center space-x-8">
+            {visibleNavItems.map((item) => (
+              <Link
+                key={item.name}
+                to={item.href}
+                className="flex items-center space-x-1 text-gray-700 dark:text-gray-300 hover:text-primary dark:hover:text-accent transition-colors duration-200 font-medium"
+              >
+                <item.icon className="h-4 w-4" />
+                <span>{item.name}</span>
+              </Link>
+            ))}
+          </nav>
 
           {/* Auth Buttons / User Menu */}
           <div className="hidden md:flex items-center space-x-4">
             <ThemeToggle />
             {isAuthenticated ? (
-              <div className="flex items-center">
-                {/* User Info Dropdown */}
+              <div className="flex items-center space-x-3">
                 <div className="relative">
                   <button
                     onClick={() => setIsUserMenuOpen(!isUserMenuOpen)}
@@ -129,7 +136,6 @@ const Header = () => {
                     <ChevronDown className={`h-4 w-4 transition-transform duration-200 ${isUserMenuOpen ? 'rotate-180' : ''}`} />
                   </button>
 
-                  {/* User Dropdown Menu */}
                   {isUserMenuOpen && (
                     <div className="absolute right-0 mt-2 w-56 bg-surface dark:bg-surface-dark rounded-xl shadow-soft-lg py-2 border border-secondary/20 dark:border-secondary/10 z-50">
                       <div className="px-4 py-2 border-b border-secondary/20 dark:border-secondary/10">
@@ -159,6 +165,23 @@ const Header = () => {
                     </div>
                   )}
                 </div>
+
+                <NotificationBell />
+
+                {user?.role === 'student' && (
+                  <Link
+                    to="/student/cart"
+                    className="relative flex items-center justify-center text-gray-700 dark:text-gray-300 hover:text-primary dark:hover:text-accent transition-all duration-200 p-2 rounded-lg hover:bg-primary/10 dark:hover:bg-primary/20 group"
+                    title="Shopping Cart"
+                  >
+                    <ShoppingCart className="h-5 w-5 group-hover:scale-110 transition-transform" />
+                    {getCartCount() > 0 && (
+                      <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center font-bold shadow-md">
+                        {getCartCount() > 99 ? '99+' : getCartCount()}
+                      </span>
+                    )}
+                  </Link>
+                )}
               </div>
             ) : (
               <div className="flex items-center space-x-4">
@@ -179,6 +202,22 @@ const Header = () => {
 
           {/* Mobile menu button */}
           <div className="md:hidden flex items-center space-x-2">
+            {/* Cart Icon for Students on Mobile */}
+            {isAuthenticated && user?.role === 'student' && (
+              <Link
+                to="/student/cart"
+                className="relative flex items-center justify-center text-gray-700 dark:text-gray-300 hover:text-primary dark:hover:text-accent transition-all duration-200 p-2 rounded-lg hover:bg-primary/10"
+                title="Shopping Cart"
+              >
+                <ShoppingCart className="h-5 w-5" />
+                {getCartCount() > 0 && (
+                  <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full h-4 w-4 flex items-center justify-center font-bold">
+                    {getCartCount() > 9 ? '9+' : getCartCount()}
+                  </span>
+                )}
+              </Link>
+            )}
+            {isAuthenticated && <NotificationBell />}
             <ThemeToggle />
             <button
               onClick={() => setIsMenuOpen(!isMenuOpen)}
@@ -197,24 +236,22 @@ const Header = () => {
         {isMenuOpen && (
           <div className="md:hidden border-t border-secondary/20 dark:border-secondary/10 py-4">
             <div className="flex flex-col space-y-3">
-              {!isAuthenticated && (
-                <>
-                  {publicNavItems.map((item) => (
-                    <Link
-                      key={item.name}
-                      to={item.href}
-                      className="flex items-center space-x-2 text-gray-700 dark:text-gray-300 hover:text-primary dark:hover:text-accent px-2 py-2 rounded-md transition-colors duration-200 font-medium"
-                      onClick={() => setIsMenuOpen(false)}
-                    >
-                      <item.icon className="h-4 w-4" />
-                      <span>{item.name}</span>
-                    </Link>
-                  ))}
-                </>
-              )}
+              {/* Navigation Items */}
+              {visibleNavItems.map((item) => (
+                <Link
+                  key={item.name}
+                  to={item.href}
+                  className="flex items-center space-x-2 text-gray-700 dark:text-gray-300 hover:text-primary dark:hover:text-accent px-2 py-2 rounded-md transition-colors duration-200 font-medium"
+                  onClick={() => setIsMenuOpen(false)}
+                >
+                  <item.icon className="h-4 w-4" />
+                  <span>{item.name}</span>
+                </Link>
+              ))}
               
+              {/* User Section */}
               {isAuthenticated ? (
-                <div className={`${!isAuthenticated ? 'border-t border-secondary/20 dark:border-secondary/10 pt-3 mt-3' : ''}`}>
+                <div className="border-t border-secondary/20 dark:border-secondary/10 pt-3 mt-3">
                   <div className="flex items-center space-x-2 px-2 py-2 mb-3">
                     <div className="bg-accent/20 p-2 rounded-full">
                       <User className="h-5 w-5 text-primary dark:text-accent" />
