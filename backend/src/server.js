@@ -10,6 +10,9 @@ const adminRoutes = require("./routes/adminRoutes");
 const roomRoutes = require("./routes/roomRoutes");
 const roomRequestRoutes = require("./routes/roomRequestRoutes");
 const roomOfferRoutes = require("./routes/roomOfferRoutes");
+const studentRoutes = require("./routes/studentRoutes");
+const shopRoutes = require("./routes/shopRoutes");
+const aiRoutes = require("./routes/aiRoutes");
 
 // Load environment variables
 dotenv.config();
@@ -61,6 +64,9 @@ app.get("/", (req, res) => {
       rooms: "/api/rooms",
       roomRequests: "/api/room-requests",
       roomOffers: "/api/room-offers",
+      student: "/api/student",
+      shop: "/api/shop",
+      ai: "/api/ai",
     },
   });
 });
@@ -71,6 +77,9 @@ app.use("/api/admin", adminRoutes);
 app.use("/api/rooms", roomRoutes);
 app.use("/api/room-requests", roomRequestRoutes);
 app.use("/api/room-offers", roomOfferRoutes);
+app.use("/api/student", studentRoutes);
+app.use("/api/shop", shopRoutes);
+app.use("/api/ai", aiRoutes);
 
 // Health check endpoint
 app.get("/api/health", (req, res) => {
