@@ -77,6 +77,54 @@ const getAllMaterials = async (req, res) => {
   }
 };
 
+// PATCH /api/education/materials/:id
+const updateMaterial = async (req, res) => {
+  try {
+    const material = await LectureMaterial.findOne({
+      _id: req.params.id,
+      uploadedBy: req.user._id,
+    });
+
+    if (!material) {
+      return res.status(404).json({ message: 'Material not found' });
+    }
+
+    const { title, description, course, linkUrl, isImportant } = req.body;
+
+    if (title !== undefined) {
+      if (!title || !title.trim()) {
+        return res.status(400).json({ message: 'Title is required' });
+      }
+      material.title = title.trim();
+    }
+
+    if (description !== undefined) {
+      material.description = description?.trim() || '';
+    }
+
+    if (course !== undefined) {
+      material.course = course?.trim() || '';
+    }
+
+    if (isImportant !== undefined) {
+      material.isImportant = isImportant === true || isImportant === 'true';
+    }
+
+    if (LINK_TYPES.includes(material.type) && linkUrl !== undefined) {
+      if (!linkUrl || !linkUrl.trim()) {
+        return res.status(400).json({ message: 'A link URL is required for this material type' });
+      }
+      material.linkUrl = linkUrl.trim();
+    }
+
+    await material.save();
+    res.json({ success: true, material });
+  } catch (error) {
+    console.error('updateMaterial error:', error);
+    res.status(500).json({ message: 'Server error', error: error.message });
+  }
+};
+
 // DELETE /api/education/materials/:id
 const deleteMaterial = async (req, res) => {
   try {
@@ -137,5 +185,13 @@ const getStudentCount = async (req, res) => {
   }
 };
 
-module.exports = { addMaterial, getMaterials, getAllMaterials, deleteMaterial, getStudentCount, toggleImportant };
+module.exports = {
+  addMaterial,
+  getMaterials,
+  getAllMaterials,
+  updateMaterial,
+  deleteMaterial,
+  getStudentCount,
+  toggleImportant,
+};
 

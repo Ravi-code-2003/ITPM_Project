@@ -6,7 +6,6 @@ import { useAuth } from '../contexts/AuthContext';
 import api from '../services/api';
 import toast from 'react-hot-toast';
 
-/* ── request helpers ────────────────────────────────────────────────────── */
 const MATERIAL_TYPES = [
   { value: 'lecture-notes', label: 'Lecture Notes' },
   { value: 'tutorial',      label: 'Tutorial' },
@@ -81,6 +80,14 @@ const getExamCountdown = (examDate, nowMs) => {
   return { label: `Started ${formatDuration(nowMs - examMs)} ago`, started: true };
 };
 
+const getTodayInputDate = () => {
+  const now = new Date();
+  const year = now.getFullYear();
+  const month = String(now.getMonth() + 1).padStart(2, '0');
+  const day = String(now.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+};
+
 const EducationProgramsPage = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
@@ -94,6 +101,7 @@ const EducationProgramsPage = () => {
   const [showExamSetup, setShowExamSetup] = useState(false);
   const [examModules, setExamModules]     = useState([{ ...EMPTY_MODULE }, { ...EMPTY_MODULE }]);
   const [examModules_saved, setExamModules_saved] = useState([]);
+  const todayDate = getTodayInputDate();
   const [examNowMs, setExamNowMs] = useState(Date.now());
   const hasSavedExamModules = examModules_saved.some((r) => r.module?.trim() || r.date);
 
@@ -158,6 +166,13 @@ const EducationProgramsPage = () => {
       toast.error('Please add at least one module');
       return;
     }
+
+    const hasPastDate = filled.some((r) => r.date && r.date < todayDate);
+    if (hasPastDate) {
+      toast.error('Exam date cannot be in the past');
+      return;
+    }
+
     setExamModules_saved(filled);
     try {
       if (storageKey) {
@@ -491,23 +506,31 @@ const EducationProgramsPage = () => {
           </div>
         )}
 
-        {isStudent && !isExamMode && (
-          <div className="mb-8 rounded-2xl border border-accent/30 dark:border-accent/20 bg-gradient-to-r from-accent/5 to-accent/10 dark:from-accent/10 dark:to-accent/5 p-5 sm:p-6">
+        {isStudent && (
+          <div className={`mb-8 rounded-2xl border p-5 sm:p-6 ${
+            isExamMode
+              ? 'border-red-300 dark:border-red-700 bg-gradient-to-r from-red-50 to-amber-50 dark:from-red-900/20 dark:to-amber-900/10'
+              : 'border-accent/30 dark:border-accent/20 bg-gradient-to-r from-accent/5 to-accent/10 dark:from-accent/10 dark:to-accent/5'
+          }`}>
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
               <div>
-                <p className="text-sm font-semibold uppercase tracking-wide text-primary dark:text-accent">Study productivity</p>
+                <p className={`text-sm font-semibold uppercase tracking-wide ${isExamMode ? 'text-red-700 dark:text-red-300' : 'text-primary dark:text-accent'}`}>
+                  {isExamMode ? 'Exam focus support' : 'Study productivity'}
+                </p>
                 <h3 className="text-lg font-bold text-gray-900 dark:text-gray-100 mt-1">Track your focused study time</h3>
                 <p className="text-sm text-gray-700 dark:text-gray-300 mt-1">
-                  Start, pause, resume study sessions and analyze your weekly progress with detailed reports.
+                  {isExamMode
+                    ? 'Keep timing your sessions in exam mode to stay consistent and review weekly progress.'
+                    : 'Start, pause, resume study sessions and analyze your weekly progress with detailed reports.'}
                 </p>
               </div>
               <button
                 type="button"
                 onClick={() => navigate('/student/study-tracker')}
-                className="inline-flex items-center justify-center gap-2 bg-primary hover:bg-primary-hover text-white font-semibold px-5 py-2.5 rounded-xl shadow-sm transition-colors"
+                className="inline-flex items-center justify-center gap-2 text-white font-semibold px-5 py-2.5 rounded-xl shadow-sm transition-colors bg-red-600 hover:bg-red-700"
               >
                 <Timer className="h-4 w-4" />
-                Study Tracker
+                {isExamMode ? 'Study Tracker' : 'Study Tracker'}
               </button>
             </div>
           </div>
@@ -1063,6 +1086,7 @@ const EducationProgramsPage = () => {
                         type="date"
                         value={row.date}
                         onChange={(e) => handleModuleChange(idx, 'date', e.target.value)}
+                        min={todayDate}
                         className="w-full px-3 py-2.5 rounded-xl border border-red-200 dark:border-red-800 bg-white dark:bg-red-950/20 text-primary dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-red-300/60 focus:border-red-400 transition text-sm"
                       />
                     </div>

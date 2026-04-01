@@ -22,6 +22,7 @@ import {
   ChevronDown,
   Star,
   Bell,
+  Pencil,
 } from 'lucide-react';
 import Card, { CardHeader, CardTitle, CardContent } from '../../components/ui/Card';
 import api from '../../services/api';
@@ -56,6 +57,14 @@ const EMPTY_FORM = {
   course: '',
   linkUrl: '',
   file: null,
+  isImportant: false,
+};
+
+const EMPTY_EDIT_FORM = {
+  title: '',
+  description: '',
+  course: '',
+  linkUrl: '',
   isImportant: false,
 };
 
@@ -100,6 +109,9 @@ const EducationProviderDashboard = () => {
   const [materials, setMaterials]  = useState([]);
   const [loading, setLoading]      = useState(false);
   const [submitting, setSubmitting] = useState(false);
+  const [editModal, setEditModal] = useState(null);
+  const [editForm, setEditForm] = useState(EMPTY_EDIT_FORM);
+  const [updatingMaterial, setUpdatingMaterial] = useState(false);
   const [filter, setFilter]        = useState('all');
   const [form, setForm]            = useState(EMPTY_FORM);
   const [fileError, setFileError]  = useState('');
@@ -122,6 +134,7 @@ const EducationProviderDashboard = () => {
 
   const isFileType = ['pdf', 'tute', 'pastpaper'].includes(form.type);
   const isLinkType = ['youtube', 'drive'].includes(form.type);
+  const isEditLinkType = editModal ? ['youtube', 'drive'].includes(editModal.type) : false;
 
   /* fetch materials */
   const fetchMaterials = useCallback(async () => {
@@ -277,6 +290,64 @@ const EducationProviderDashboard = () => {
       setMaterials((m) => m.filter((x) => x._id !== id));
     } catch {
       toast.error('Failed to delete material');
+    }
+  };
+
+  const openEditModal = (material) => {
+    setEditModal(material);
+    setEditForm({
+      title: material.title || '',
+      description: material.description || '',
+      course: material.course || '',
+      linkUrl: material.linkUrl || '',
+      isImportant: Boolean(material.isImportant),
+    });
+  };
+
+  const closeEditModal = () => {
+    setEditModal(null);
+    setEditForm(EMPTY_EDIT_FORM);
+  };
+
+  const handleMaterialUpdate = async (e) => {
+    e.preventDefault();
+    if (!editModal) return;
+
+    if (!editForm.title.trim()) {
+      toast.error('Please enter a title');
+      return;
+    }
+
+    if (isEditLinkType && !editForm.linkUrl.trim()) {
+      toast.error('Please enter a URL');
+      return;
+    }
+
+    setUpdatingMaterial(true);
+    try {
+      const payload = {
+        title: editForm.title.trim(),
+        description: editForm.description.trim(),
+        course: editForm.course.trim(),
+        isImportant: editForm.isImportant,
+      };
+
+      if (isEditLinkType) {
+        payload.linkUrl = editForm.linkUrl.trim();
+      }
+
+      const res = await api.patch(`/education/materials/${editModal._id}`, payload);
+      const updatedMaterial = res.data.material;
+
+      setMaterials((prev) =>
+        prev.map((mat) => (mat._id === updatedMaterial._id ? updatedMaterial : mat))
+      );
+      toast.success('Material details updated');
+      closeEditModal();
+    } catch (err) {
+      toast.error(err.response?.data?.message || 'Failed to update material');
+    } finally {
+      setUpdatingMaterial(false);
     }
   };
 
@@ -464,6 +535,13 @@ const EducationProviderDashboard = () => {
                         </div>
                         <div className="flex items-center gap-1">
                           <button
+                            onClick={() => openEditModal(mat)}
+                            title="Update material details"
+                            className="opacity-0 group-hover:opacity-100 transition-opacity text-blue-400 hover:text-blue-600 p-1 rounded-lg hover:bg-blue-50 dark:hover:bg-blue-900/20"
+                          >
+                            <Pencil className="h-4 w-4" />
+                          </button>
+                          <button
                             onClick={() => handleToggleImportant(mat._id)}
                             title={mat.isImportant ? 'Remove important' : 'Mark as important'}
                             className={`opacity-0 group-hover:opacity-100 transition-opacity p-1 rounded-lg ${
@@ -551,9 +629,7 @@ const EducationProviderDashboard = () => {
                   <Inbox className="h-5 w-5 text-accent" />
                   <CardTitle className="text-primary dark:text-accent">Student Material Requests</CardTitle>
                 </div>
-                <p className="text-xs text-blue-700 dark:text-blue-300 mt-1">
-                  Review requests, update status, and add a short note to guide students.
-                </p>
+                
               </div>
               {/* filter pills */}
               <div className="flex flex-wrap gap-2">
@@ -573,20 +649,7 @@ const EducationProviderDashboard = () => {
               </div>
             </div>
 
-            <div className="mt-3 flex flex-wrap gap-2">
-              <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-medium bg-yellow-50 dark:bg-yellow-900/20 text-yellow-700 dark:text-yellow-300 border border-yellow-200 dark:border-yellow-700">
-                <Clock className="h-3 w-3" />
-                Pending: waiting for provider response
-              </span>
-              <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-medium bg-green-50 dark:bg-green-900/20 text-green-700 dark:text-green-300 border border-green-200 dark:border-green-700">
-                <CheckCircle className="h-3 w-3" />
-                Fulfilled: material is available
-              </span>
-              <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-medium bg-red-50 dark:bg-red-900/20 text-red-700 dark:text-red-300 border border-red-200 dark:border-red-700">
-                <XCircle className="h-3 w-3" />
-                Rejected: cannot provide currently
-              </span>
-            </div>
+           
           </CardHeader>
 
           <CardContent>
@@ -774,6 +837,114 @@ const EducationProviderDashboard = () => {
                 >
                   {updatingStatus ? <div className="animate-spin h-4 w-4 border-2 border-white border-t-transparent rounded-full" /> : null}
                   {updatingStatus ? 'Saving…' : 'Save Status'}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* ── Material Update Modal ─────────────────────────────────────── */}
+      {editModal && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm"
+          onClick={(e) => { if (e.target === e.currentTarget) closeEditModal(); }}
+        >
+          <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl w-full max-w-lg">
+            <div className="flex items-center justify-between px-6 py-4 border-b border-gray-200 dark:border-gray-700">
+              <h2 className="text-base font-bold text-primary dark:text-gray-100">Update Material Details</h2>
+              <button
+                onClick={closeEditModal}
+                className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+              >
+                <X className="h-5 w-5 text-secondary dark:text-gray-400" />
+              </button>
+            </div>
+
+            <form onSubmit={handleMaterialUpdate} className="px-6 py-5 space-y-4">
+              <div className="bg-gray-50 dark:bg-gray-700/40 rounded-xl p-3">
+                <p className="text-xs text-secondary dark:text-gray-400">Material Type</p>
+                <p className="font-medium text-primary dark:text-gray-100 text-sm">{typeInfo(editModal.type).label}</p>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-primary dark:text-gray-200 mb-1">
+                  Title <span className="text-red-500">*</span>
+                </label>
+                <input
+                  type="text"
+                  value={editForm.title}
+                  onChange={(e) => setEditForm((prev) => ({ ...prev, title: e.target.value }))}
+                  className="w-full px-4 py-2.5 rounded-xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-primary dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-accent/50 focus:border-accent transition"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-primary dark:text-gray-200 mb-1">
+                  Course <span className="text-xs text-gray-400 font-normal">(optional)</span>
+                </label>
+                <input
+                  type="text"
+                  value={editForm.course}
+                  onChange={(e) => setEditForm((prev) => ({ ...prev, course: e.target.value }))}
+                  className="w-full px-4 py-2.5 rounded-xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-primary dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-accent/50 focus:border-accent transition"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-primary dark:text-gray-200 mb-1">
+                  Description <span className="text-xs text-gray-400 font-normal">(optional)</span>
+                </label>
+                <textarea
+                  value={editForm.description}
+                  onChange={(e) => setEditForm((prev) => ({ ...prev, description: e.target.value }))}
+                  rows={3}
+                  className="w-full px-4 py-2.5 rounded-xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-primary dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-accent/50 focus:border-accent transition resize-none"
+                />
+              </div>
+
+              {isEditLinkType && (
+                <div>
+                  <label className="block text-sm font-medium text-primary dark:text-gray-200 mb-1">
+                    {editModal.type === 'youtube' ? 'YouTube URL' : 'Google Drive URL'} <span className="text-red-500">*</span>
+                  </label>
+                  <div className="relative">
+                    <Link2 className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400 pointer-events-none" />
+                    <input
+                      type="url"
+                      value={editForm.linkUrl}
+                      onChange={(e) => setEditForm((prev) => ({ ...prev, linkUrl: e.target.value }))}
+                      className="w-full pl-9 pr-4 py-2.5 rounded-xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-primary dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-accent/50 focus:border-accent transition"
+                    />
+                  </div>
+                </div>
+              )}
+
+              <label className="flex items-center gap-2.5 cursor-pointer select-none">
+                <input
+                  type="checkbox"
+                  checked={editForm.isImportant}
+                  onChange={(e) => setEditForm((prev) => ({ ...prev, isImportant: e.target.checked }))}
+                  className="h-4 w-4 rounded border-gray-300 dark:border-gray-600"
+                />
+                <span className="text-sm text-primary dark:text-gray-200">Mark as important</span>
+              </label>
+
+              <div className="flex gap-3 pt-1">
+                <button
+                  type="button"
+                  onClick={closeEditModal}
+                  className="flex-1 px-4 py-2.5 rounded-xl border border-gray-300 dark:border-gray-600 text-secondary dark:text-gray-400 font-medium hover:bg-gray-50 dark:hover:bg-gray-700 transition text-sm"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={updatingMaterial}
+                  className="flex-1 flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-primary text-white font-semibold hover:bg-primary-hover disabled:opacity-60 transition text-sm"
+                >
+                  {updatingMaterial ? <div className="animate-spin h-4 w-4 border-2 border-white border-t-transparent rounded-full" /> : <Pencil className="h-4 w-4" />}
+                  {updatingMaterial ? 'Saving…' : 'Save Changes'}
                 </button>
               </div>
             </form>
