@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { BookOpen, Clock, Star, Plus, X, Send, Inbox, CheckCircle, XCircle, Trash2, MessageSquare, FileText, ExternalLink, Download, Youtube, HardDrive, FlaskConical, LayoutDashboard, CalendarDays, GraduationCap, Bell, Timer } from 'lucide-react';
+import { BookOpen, Clock, Star, Plus, X, Send, Inbox, CheckCircle, XCircle, Trash2, MessageSquare, FileText, ExternalLink, Download, Youtube, HardDrive, FlaskConical, LayoutDashboard, CalendarDays, GraduationCap, Bell, Timer, Pencil } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import Card, { CardHeader, CardTitle, CardContent } from '../components/ui/Card';
 import { useAuth } from '../contexts/AuthContext';
@@ -222,6 +222,7 @@ const EducationProgramsPage = () => {
 
   const [showModal, setShowModal] = useState(false);
   const [form, setForm]           = useState(EMPTY_FORM);
+  const [editingRequestId, setEditingRequestId] = useState(null);
   const [submitting, setSubmitting] = useState(false);
   const [notices, setNotices] = useState([]);
   const [showNotices, setShowNotices] = useState(false);
@@ -319,9 +320,15 @@ const EducationProgramsPage = () => {
     if (!form.title.trim()) { toast.error('Please enter a title'); return; }
     setSubmitting(true);
     try {
-      await api.post('/education/requests', form);
-      toast.success('Request submitted!');
+      if (editingRequestId) {
+        await api.patch(`/education/requests/${editingRequestId}`, form);
+        toast.success('Request updated!');
+      } else {
+        await api.post('/education/requests', form);
+        toast.success('Request submitted!');
+      }
       setShowModal(false);
+      setEditingRequestId(null);
       setForm(EMPTY_FORM);
       fetchRequests();
     } catch (err) {
@@ -340,6 +347,22 @@ const EducationProgramsPage = () => {
     } catch {
       toast.error('Failed to cancel request');
     }
+  };
+
+  const handleEditRequest = (request) => {
+    if (request.status !== 'pending') {
+      toast.error('Only pending requests can be updated.');
+      return;
+    }
+
+    setEditingRequestId(request._id);
+    setForm({
+      title: request.title || '',
+      description: request.description || '',
+      course: request.course || '',
+      materialType: request.materialType || 'lecture-notes',
+    });
+    setShowModal(true);
   };
 
   return (
@@ -438,6 +461,8 @@ const EducationProgramsPage = () => {
                     toast.error('Please sign in with a student account to request materials.');
                     return;
                   }
+                  setEditingRequestId(null);
+                  setForm(EMPTY_FORM);
                   setShowModal(true);
                 }}
                 className="inline-flex items-center gap-2 bg-primary hover:bg-primary-hover text-white font-semibold px-5 py-1.5 rounded-xl shadow-md transition-all duration-200 hover:shadow-lg hover:-translate-y-0.5"
@@ -465,9 +490,10 @@ const EducationProgramsPage = () => {
               </div>
               <button
                 onClick={openExamSetup}
-                className="text-sm text-gray-900 dark:text-gray-100 hover:underline font-medium whitespace-nowrap"
+                className="inline-flex items-center gap-2 px-4 py-2 rounded-xl border border-red-300 dark:border-red-700 bg-gradient-to-r from-red-600 to-rose-600 hover:from-red-700 hover:to-rose-700 text-white text-sm font-semibold shadow-sm hover:shadow-md transition-all duration-200 whitespace-nowrap focus:outline-none focus:ring-2 focus:ring-red-400/60"
               >
-                Edit schedule
+                <CalendarDays className="h-4 w-4" />
+                Edit Schedule
               </button>
             </div>
             {/* module cards grid */}
@@ -846,9 +872,9 @@ const EducationProgramsPage = () => {
                   </p>
                 </div>
               ) : (
-                <div className="overflow-x-auto -mx-4 sm:mx-0">
-                  <table className="w-full text-sm min-w-[560px]">
-                    <thead>
+                <div className={`overflow-x-auto -mx-4 sm:mx-0 rounded-xl border ${isExamMode ? 'border-red-200 dark:border-red-700' : 'border-gray-200 dark:border-gray-700'}`}>
+                  <table className="w-full text-sm min-w-[560px] border-collapse">
+                    <thead className={isExamMode ? 'bg-red-50/70 dark:bg-red-900/20' : 'bg-gray-50 dark:bg-gray-800/70'}>
                       <tr className="border-b border-gray-200 dark:border-gray-700">
                         <th className={`text-left py-3 px-4 text-xs font-semibold uppercase tracking-wide ${isExamMode ? 'text-gray-900 dark:text-gray-100' : 'text-secondary dark:text-gray-400'}`}>Title</th>
                         <th className={`text-left py-3 px-4 text-xs font-semibold uppercase tracking-wide ${isExamMode ? 'text-gray-900 dark:text-gray-100' : 'text-secondary dark:text-gray-400'}`}>Type</th>
@@ -889,13 +915,22 @@ const EducationProgramsPage = () => {
                           </td>
                           <td className="py-3.5 px-4">
                             {req.status === 'pending' && (
-                              <button
-                                onClick={() => handleDelete(req._id)}
-                                title="Cancel request"
-                                className="opacity-0 group-hover:opacity-100 transition-opacity text-red-400 hover:text-red-600 p-1.5 rounded-lg hover:bg-red-50 dark:hover:bg-red-900/20"
-                              >
-                                <Trash2 className="h-4 w-4" />
-                              </button>
+                              <div className="flex items-center justify-end gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                                <button
+                                  onClick={() => handleEditRequest(req)}
+                                  title="Update request"
+                                  className="text-blue-500 hover:text-blue-700 p-1.5 rounded-lg hover:bg-blue-50 dark:hover:bg-blue-900/20"
+                                >
+                                  <Pencil className="h-4 w-4" />
+                                </button>
+                                <button
+                                  onClick={() => handleDelete(req._id)}
+                                  title="Cancel request"
+                                  className="text-red-400 hover:text-red-600 p-1.5 rounded-lg hover:bg-red-50 dark:hover:bg-red-900/20"
+                                >
+                                  <Trash2 className="h-4 w-4" />
+                                </button>
+                              </div>
                             )}
                           </td>
                         </tr>
@@ -915,7 +950,7 @@ const EducationProgramsPage = () => {
     {showModal && isStudent && (
       <div
         className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm"
-        onClick={(e) => { if (e.target === e.currentTarget) { setShowModal(false); setForm(EMPTY_FORM); } }}
+        onClick={(e) => { if (e.target === e.currentTarget) { setShowModal(false); setEditingRequestId(null); setForm(EMPTY_FORM); } }}
       >
         <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl border border-gray-200 dark:border-gray-700 w-full max-w-lg max-h-[92vh] overflow-y-auto">
           {/* header */}
@@ -927,7 +962,7 @@ const EducationProgramsPage = () => {
               <h2 className="text-lg font-bold text-primary dark:text-gray-100">Request Study Material</h2>
             </div>
             <button
-              onClick={() => { setShowModal(false); setForm(EMPTY_FORM); }}
+              onClick={() => { setShowModal(false); setEditingRequestId(null); setForm(EMPTY_FORM); }}
               className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
             >
               <X className="h-5 w-5 text-secondary dark:text-gray-400" />
@@ -1003,7 +1038,7 @@ const EducationProgramsPage = () => {
             <div className="flex gap-3 pt-2">
               <button
                 type="button"
-                onClick={() => { setShowModal(false); setForm(EMPTY_FORM); }}
+                onClick={() => { setShowModal(false); setEditingRequestId(null); setForm(EMPTY_FORM); }}
                 className="flex-1 px-4 py-2.5 rounded-xl border border-gray-300 dark:border-gray-600 text-secondary dark:text-gray-400 font-medium hover:bg-gray-50 dark:hover:bg-gray-700 transition"
               >
                 Cancel
@@ -1016,7 +1051,7 @@ const EducationProgramsPage = () => {
                 {submitting
                   ? <div className="animate-spin h-4 w-4 border-2 border-white border-t-transparent rounded-full" />
                   : <Send className="h-4 w-4" />}
-                {submitting ? 'Submitting…' : 'Submit Request'}
+                {submitting ? 'Submitting…' : (editingRequestId ? 'Update Request' : 'Submit Request')}
               </button>
             </div>
           </form>

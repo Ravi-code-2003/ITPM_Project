@@ -36,6 +36,41 @@ const getMyRequests = async (req, res) => {
   }
 };
 
+// PATCH /api/education/requests/:id  — student updates their own pending request
+const updateMyRequest = async (req, res) => {
+  try {
+    const { title, description, course, materialType } = req.body;
+
+    if (!title || !title.trim()) {
+      return res.status(400).json({ message: 'Title is required' });
+    }
+
+    const request = await LectureRequest.findOne({
+      _id: req.params.id,
+      student: req.user._id,
+    });
+
+    if (!request) {
+      return res.status(404).json({ message: 'Request not found' });
+    }
+
+    if (request.status !== 'pending') {
+      return res.status(400).json({ message: 'Only pending requests can be updated' });
+    }
+
+    request.title = title.trim();
+    request.description = description?.trim() || '';
+    request.course = course?.trim() || '';
+    request.materialType = materialType || request.materialType;
+
+    await request.save();
+    res.json({ success: true, request });
+  } catch (error) {
+    console.error('updateMyRequest error:', error);
+    res.status(500).json({ message: 'Server error', error: error.message });
+  }
+};
+
 // GET /api/education/requests/all  — education provider views all requests
 const getAllRequests = async (req, res) => {
   try {
@@ -95,4 +130,4 @@ const deleteRequest = async (req, res) => {
   }
 };
 
-module.exports = { createRequest, getMyRequests, getAllRequests, updateRequestStatus, deleteRequest };
+module.exports = { createRequest, getMyRequests, updateMyRequest, getAllRequests, updateRequestStatus, deleteRequest };

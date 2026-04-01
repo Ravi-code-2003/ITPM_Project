@@ -314,7 +314,7 @@ const ExamStudyTrackerPage = () => {
             icon={<ArrowLeft className="h-4 w-4" />}
             onClick={() => navigate('/education-programs')}
           >
-            Back to the Dashboard
+            Back
           </Button>
         </div>
 

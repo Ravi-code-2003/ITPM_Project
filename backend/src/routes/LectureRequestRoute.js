@@ -4,6 +4,7 @@ const router = express.Router();
 const {
   createRequest,
   getMyRequests,
+  updateMyRequest,
   getAllRequests,
   updateRequestStatus,
   deleteRequest,
@@ -16,6 +17,7 @@ router.use(protect);
 // Student routes
 router.post('/',       authorize('student'),               createRequest);
 router.get('/',        authorize('student'),               getMyRequests);
+router.patch('/:id',   authorize('student'),               updateMyRequest);
 router.delete('/:id',  authorize('student'),               deleteRequest);
 
 // Education provider routes
