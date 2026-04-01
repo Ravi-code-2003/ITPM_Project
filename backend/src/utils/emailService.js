@@ -2,10 +2,15 @@ const nodemailer = require("nodemailer");
 
 // Create transporter
 const createTransporter = () => {
-  return nodemailer.createTransporter({
+  const port = Number(process.env.EMAIL_PORT || 587);
+  const secure = process.env.EMAIL_SECURE === "true" || port === 465;
+
+  return nodemailer.createTransport({
     host: process.env.EMAIL_HOST,
-    port: process.env.EMAIL_PORT,
-    secure: false, // true for 465, false for other ports
+    port,
+    secure,
+    requireTLS: process.env.EMAIL_REQUIRE_TLS === "true",
+    authMethod: process.env.EMAIL_AUTH_METHOD || undefined,
     auth: {
       user: process.env.EMAIL_USER,
       pass: process.env.EMAIL_PASS,
