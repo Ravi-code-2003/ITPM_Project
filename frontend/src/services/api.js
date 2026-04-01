@@ -3,10 +3,15 @@ import toast from 'react-hot-toast';
 
 // Debug mode
 const DEBUG = process.env.NODE_ENV === 'development';
+const API_BASE_URL =
+  process.env.REACT_APP_API_URL ||
+  (process.env.NODE_ENV === 'development'
+    ? 'http://localhost:5001/api'
+    : '/api');
 
 // Create axios instance
 const api = axios.create({
-  baseURL: process.env.REACT_APP_API_URL || 'http://localhost:5000/api',
+  baseURL: API_BASE_URL,
   headers: {
     'Content-Type': 'application/json',
   },
