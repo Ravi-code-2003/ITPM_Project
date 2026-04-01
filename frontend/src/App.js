@@ -90,9 +90,11 @@ function App() {
             <Route 
               path="/restaurants" 
               element={
-                <Layout>
-                  <RestaurantsPage />
-                </Layout>
+                <RoleRoute roles={['student']}>
+                  <Layout>
+                    <RestaurantsPage />
+                  </Layout>
+                </RoleRoute>
               } 
             />
             <Route 

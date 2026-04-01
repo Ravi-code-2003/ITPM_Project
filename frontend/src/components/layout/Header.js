@@ -69,6 +69,12 @@ const Header = () => {
     { name: 'Contact', href: '/contact', icon: Phone },
   ];
 
+  const visibleNavItems = publicNavItems.filter((item) => {
+    if (item.href !== '/restaurants') return true;
+    if (!isAuthenticated) return true;
+    return user?.role === 'student';
+  });
+
   return (
     <header className="bg-surface dark:bg-surface-dark shadow-soft border-b border-secondary/20 dark:border-secondary/10 sticky top-0 z-50 transition-colors duration-200">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -92,7 +98,7 @@ const Header = () => {
 
           {/* Desktop Navigation */}
           <nav className="hidden md:flex items-center space-x-8">
-            {publicNavItems.map((item) => (
+            {visibleNavItems.map((item) => (
               <Link
                 key={item.name}
                 to={item.href}
@@ -196,7 +202,7 @@ const Header = () => {
           <div className="md:hidden border-t border-secondary/20 dark:border-secondary/10 py-4">
             <div className="flex flex-col space-y-3">
               {/* Navigation Items */}
-              {publicNavItems.map((item) => (
+              {visibleNavItems.map((item) => (
                 <Link
                   key={item.name}
                   to={item.href}
