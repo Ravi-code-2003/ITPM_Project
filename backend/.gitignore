@@ -25,3 +25,6 @@ yarn-error.log*
 
 # Uploaded study materials (runtime files)
 /uploads/*
+# Logs
+*.log
+backend/backend.log
