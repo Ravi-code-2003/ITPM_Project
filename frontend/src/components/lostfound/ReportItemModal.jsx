@@ -1,214 +1,203 @@
-import React, { useEffect, useMemo, useState } from "react";
-import { X } from "lucide-react";
+import React, { useState } from 'react';
+import api from '../../services/api';
 
-const DEFAULT_FORM = {
-  postType: "lost",
-  title: "",
-  description: "",
-  location: "",
-  date: "",
-  category: "electronics",
-  contactInfo: "",
-  image: null,
-};
+const ReportItemModal = ({ onClose, onSuccess }) => {
+  const [postType, setPostType] = useState('lost');
+  const [form, setForm] = useState({
+    title: '',
+    description: '',
+    category: '',
+    location: '',
+    date: '',
+    contactInfo: '',
+    image: null,
+  });
+  const [preview, setPreview] = useState('');
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
 
-const CATEGORIES = ["electronics", "id card", "bag", "keys", "books", "other"];
-
-const ReportItemModal = ({ isOpen, isSubmitting, onClose, onSubmit }) => {
-  const [form, setForm] = useState(DEFAULT_FORM);
-  const [previewUrl, setPreviewUrl] = useState("");
-  const [formError, setFormError] = useState("");
-
-  useEffect(() => {
-    if (!isOpen) {
-      setForm(DEFAULT_FORM);
-      setPreviewUrl("");
-      setFormError("");
+  const handleImage = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      setForm((p) => ({ ...p, image: file }));
+      setPreview(URL.createObjectURL(file));
     }
-  }, [isOpen]);
-
-  useEffect(() => {
-    if (!form.image) {
-      setPreviewUrl("");
-      return undefined;
-    }
-
-    const url = URL.createObjectURL(form.image);
-    setPreviewUrl(url);
-    return () => URL.revokeObjectURL(url);
-  }, [form.image]);
-
-  const dateLabel = useMemo(() => (form.postType === "lost" ? "Date Lost" : "Date Found"), [form.postType]);
-  const locationLabel = useMemo(
-    () => (form.postType === "lost" ? "Location item was lost" : "Location item was found"),
-    [form.postType]
-  );
-
-  if (!isOpen) return null;
-
-  const handleInput = (field, value) => setForm((prev) => ({ ...prev, [field]: value }));
-
-  const handleSubmit = async (event) => {
-    event.preventDefault();
-    setFormError("");
-
-    if (!form.title.trim() || !form.description.trim() || !form.location.trim() || !form.date || !form.category) {
-      setFormError("Please fill in all required fields.");
-      return;
-    }
-
-    if (form.postType === "found" && !form.image) {
-      setFormError("Found item photo is required.");
-      return;
-    }
-
-    const formData = new FormData();
-    formData.append("postType", form.postType);
-    formData.append("title", form.title.trim());
-    formData.append("description", form.description.trim());
-    formData.append("location", form.location.trim());
-    formData.append("date", form.date);
-    formData.append("category", form.category);
-    formData.append("contactInfo", form.contactInfo.trim());
-    if (form.image) formData.append("image", form.image);
-
-    await onSubmit(formData);
   };
 
+  const handleInputChange = (field, value) => {
+    setForm((prev) => ({ ...prev, [field]: value }));
+    setError('');
+  };
+
+  const validateForm = () => {
+    if (!form.title.trim()) return 'Title is required';
+    if (!form.description.trim()) return 'Description is required';
+    if (!form.category.trim()) return 'Category is required';
+    if (!form.location.trim()) return 'Location is required';
+    if (!form.date) return 'Date is required';
+    if (!form.image) return 'Image is required';
+    return '';
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    
+    const validationError = validateForm();
+    if (validationError) {
+      setError(validationError);
+      return;
+    }
+
+    try {
+      setLoading(true);
+      const body = new FormData();
+      body.append('postType', postType);
+      body.append('title', form.title);
+      body.append('description', form.description);
+      body.append('category', form.category);
+      body.append('location', form.location);
+      body.append('date', form.date);
+      body.append('contactInfo', form.contactInfo || '');
+      body.append('image', form.image);
+
+      const { data } = await api.post('/lostfound', body, {
+        headers: { 'Content-Type': 'multipart/form-data' },
+      });
+
+      onSuccess(data);
+    } catch (err) {
+      setError(err.response?.data?.message || 'Failed to create post. Please try again.');
+      console.error('Submit error:', err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const categories = ['Electronics', 'Documents', 'Jewelry', 'Clothing', 'Accessories', 'Books', 'Other'];
+
   return (
-    <div className="lostfound-modal-backdrop">
-      <div className="lostfound-modal">
-        <div className="flex items-center justify-between mb-4">
-          <h3 className="text-xl font-semibold text-primary dark:text-gray-100">Report Item</h3>
-          <button type="button" onClick={onClose} className="text-gray-500 hover:text-gray-700">
-            <X className="h-5 w-5" />
+    <div className="lf-modal-overlay">
+      <div className="lf-modal">
+        <button className="lf-close-btn" onClick={onClose}>✕</button>
+        <h2>Report Item</h2>
+        
+        <div className="lf-toggle-group">
+          <button 
+            className={`lf-toggle-btn ${postType === 'lost' ? 'active' : ''}`}
+            onClick={() => setPostType('lost')}
+          >
+            📍 Lost
+          </button>
+          <button 
+            className={`lf-toggle-btn ${postType === 'found' ? 'active' : ''}`}
+            onClick={() => setPostType('found')}
+          >
+            ✅ Found
           </button>
         </div>
 
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <div className="lostfound-toggle">
-            <button
-              type="button"
-              className={form.postType === "lost" ? "active" : ""}
-              onClick={() => handleInput("postType", "lost")}
-            >
-              Lost Item
-            </button>
-            <button
-              type="button"
-              className={form.postType === "found" ? "active" : ""}
-              onClick={() => handleInput("postType", "found")}
-            >
-              Found Item
-            </button>
+        <form onSubmit={handleSubmit} className="lf-form">
+          <div className="lf-form-group">
+            <label>Title *</label>
+            <input 
+              type="text"
+              value={form.title}
+              onChange={(e) => handleInputChange('title', e.target.value)}
+              placeholder="e.g., Blue backpack with laptop"
+              maxLength={200}
+            />
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className="md:col-span-2">
-              <label className="lostfound-label">Item title *</label>
-              <input
-                type="text"
-                className="lostfound-input"
-                value={form.title}
-                onChange={(e) => handleInput("title", e.target.value)}
-                maxLength={120}
-              />
-            </div>
+          <div className="lf-form-group">
+            <label>Description *</label>
+            <textarea 
+              value={form.description}
+              onChange={(e) => handleInputChange('description', e.target.value)}
+              placeholder="Provide details about the item..."
+              maxLength={2000}
+              rows={4}
+            />
+          </div>
 
-            <div className="md:col-span-2">
-              <label className="lostfound-label">Description *</label>
-              <textarea
-                className="lostfound-input min-h-[90px]"
-                value={form.description}
-                onChange={(e) => handleInput("description", e.target.value)}
-                maxLength={1000}
-              />
-            </div>
-
-            <div>
-              <label className="lostfound-label">{locationLabel} *</label>
-              <input
-                type="text"
-                className="lostfound-input"
-                value={form.location}
-                onChange={(e) => handleInput("location", e.target.value)}
-              />
-            </div>
-
-            <div>
-              <label className="lostfound-label">{dateLabel} *</label>
-              <input
-                type="date"
-                className="lostfound-input"
-                value={form.date}
-                onChange={(e) => handleInput("date", e.target.value)}
-              />
-            </div>
-
-            <div>
-              <label className="lostfound-label">Category *</label>
-              <select
-                className="lostfound-input"
+          <div className="lf-form-row">
+            <div className="lf-form-group">
+              <label>Category *</label>
+              <select 
                 value={form.category}
-                onChange={(e) => handleInput("category", e.target.value)}
+                onChange={(e) => handleInputChange('category', e.target.value)}
               >
-                {CATEGORIES.map((category) => (
-                  <option key={category} value={category}>
-                    {category}
-                  </option>
+                <option value="">Select a category</option>
+                {categories.map(cat => (
+                  <option key={cat} value={cat}>{cat}</option>
                 ))}
               </select>
             </div>
 
-            <div>
-              <label className="lostfound-label">Contact information (optional)</label>
-              <input
+            <div className="lf-form-group">
+              <label>Location *</label>
+              <input 
                 type="text"
-                className="lostfound-input"
-                value={form.contactInfo}
-                onChange={(e) => handleInput("contactInfo", e.target.value)}
-                placeholder="Email / phone"
-                maxLength={200}
+                value={form.location}
+                onChange={(e) => handleInputChange('location', e.target.value)}
+                placeholder="e.g., Campus Library"
               />
             </div>
-
-            <div className="md:col-span-2">
-              <label className="lostfound-label">
-                Upload photo {form.postType === "found" ? "*" : "(optional)"} (JPG/PNG)
-              </label>
-              <input
-                type="file"
-                accept="image/jpeg,image/png"
-                onChange={(e) => handleInput("image", e.target.files?.[0] || null)}
-                className="lostfound-input"
-              />
-            </div>
-
-            {previewUrl && (
-              <div className="md:col-span-2">
-                <p className="lostfound-label">Image preview</p>
-                <img src={previewUrl} alt="Preview" className="h-40 w-40 rounded-lg object-cover border border-gray-200" />
-              </div>
-            )}
           </div>
 
-          {formError && <p className="text-sm text-red-600">{formError}</p>}
+          <div className="lf-form-row">
+            <div className="lf-form-group">
+              <label>Date *</label>
+              <input 
+                type="date"
+                value={form.date}
+                onChange={(e) => handleInputChange('date', e.target.value)}
+              />
+            </div>
 
-          <div className="flex justify-end gap-2">
-            <button
+            <div className="lf-form-group">
+              <label>Contact Info (optional)</label>
+              <input 
+                type="text"
+                value={form.contactInfo}
+                onChange={(e) => handleInputChange('contactInfo', e.target.value)}
+                placeholder="Phone or email"
+              />
+            </div>
+          </div>
+
+          <div className="lf-form-group">
+            <label>Image (JPG/PNG) *</label>
+            <input 
+              type="file"
+              accept="image/png,image/jpeg"
+              onChange={handleImage}
+              required
+            />
+          </div>
+
+          {preview && (
+            <div className="lf-preview-container">
+              <img className="lf-preview" src={preview} alt="Preview" />
+            </div>
+          )}
+
+          {error && <p className="lf-error">{error}</p>}
+          
+          <div className="lf-modal-actions">
+            <button 
               type="button"
+              className="lf-btn-secondary"
               onClick={onClose}
-              className="px-4 py-2 rounded-md border border-gray-300 text-gray-700 hover:bg-gray-50"
-              disabled={isSubmitting}
+              disabled={loading}
             >
               Cancel
             </button>
-            <button
+            <button 
               type="submit"
-              className="px-4 py-2 rounded-md bg-primary text-white hover:bg-primary-hover disabled:opacity-70"
-              disabled={isSubmitting}
+              className="lf-btn-primary"
+              disabled={loading}
             >
-              {isSubmitting ? "Submitting..." : "Submit"}
+              {loading ? 'Reporting...' : 'Report Item'}
             </button>
           </div>
         </form>

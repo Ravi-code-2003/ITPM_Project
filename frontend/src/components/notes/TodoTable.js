@@ -1,247 +1,196 @@
-import React, { useEffect, useState } from "react";
-import { Check, Pencil, Trash2, X } from "lucide-react";
-import toast from "react-hot-toast";
-import { notesAPI } from "../../services/api";
-import AddNoteButton from "./AddNoteButton";
-import NoteFormModal from "./NoteFormModal";
-import "./notes.css";
+import React, { useState, useEffect } from 'react';
+import { Trash2, Calendar, Check, Edit } from 'lucide-react';
+import { notesAPI } from '../../services/api';
+import toast from 'react-hot-toast';
+import NoteFormModal from './NoteFormModal';
 
 const TodoTable = () => {
   const [todos, setTodos] = useState([]);
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [editingTodo, setEditingTodo] = useState(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [editingTodoId, setEditingTodoId] = useState(null);
-  const [editForm, setEditForm] = useState({
-    title: "",
-    description: "",
-    dueDate: "",
-  });
 
   useEffect(() => {
     fetchTodos();
-
-    const onCreated = (event) => {
-      if (event.detail?.note?.type === "todo") {
-        setTodos((prev) => [event.detail.note, ...prev]);
-      }
-    };
-
-    window.addEventListener("note:created", onCreated);
-    return () => window.removeEventListener("note:created", onCreated);
   }, []);
 
   const fetchTodos = async () => {
     try {
       setLoading(true);
       const response = await notesAPI.getTodos();
-      setTodos(response.notes || []);
+      setTodos(response.todos || []);
     } catch (error) {
-      toast.error("Failed to load todos");
+      console.error('Error fetching todos:', error);
+      toast.error('Failed to load todos');
     } finally {
       setLoading(false);
     }
   };
 
-  const handleCreated = (note) => {
-    if (note?.type === "todo") {
-      setTodos((prev) => [note, ...prev]);
-    }
-    window.dispatchEvent(new CustomEvent("note:created", { detail: { note } }));
-  };
-
-  const toggleCompleted = async (todo) => {
+  const handleToggleComplete = async (todoId, currentCompleted) => {
     try {
-      const response = await notesAPI.toggleTodoCompletion(todo._id, !todo.completed);
-      setTodos((prev) => prev.map((t) => (t._id === todo._id ? response.note : t)));
+      await notesAPI.toggleTodoCompletion(todoId, !currentCompleted);
+      setTodos(prev =>
+        prev.map(todo =>
+          todo._id === todoId ? { ...todo, completed: !currentCompleted } : todo
+        )
+      );
+      toast.success(`Todo ${!currentCompleted ? 'completed' : 'marked incomplete'}`);
     } catch (error) {
-      toast.error(error.response?.data?.message || "Failed to update todo");
+      console.error('Error toggling todo:', error);
+      toast.error('Failed to update todo');
     }
   };
 
-  const removeTodo = async (id) => {
-    try {
-      await notesAPI.deleteNote(id);
-      setTodos((prev) => prev.filter((t) => t._id !== id));
-      toast.success("Todo deleted");
-    } catch (error) {
-      toast.error(error.response?.data?.message || "Failed to delete todo");
-    }
-  };
-
-  const startEdit = (todo) => {
-    setEditingTodoId(todo._id);
-    setEditForm({
-      title: todo.title || "",
-      description: todo.description || "",
-      dueDate: todo.dueDate ? new Date(todo.dueDate).toISOString().split("T")[0] : "",
-    });
-  };
-
-  const cancelEdit = () => {
-    setEditingTodoId(null);
-    setEditForm({ title: "", description: "", dueDate: "" });
-  };
-
-  const saveEdit = async (todoId) => {
-    if (!editForm.title.trim()) {
-      toast.error("Task title is required");
+  const handleDeleteTodo = async (todoId) => {
+    if (!window.confirm('Are you sure you want to delete this todo?')) {
       return;
     }
 
     try {
-      const response = await notesAPI.updateTodo(todoId, {
-        title: editForm.title,
-        description: editForm.description,
-        dueDate: editForm.dueDate || null,
-      });
-
-      setTodos((prev) => prev.map((t) => (t._id === todoId ? response.note : t)));
-      toast.success("Todo updated");
-      cancelEdit();
+      await notesAPI.deleteNote(todoId);
+      setTodos(prev => prev.filter(todo => todo._id !== todoId));
+      toast.success('Todo deleted successfully');
     } catch (error) {
-      toast.error(error.response?.data?.message || "Failed to update todo");
+      console.error('Error deleting todo:', error);
+      toast.error('Failed to delete todo');
     }
   };
 
+  const handleEditTodo = (todo) => {
+    setEditingTodo(todo);
+    setIsModalOpen(true);
+  };
+
+  const handleCloseModal = () => {
+    setIsModalOpen(false);
+    setEditingTodo(null);
+  };
+
+  const formatDate = (dateString) => {
+    if (!dateString) return '';
+    return new Date(dateString).toLocaleDateString();
+  };
+
+  if (loading) {
+    return (
+      <div className="p-4 border rounded-lg bg-white dark:bg-gray-900">
+        <h3 className="font-semibold mb-2 text-gray-900 dark:text-white">Todo List</h3>
+        <div className="text-center py-4">
+          <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-600 mx-auto"></div>
+          <p className="text-sm text-gray-600 dark:text-gray-400 mt-2">Loading todos...</p>
+        </div>
+      </div>
+    );
+  }
+
   return (
-    <div className="mt-4">
-      <div className="flex items-center justify-between mb-3">
-        <h4 className="font-semibold text-primary dark:text-gray-100">Todo Items</h4>
-        <AddNoteButton label="Jot Down" onClick={() => setIsModalOpen(true)} />
+    <>
+      <div className="p-4 border rounded-lg bg-white dark:bg-gray-900">
+        <h3 className="font-semibold mb-4 text-gray-900 dark:text-white">Todo List</h3>
+
+        {todos.length === 0 ? (
+          <p className="text-sm text-gray-600 dark:text-gray-400">No todos yet. Create your first todo!</p>
+        ) : (
+          <div className="overflow-x-auto">
+            <table className="min-w-full text-sm">
+              <thead>
+                <tr className="border-b border-gray-200 dark:border-gray-700">
+                  <th className="text-left py-2 px-3 font-semibold text-gray-900 dark:text-white">Done</th>
+                  <th className="text-left py-2 px-3 font-semibold text-gray-900 dark:text-white">Task</th>
+                  <th className="text-left py-2 px-3 font-semibold text-gray-900 dark:text-white">Description</th>
+                  <th className="text-left py-2 px-3 font-semibold text-gray-900 dark:text-white">Due Date</th>
+                  <th className="text-left py-2 px-3 font-semibold text-gray-900 dark:text-white">Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                {todos.map((todo) => (
+                  <tr
+                    key={todo._id}
+                    className={`border-b border-gray-100 dark:border-gray-800 ${
+                      todo.completed ? 'opacity-60' : ''
+                    }`}
+                  >
+                    {/* Checkbox */}
+                    <td className="py-3 px-3">
+                      <button
+                        onClick={() => handleToggleComplete(todo._id, todo.completed)}
+                        className={`w-5 h-5 rounded border-2 flex items-center justify-center transition-colors ${
+                          todo.completed
+                            ? 'bg-green-500 border-green-500 text-white'
+                            : 'border-gray-300 dark:border-gray-600 hover:border-blue-500'
+                        }`}
+                      >
+                        {todo.completed && <Check className="h-3 w-3" />}
+                      </button>
+                    </td>
+
+                    {/* Task Title */}
+                    <td className="py-3 px-3">
+                      <span
+                        className={`font-medium ${
+                          todo.completed
+                            ? 'line-through text-gray-500 dark:text-gray-400'
+                            : 'text-gray-900 dark:text-white'
+                        }`}
+                      >
+                        {todo.title}
+                      </span>
+                    </td>
+
+                    {/* Description */}
+                    <td className="py-3 px-3">
+                      <span className="text-gray-700 dark:text-gray-300 text-sm">
+                        {todo.description || '-'}
+                      </span>
+                    </td>
+
+                    {/* Due Date */}
+                    <td className="py-3 px-3">
+                      {todo.dueDate ? (
+                        <div className="flex items-center text-sm text-gray-600 dark:text-gray-400">
+                          <Calendar className="h-3 w-3 mr-1" />
+                          {formatDate(todo.dueDate)}
+                        </div>
+                      ) : (
+                        <span className="text-gray-400">-</span>
+                      )}
+                    </td>
+
+                    {/* Actions */}
+                    <td className="py-3 px-3">
+                      <div className="flex gap-2">
+                        <button
+                          onClick={() => handleEditTodo(todo)}
+                          className="text-blue-500 hover:text-blue-700 dark:hover:text-blue-400 transition-colors"
+                          title="Edit todo"
+                        >
+                          <Edit className="h-4 w-4" />
+                        </button>
+                        <button
+                          onClick={() => handleDeleteTodo(todo._id)}
+                          className="text-red-500 hover:text-red-700 dark:hover:text-red-400 transition-colors"
+                          title="Delete todo"
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
       </div>
 
-      {loading ? (
-        <p className="text-sm text-secondary dark:text-gray-400">Loading todos...</p>
-      ) : (
-        <div className="overflow-x-auto">
-          <table className="min-w-full text-sm">
-            <thead>
-              <tr className="border-b border-gray-200 dark:border-gray-700">
-                <th className="text-left py-2 pr-3 font-semibold text-primary dark:text-gray-100">Done</th>
-                <th className="text-left py-2 pr-3 font-semibold text-primary dark:text-gray-100">Task</th>
-                <th className="text-left py-2 pr-3 font-semibold text-primary dark:text-gray-100">Description</th>
-                <th className="text-left py-2 pr-3 font-semibold text-primary dark:text-gray-100">Due Date</th>
-                <th className="text-left py-2 font-semibold text-primary dark:text-gray-100">Actions</th>
-              </tr>
-            </thead>
-            <tbody>
-              {todos.map((todo) => (
-                <tr key={todo._id} className="border-b border-gray-100 dark:border-gray-800">
-                  <td className="py-2 pr-3">
-                    <input
-                      type="checkbox"
-                      checked={!!todo.completed}
-                      onChange={() => toggleCompleted(todo)}
-                      className="h-4 w-4 accent-primary"
-                      disabled={editingTodoId === todo._id}
-                    />
-                  </td>
-                  {editingTodoId === todo._id ? (
-                    <>
-                      <td className="py-2 pr-3">
-                        <input
-                          type="text"
-                          value={editForm.title}
-                          onChange={(e) => setEditForm((prev) => ({ ...prev, title: e.target.value }))}
-                          className="w-full rounded border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 px-2 py-1 text-sm"
-                          maxLength={120}
-                        />
-                      </td>
-                      <td className="py-2 pr-3">
-                        <input
-                          type="text"
-                          value={editForm.description}
-                          onChange={(e) => setEditForm((prev) => ({ ...prev, description: e.target.value }))}
-                          className="w-full rounded border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 px-2 py-1 text-sm"
-                          maxLength={500}
-                        />
-                      </td>
-                      <td className="py-2 pr-3">
-                        <input
-                          type="date"
-                          value={editForm.dueDate}
-                          onChange={(e) => setEditForm((prev) => ({ ...prev, dueDate: e.target.value }))}
-                          className="w-full rounded border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 px-2 py-1 text-sm"
-                        />
-                      </td>
-                    </>
-                  ) : (
-                    <>
-                      <td className={`py-2 pr-3 ${todo.completed ? "line-through text-gray-400" : "text-secondary dark:text-gray-300"}`}>
-                        {todo.title}
-                      </td>
-                      <td className={`py-2 pr-3 ${todo.completed ? "line-through text-gray-400" : "text-secondary dark:text-gray-300"}`}>
-                        {todo.description || "-"}
-                      </td>
-                      <td className={`py-2 pr-3 ${todo.completed ? "line-through text-gray-400" : "text-secondary dark:text-gray-300"}`}>
-                        {todo.dueDate ? new Date(todo.dueDate).toLocaleDateString() : "-"}
-                      </td>
-                    </>
-                  )}
-                  <td className="py-2">
-                    <div className="flex items-center gap-2">
-                      {editingTodoId === todo._id ? (
-                        <>
-                          <button
-                            type="button"
-                            onClick={() => saveEdit(todo._id)}
-                            className="text-green-600 hover:text-green-700"
-                            title="Save todo"
-                          >
-                            <Check className="h-4 w-4" />
-                          </button>
-                          <button
-                            type="button"
-                            onClick={cancelEdit}
-                            className="text-gray-600 hover:text-gray-700"
-                            title="Cancel edit"
-                          >
-                            <X className="h-4 w-4" />
-                          </button>
-                        </>
-                      ) : (
-                        <>
-                          <button
-                            type="button"
-                            onClick={() => startEdit(todo)}
-                            className="text-blue-600 hover:text-blue-700"
-                            title="Edit todo"
-                          >
-                            <Pencil className="h-4 w-4" />
-                          </button>
-                          <button
-                            type="button"
-                            onClick={() => removeTodo(todo._id)}
-                            className="text-red-600 hover:text-red-700"
-                            title="Delete todo"
-                          >
-                            <Trash2 className="h-4 w-4" />
-                          </button>
-                        </>
-                      )}
-                    </div>
-                  </td>
-                </tr>
-              ))}
-              {todos.length === 0 && (
-                <tr>
-                  <td colSpan={5} className="py-4 text-center text-secondary dark:text-gray-400">
-                    No todo items yet.
-                  </td>
-                </tr>
-              )}
-            </tbody>
-          </table>
-        </div>
-      )}
-
+      {/* Edit Modal */}
       <NoteFormModal
         isOpen={isModalOpen}
-        onClose={() => setIsModalOpen(false)}
-        onCreated={handleCreated}
-        defaultType="todo"
+        onClose={handleCloseModal}
+        editNote={editingTodo}
       />
-    </div>
+    </>
   );
 };
 

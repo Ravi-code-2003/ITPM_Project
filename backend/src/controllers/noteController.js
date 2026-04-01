@@ -1,253 +1,213 @@
-const Note = require("../models/Note");
+const Note = require('../models/Note');
+const Joi = require('joi');
 
-const STICKY_COLORS = ["yellow", "blue", "pink", "green", "purple", "orange"];
+// Validation schemas
+const createNoteSchema = Joi.object({
+  type: Joi.string().valid('sticky', 'todo').required(),
+  title: Joi.string().min(1).max(200).required(),
+  description: Joi.string().max(1000).optional(),
+  color: Joi.string().valid('yellow', 'blue', 'pink', 'green', 'purple', 'orange').optional(),
+  dueDate: Joi.date().optional(),
+});
 
-/**
- * POST /api/notes
- * Create sticky note or todo for the authenticated user.
- */
+const updateTodoSchema = Joi.object({
+  completed: Joi.boolean().required(),
+});
+
+// Create a new note or todo
 const createNote = async (req, res) => {
   try {
-    const {
-      type,
-      title,
-      description = "",
-      color = "yellow",
-      dueDate = null,
-    } = req.body;
-
-    if (!["sticky", "todo"].includes(type)) {
+    const { error, value } = createNoteSchema.validate(req.body);
+    if (error) {
       return res.status(400).json({
         success: false,
-        message: "Type must be 'sticky' or 'todo'",
+        message: 'Validation error',
+        details: error.details[0].message,
       });
     }
 
-    if (!title || !title.trim()) {
-      return res.status(400).json({
-        success: false,
-        message: "Title is required",
-      });
-    }
-
-    if (type === "sticky" && !STICKY_COLORS.includes(color)) {
-      return res.status(400).json({
-        success: false,
-        message: `Color must be one of: ${STICKY_COLORS.join(", ")}`,
-      });
-    }
-
-    const notePayload = {
-      userId: req.user.id,
-      type,
-      title: title.trim(),
-      description: description?.trim() || "",
-      completed: false,
+    // Add userId from authenticated user
+    const noteData = {
+      ...value,
+      userId: req.user._id,
     };
 
-    if (type === "sticky") {
-      notePayload.color = color;
-      notePayload.dueDate = null;
-    } else {
-      notePayload.dueDate = dueDate ? new Date(dueDate) : null;
-      notePayload.color = "yellow";
+    // Set defaults based on type
+    if (noteData.type === 'sticky') {
+      noteData.color = noteData.color || 'yellow';
+      noteData.completed = false; // Sticky notes are never completed
+    } else if (noteData.type === 'todo') {
+      noteData.completed = false; // Todos start incomplete
     }
 
-    const note = await Note.create(notePayload);
+    const note = new Note(noteData);
+    await note.save();
 
-    return res.status(201).json({
+    res.status(201).json({
       success: true,
+      message: `${noteData.type === 'sticky' ? 'Sticky note' : 'Todo'} created successfully`,
       note,
-      message: `${type === "sticky" ? "Sticky note" : "Todo"} created successfully`,
     });
   } catch (error) {
-    return res.status(400).json({
+    console.error('Create note error:', error);
+    res.status(500).json({
       success: false,
-      message: error.message,
+      message: 'Server error while creating note',
     });
   }
 };
 
-/**
- * GET /api/notes/sticky
- * Get all sticky notes for the authenticated user.
- */
+// Get all sticky notes for the authenticated user
 const getStickyNotes = async (req, res) => {
   try {
     const notes = await Note.find({
-      userId: req.user.id,
-      type: "sticky",
+      userId: req.user._id,
+      type: 'sticky',
     }).sort({ createdAt: -1 });
 
-    return res.json({
+    res.json({
       success: true,
       notes,
     });
   } catch (error) {
-    return res.status(500).json({
+    console.error('Get sticky notes error:', error);
+    res.status(500).json({
       success: false,
-      message: error.message,
+      message: 'Server error while fetching sticky notes',
     });
   }
 };
 
-/**
- * GET /api/notes/todos
- * Get all todo items for the authenticated user.
- */
+// Get all todos for the authenticated user
 const getTodos = async (req, res) => {
   try {
-    const notes = await Note.find({
-      userId: req.user.id,
-      type: "todo",
+    const todos = await Note.find({
+      userId: req.user._id,
+      type: 'todo',
     }).sort({ createdAt: -1 });
 
-    return res.json({
+    res.json({
       success: true,
-      notes,
+      todos,
     });
   } catch (error) {
-    return res.status(500).json({
+    console.error('Get todos error:', error);
+    res.status(500).json({
       success: false,
-      message: error.message,
+      message: 'Server error while fetching todos',
     });
   }
 };
 
-/**
- * PATCH /api/notes/:id/complete
- * Toggle or set completed state of a todo.
- */
+// Toggle todo completion status
 const toggleTodoCompletion = async (req, res) => {
   try {
     const { id } = req.params;
-    const { completed } = req.body;
+    const { error, value } = updateTodoSchema.validate(req.body);
 
-    const note = await Note.findOne({
-      _id: id,
-      userId: req.user.id,
-      type: "todo",
-    });
-
-    if (!note) {
-      return res.status(404).json({
+    if (error) {
+      return res.status(400).json({
         success: false,
-        message: "Todo item not found",
+        message: 'Validation error',
+        details: error.details[0].message,
       });
     }
 
-    note.completed = typeof completed === "boolean" ? completed : !note.completed;
-    note.updatedAt = new Date();
-    await note.save();
+    // Find and update the todo, ensuring it belongs to the user
+    const todo = await Note.findOneAndUpdate(
+      { _id: id, userId: req.user._id, type: 'todo' },
+      { completed: value.completed },
+      { new: true }
+    );
 
-    return res.json({
+    if (!todo) {
+      return res.status(404).json({
+        success: false,
+        message: 'Todo not found or access denied',
+      });
+    }
+
+    res.json({
       success: true,
-      note,
-      message: "Todo status updated",
+      message: `Todo ${value.completed ? 'completed' : 'marked incomplete'}`,
+      todo,
     });
   } catch (error) {
-    return res.status(400).json({
+    console.error('Toggle todo completion error:', error);
+    res.status(500).json({
       success: false,
-      message: error.message,
+      message: 'Server error while updating todo',
     });
   }
 };
 
-/**
- * PATCH /api/notes/:id
- * Edit note fields for the authenticated user.
- */
+// Update a note or todo
 const updateNote = async (req, res) => {
   try {
     const { id } = req.params;
-    const { title, description, dueDate, color } = req.body;
+    const { error, value } = createNoteSchema.validate(req.body);
 
-    const note = await Note.findOne({
+    if (error) {
+      return res.status(400).json({
+        success: false,
+        message: 'Validation error',
+        details: error.details[0].message,
+      });
+    }
+
+    const note = await Note.findOneAndUpdate(
+      { _id: id, userId: req.user._id },
+      value,
+      { new: true }
+    );
+
+    if (!note) {
+      return res.status(404).json({
+        success: false,
+        message: 'Note not found or access denied',
+      });
+    }
+
+    res.json({
+      success: true,
+      message: `${note.type === 'sticky' ? 'Sticky note' : 'Todo'} updated successfully`,
+      note,
+    });
+  } catch (error) {
+    console.error('Update note error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Server error while updating note',
+    });
+  }
+};
+
+// Delete a note or todo
+const deleteNote = async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    const note = await Note.findOneAndDelete({
       _id: id,
-      userId: req.user.id,
+      userId: req.user._id,
     });
 
     if (!note) {
       return res.status(404).json({
         success: false,
-        message: "Note not found",
+        message: 'Note not found or access denied',
       });
     }
 
-    if (typeof title === "string") {
-      if (!title.trim()) {
-        return res.status(400).json({
-          success: false,
-          message: "Title is required",
-        });
-      }
-      note.title = title.trim();
-    }
-
-    if (typeof description === "string") {
-      note.description = description.trim();
-    }
-
-    if (note.type === "todo") {
-      if (dueDate === null || dueDate === "") {
-        note.dueDate = null;
-      } else if (typeof dueDate === "string" || dueDate instanceof Date) {
-        note.dueDate = new Date(dueDate);
-      }
-    }
-
-    if (note.type === "sticky" && typeof color === "string") {
-      if (!STICKY_COLORS.includes(color)) {
-        return res.status(400).json({
-          success: false,
-          message: `Color must be one of: ${STICKY_COLORS.join(", ")}`,
-        });
-      }
-      note.color = color;
-    }
-
-    note.updatedAt = new Date();
-    await note.save();
-
-    return res.json({
+    res.json({
       success: true,
-      note,
-      message: `${note.type === "sticky" ? "Sticky note" : "Todo"} updated successfully`,
+      message: `${note.type === 'sticky' ? 'Sticky note' : 'Todo'} deleted successfully`,
     });
   } catch (error) {
-    return res.status(400).json({
+    console.error('Delete note error:', error);
+    res.status(500).json({
       success: false,
-      message: error.message,
-    });
-  }
-};
-
-/**
- * DELETE /api/notes/:id
- * Delete note/todo for the authenticated user.
- */
-const deleteNote = async (req, res) => {
-  try {
-    const deleted = await Note.findOneAndDelete({
-      _id: req.params.id,
-      userId: req.user.id,
-    });
-
-    if (!deleted) {
-      return res.status(404).json({
-        success: false,
-        message: "Note not found",
-      });
-    }
-
-    return res.json({
-      success: true,
-      message: "Note deleted successfully",
-    });
-  } catch (error) {
-    return res.status(400).json({
-      success: false,
-      message: error.message,
+      message: 'Server error while deleting note',
     });
   }
 };

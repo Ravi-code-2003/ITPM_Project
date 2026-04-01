@@ -1,28 +1,48 @@
 const express = require("express");
-const { protect, authorize, approvedOnly } = require("../middleware/auth");
 const {
-  createPost,
+  createLostFoundPost,
   getLostPosts,
   getFoundPosts,
-  getCurrentUserPosts,
+  getUserPosts,
   deletePost,
-  markAsResolved,
+  resolvePost,
   getMatchesByLostId,
+  markAsFound,
+  addComment,
+  getComments,
+  replyComment,
 } = require("../controllers/lostFoundController");
-const { upload, handleUploadError } = require("../middleware/uploadMiddleware");
+const { protect } = require("../middleware/auth");
+const { singleImageUpload, handleUploadError } = require("../middleware/uploadMiddleware");
 
 const router = express.Router();
 
-router.use(protect);
-router.use(authorize("student"));
-router.use(approvedOnly);
+// Create a lost or found post
+router.post("/", protect, singleImageUpload, createLostFoundPost);
 
-router.post("/", upload.single("image"), handleUploadError, createPost);
-router.get("/lost", getLostPosts);
-router.get("/found", getFoundPosts);
-router.get("/user", getCurrentUserPosts);
-router.get("/matches/:lostId", getMatchesByLostId);
-router.delete("/:id", deletePost);
-router.patch("/:id/resolve", markAsResolved);
+// Fetch posts
+router.get("/lost", protect, getLostPosts);
+router.get("/found", protect, getFoundPosts);
+router.get("/user", protect, getUserPosts);
+
+// Matches
+router.get("/matches/:lostId", protect, getMatchesByLostId);
+
+// Update posts
+router.delete("/:id", protect, deletePost);
+router.patch("/:id/resolve", protect, resolvePost);
+router.post("/:id/mark-found", protect, markAsFound);
+
+// Comments - add comment to a lost post
+router.post("/:postId/comment", protect, addComment);
+
+// Comments - get all comments for a lost post (owner only)
+router.get("/:postId/comments", protect, getComments);
+
+// Comments - reply to a comment (owner only)
+router.post("/comment/:commentId/reply", protect, replyComment);
+
+// Multer error handling
+router.use(handleUploadError);
 
 module.exports = router;

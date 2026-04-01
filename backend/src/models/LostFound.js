@@ -1,12 +1,11 @@
 const mongoose = require("mongoose");
 
-const lostFoundSchema = new mongoose.Schema(
+const LostFoundSchema = new mongoose.Schema(
   {
     userId: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "User",
       required: true,
-      index: true,
     },
     postType: {
       type: String,
@@ -16,42 +15,39 @@ const lostFoundSchema = new mongoose.Schema(
     },
     title: {
       type: String,
-      required: [true, "Item title is required"],
+      required: true,
       trim: true,
-      maxlength: [120, "Title cannot exceed 120 characters"],
+      maxlength: 200,
     },
     description: {
       type: String,
-      required: [true, "Description is required"],
+      required: true,
       trim: true,
-      maxlength: [1000, "Description cannot exceed 1000 characters"],
+      maxlength: 2000,
     },
     category: {
       type: String,
-      required: [true, "Category is required"],
+      required: true,
       trim: true,
-      maxlength: [80, "Category cannot exceed 80 characters"],
+      index: true,
     },
     location: {
       type: String,
-      required: [true, "Location is required"],
+      required: true,
       trim: true,
-      maxlength: [160, "Location cannot exceed 160 characters"],
     },
     date: {
       type: Date,
-      required: [true, "Date is required"],
+      required: true,
     },
     imageUrl: {
       type: String,
       default: "",
-      trim: true,
     },
     contactInfo: {
       type: String,
-      default: "",
       trim: true,
-      maxlength: [200, "Contact information cannot exceed 200 characters"],
+      default: "",
     },
     status: {
       type: String,
@@ -65,6 +61,6 @@ const lostFoundSchema = new mongoose.Schema(
   }
 );
 
-lostFoundSchema.index({ postType: 1, category: 1, status: 1, createdAt: -1 });
+LostFoundSchema.index({ postType: 1, category: 1, status: 1 });
 
-module.exports = mongoose.model("LostFound", lostFoundSchema);
+module.exports = mongoose.model("LostFound", LostFoundSchema);

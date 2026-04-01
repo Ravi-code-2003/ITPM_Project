@@ -1,33 +1,18 @@
-import React, { useEffect, useState } from "react";
-import { Pencil, StickyNote, Trash2 } from "lucide-react";
-import toast from "react-hot-toast";
-import { useAuth } from "../../contexts/AuthContext";
-import { notesAPI } from "../../services/api";
-import AddNoteButton from "./AddNoteButton";
-import NoteFormModal from "./NoteFormModal";
-import "./notes.css";
-
-const colorClassMap = {
-  yellow: "note-card-yellow",
-  blue: "note-card-blue",
-  pink: "note-card-pink",
-  green: "note-card-green",
-  purple: "note-card-purple",
-  orange: "note-card-orange",
-};
+import React, { useState, useEffect } from 'react';
+import { Trash2, Calendar, Edit } from 'lucide-react';
+import { notesAPI } from '../../services/api';
+import toast from 'react-hot-toast';
+import NoteFormModal from './NoteFormModal';
 
 const StickyNotesBoard = () => {
-  const { isAuthenticated } = useAuth();
   const [notes, setNotes] = useState([]);
-  const [loading, setLoading] = useState(false);
-  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [loading, setLoading] = useState(true);
   const [editingNote, setEditingNote] = useState(null);
-  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [isModalOpen, setIsModalOpen] = useState(false);
 
   useEffect(() => {
-    if (!isAuthenticated) return;
     fetchStickyNotes();
-  }, [isAuthenticated]);
+  }, []);
 
   const fetchStickyNotes = async () => {
     try {
@@ -35,117 +20,125 @@ const StickyNotesBoard = () => {
       const response = await notesAPI.getStickyNotes();
       setNotes(response.notes || []);
     } catch (error) {
-      console.error("Failed to load sticky notes:", error);
+      console.error('Error fetching sticky notes:', error);
+      toast.error('Failed to load sticky notes');
     } finally {
       setLoading(false);
     }
   };
 
-  const handleCreated = (note) => {
-    // Update sticky board immediately when a sticky note is created.
-    if (note?.type === "sticky") {
-      setNotes((prev) => [note, ...prev]);
+  const handleDeleteNote = async (noteId) => {
+    if (!window.confirm('Are you sure you want to delete this sticky note?')) {
+      return;
     }
 
-    // Notify other note widgets (e.g. TodoTable) to update.
-    window.dispatchEvent(new CustomEvent("note:created", { detail: { note } }));
-  };
-
-  const handleDelete = async (id) => {
     try {
-      await notesAPI.deleteNote(id);
-      setNotes((prev) => prev.filter((note) => note._id !== id));
-      toast.success("Sticky note deleted");
+      await notesAPI.deleteNote(noteId);
+      setNotes(prev => prev.filter(note => note._id !== noteId));
+      toast.success('Sticky note deleted successfully');
     } catch (error) {
-      toast.error(error.response?.data?.message || "Failed to delete note");
+      console.error('Error deleting note:', error);
+      toast.error('Failed to delete sticky note');
     }
   };
 
-  const handleEditClick = (note) => {
+  const handleEditNote = (note) => {
     setEditingNote(note);
-    setIsEditModalOpen(true);
+    setIsModalOpen(true);
   };
 
-  const handleUpdated = (updatedNote) => {
-    if (updatedNote?.type === "sticky") {
-      setNotes((prev) => prev.map((note) => (note._id === updatedNote._id ? updatedNote : note)));
-    }
+  const handleCloseModal = () => {
+    setIsModalOpen(false);
+    setEditingNote(null);
   };
 
-  if (!isAuthenticated) {
-    return null;
+  const getColorClasses = (color) => {
+    const colorMap = {
+      yellow: 'bg-yellow-200 dark:bg-yellow-800 border-yellow-300 dark:border-yellow-700',
+      blue: 'bg-blue-200 dark:bg-blue-800 border-blue-300 dark:border-blue-700',
+      pink: 'bg-pink-200 dark:bg-pink-800 border-pink-300 dark:border-pink-700',
+      green: 'bg-green-200 dark:bg-green-800 border-green-300 dark:border-green-700',
+      purple: 'bg-purple-200 dark:bg-purple-800 border-purple-300 dark:border-purple-700',
+      orange: 'bg-orange-200 dark:bg-orange-800 border-orange-300 dark:border-orange-700',
+    };
+    return colorMap[color] || colorMap.yellow;
+  };
+
+  if (loading) {
+    return (
+      <section className="p-4 bg-gray-50 dark:bg-gray-900 shadow rounded-lg mb-6">
+        <h2 className="text-lg font-semibold mb-4 text-gray-900 dark:text-white">Sticky Notes</h2>
+        <div className="text-center py-8">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto"></div>
+          <p className="text-sm text-gray-600 dark:text-gray-400 mt-2">Loading notes...</p>
+        </div>
+      </section>
+    );
   }
 
   return (
-    <section className="border-b border-yellow-200/60 dark:border-yellow-700/40 bg-gradient-to-r from-yellow-50 to-amber-50 dark:from-yellow-900/20 dark:to-amber-900/20">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
-        <div className="flex items-center justify-between mb-3">
-          <div className="flex items-center gap-2 text-primary dark:text-gray-100 font-semibold">
-            <StickyNote className="h-5 w-5" />
-            Sticky Notes
-          </div>
-          <AddNoteButton label="Add Notes" onClick={() => setIsModalOpen(true)} />
-        </div>
+    <>
+      <section className="p-4 bg-gray-50 dark:bg-gray-900 shadow rounded-lg mb-6">
+        <h2 className="text-lg font-semibold mb-4 text-gray-900 dark:text-white">Sticky Notes</h2>
 
-        {loading ? (
-          <p className="text-sm text-secondary dark:text-gray-300">Loading sticky notes...</p>
-        ) : notes.length === 0 ? (
-          <p className="text-sm text-secondary dark:text-gray-300">No sticky notes yet. Click Add Notes to create one.</p>
+        {notes.length === 0 ? (
+          <div className="text-center py-8">
+            <p className="text-sm text-gray-600 dark:text-gray-400">No sticky notes yet. Create your first note!</p>
+          </div>
         ) : (
-          <div className="notes-grid">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
             {notes.map((note) => (
-              <div key={note._id} className={`note-card ${colorClassMap[note.color] || "note-card-yellow"}`}>
-                <div className="flex justify-between items-start gap-2">
-                  <h4 className="font-semibold text-sm text-gray-900">{note.title}</h4>
-                  <div className="flex items-center gap-2">
-                    <button
-                      type="button"
-                      onClick={() => handleEditClick(note)}
-                      className="text-gray-700 hover:text-blue-600 transition-colors"
-                      title="Edit"
-                    >
-                      <Pencil className="h-4 w-4" />
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => handleDelete(note._id)}
-                      className="text-gray-700 hover:text-red-600 transition-colors"
-                      title="Delete"
-                    >
-                      <Trash2 className="h-4 w-4" />
-                    </button>
-                  </div>
+              <div
+                key={note._id}
+                className={`relative p-4 rounded-lg shadow-md border-2 transform hover:scale-105 transition-transform ${getColorClasses(note.color)}`}
+              >
+                {/* Action buttons */}
+                <div className="absolute top-2 right-2 flex gap-1">
+                  <button
+                    onClick={() => handleEditNote(note)}
+                    className="text-gray-500 hover:text-blue-600 dark:hover:text-blue-400 transition-colors"
+                    title="Edit note"
+                  >
+                    <Edit className="h-4 w-4" />
+                  </button>
+                  <button
+                    onClick={() => handleDeleteNote(note._id)}
+                    className="text-gray-500 hover:text-red-600 dark:hover:text-red-400 transition-colors"
+                    title="Delete note"
+                  >
+                    <Trash2 className="h-4 w-4" />
+                  </button>
                 </div>
+
+                {/* Note content */}
+                <h3 className="font-semibold text-gray-900 dark:text-white mb-2 pr-6">
+                  {note.title}
+                </h3>
+
                 {note.description && (
-                  <p className="text-sm text-gray-800 mt-2 whitespace-pre-wrap break-words">{note.description}</p>
+                  <p className="text-sm text-gray-700 dark:text-gray-300 mb-3 whitespace-pre-wrap">
+                    {note.description}
+                  </p>
                 )}
-                <p className="text-xs text-gray-700 mt-3">
+
+                {/* Created date */}
+                <div className="flex items-center text-xs text-gray-500 dark:text-gray-400 mt-auto">
+                  <Calendar className="h-3 w-3 mr-1" />
                   {new Date(note.createdAt).toLocaleDateString()}
-                </p>
+                </div>
               </div>
             ))}
           </div>
         )}
+      </section>
 
-        <NoteFormModal
-          isOpen={isModalOpen}
-          onClose={() => setIsModalOpen(false)}
-          onCreated={handleCreated}
-          defaultType="sticky"
-        />
-        <NoteFormModal
-          isOpen={isEditModalOpen}
-          onClose={() => {
-            setIsEditModalOpen(false);
-            setEditingNote(null);
-          }}
-          onUpdated={handleUpdated}
-          defaultType="sticky"
-          mode="edit"
-          note={editingNote}
-        />
-      </div>
-    </section>
+      {/* Edit Modal */}
+      <NoteFormModal
+        isOpen={isModalOpen}
+        onClose={handleCloseModal}
+        editNote={editingNote}
+      />
+    </>
   );
 };
 

@@ -16,13 +16,6 @@ const {
   getRestaurantPolls,
   voteInPollProposal
 } = require("../controllers/studentController");
-const {
-  getBudgetSummary,
-  generateMonthlyMealPlans,
-  getLowBudgetFoods,
-  getEndOfMonthAdvice
-} = require("../controllers/budgetManagerController");
-
 const router = express.Router();
 
 // Apply middleware to all routes
@@ -36,10 +29,6 @@ router.get("/restaurant/:id/menu", getRestaurantMenu);
 
 // Smart Features Routes
 router.get("/budget-meals", getBudgetMeals);
-router.get("/budget-manager/summary", getBudgetSummary);
-router.post("/budget-manager/meal-plans", generateMonthlyMealPlans);
-router.get("/budget-manager/low-budget-foods", getLowBudgetFoods);
-router.post("/budget-manager/end-of-month-advice", getEndOfMonthAdvice);
 
 // Order Routes
 router.route("/orders")

@@ -1,4 +1,4 @@
-﻿const express = require("express");
+const express = require("express");
 const cors = require("cors");
 const dotenv = require("dotenv");
 const path = require("path");
@@ -14,9 +14,12 @@ const adminRoutes = require("./routes/adminRoutes");
 const aiRoutes = require("./routes/aiRoutes");
 const shopRoutes = require("./routes/shopRoutes");
 const studentRoutes = require("./routes/studentRoutes");
+const budgetRoutes = require("./routes/budgetRoutes");
 const noteRoutes = require("./routes/noteRoutes");
 const lostFoundRoutes = require("./routes/lostFoundRoutes");
 const transactionRoutes = require("./routes/transactionRoutes");
+const notificationRoutes = require("./routes/notificationRoutes");
+const claimRoutes = require("./routes/claimRoutes");
 
 
 
@@ -67,6 +70,7 @@ app.get("/", (req, res) => {
       ai: "/api/ai",
       shop: "/api/shop",
       student: "/api/student",
+      budget: "/api/budget",
       notes: "/api/notes",
       lostfound: "/api/lostfound",
     },
@@ -79,9 +83,12 @@ app.use("/api/admin", adminRoutes);
 app.use("/api/ai", aiRoutes);
 app.use("/api/shop", shopRoutes);
 app.use("/api/student", studentRoutes);
+app.use("/api/budget", budgetRoutes);
 app.use("/api/transactions", transactionRoutes);
 app.use("/api/notes", noteRoutes);
 app.use("/api/lostfound", lostFoundRoutes);
+app.use("/api/notifications", notificationRoutes);
+app.use("/api/claims", claimRoutes);
 
 // Health check endpoint
 app.get("/api/health", (req, res) => {

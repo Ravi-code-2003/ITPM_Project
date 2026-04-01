@@ -1,91 +1,130 @@
-import React from "react";
-import { CheckCircle2, MapPin, CalendarDays, Tag, Trash2 } from "lucide-react";
+import React, { useState } from "react";
+import api from "../../services/api";
+import CommentSection from "./CommentSection";
+import MarkFoundModal from "./MarkFoundModal";
+import { useAuth } from "../../contexts/AuthContext";
 
-const formatDate = (dateValue) => {
-  if (!dateValue) return "-";
-  return new Date(dateValue).toLocaleDateString();
+const getImageSrc = (imageUrl) => {
+  if (!imageUrl) return "";
+  if (imageUrl.startsWith("http")) return imageUrl;
+  const apiBase = api.defaults.baseURL || "";
+  const serverBase = apiBase.replace(/\/api\/?$/, "");
+  return `${serverBase}${imageUrl}`;
 };
 
-const LostFoundCard = ({ post, isOwner, onResolve, onDelete, readOnly = false }) => {
-  const isResolved = post.status === "resolved";
+const LostFoundCard = ({ item, postType, onResolve, onDelete }) => {
+  const { user } = useAuth();
+  const [showComments, setShowComments] = useState(false);
+  const [showContact, setShowContact] = useState(false);
+  const [showMarkFoundModal, setShowMarkFoundModal] = useState(false);
+  const imageSrc = getImageSrc(item.imageUrl);
+  const statusLabel = item.status === "resolved" ? "Resolved" : "Open";
+  const isOwner = user && user._id === item.userId;
+
+  const handleDeleteClick = () => {
+    if (onDelete) {
+      onDelete(item._id);
+    }
+  };
+
+  const handleResolveClick = () => {
+    if (onResolve) {
+      onResolve(item._id);
+    }
+  };
 
   return (
-    <div className="lostfound-card border border-gray-200 dark:border-gray-700 rounded-xl p-4 bg-white dark:bg-slate-900">
-      <div className="flex items-start gap-4">
-        {post.imageUrl ? (
-          <img
-            src={post.imageUrl}
-            alt={post.title}
-            className="w-24 h-24 object-cover rounded-lg border border-gray-200 dark:border-gray-700"
-          />
+    <div className="lf-card">
+      <div className="lf-card-image">
+        {imageSrc ? (
+          <img src={imageSrc} alt={item.title} />
         ) : (
-          <div className="w-24 h-24 rounded-lg border border-gray-200 dark:border-gray-700 bg-gray-100 dark:bg-slate-800 text-xs text-gray-500 flex items-center justify-center text-center px-2">
-            No image
+          <div className="lf-card-placeholder">No photo</div>
+        )}
+      </div>
+      <div className="lf-card-body">
+        <div className="lf-card-header">
+          <h4 className="lf-card-title">{item.title}</h4>
+          <span className={`lf-status ${item.status === "resolved" ? "resolved" : "open"}`}>
+            {statusLabel}
+          </span>
+        </div>
+        <p className="lf-card-description">{item.description}</p>
+        <div className="lf-card-meta">
+          <span className="lf-meta-item">📍 {item.location}</span>
+          <span className="lf-meta-item">📅 {new Date(item.date).toLocaleDateString()}</span>
+          <span className="lf-card-category">{item.category}</span>
+        </div>
+
+        {/* For FOUND items: Show "View Noter Info" button */}
+        {postType === "found" && (
+          <button 
+            className="lf-btn-secondary lf-btn-small"
+            onClick={() => setShowContact(!showContact)}
+          >
+            {showContact ? "Hide Noter Info" : "View Noter Info"}
+          </button>
+        )}
+
+        {/* Contact info display for found items */}
+        {postType === "found" && showContact && item.contactInfo && (
+          <div className="lf-contact-info">
+            <p><strong>Contact:</strong> {item.contactInfo}</p>
           </div>
         )}
 
-        <div className="flex-1 min-w-0">
-          <div className="flex items-start justify-between gap-2">
-            <h4 className="text-lg font-semibold text-primary dark:text-gray-100 truncate">{post.title}</h4>
-            <span
-              className={`text-xs font-semibold px-2 py-1 rounded-full ${
-                isResolved
-                  ? "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-300"
-                  : "bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-300"
-              }`}
-            >
-              {isResolved ? "Resolved" : "Open"}
-            </span>
-          </div>
+        {/* For LOST items: Show messages button only to owner */}
+        {postType === "lost" && isOwner && (
+          <button 
+            className="lf-btn-primary lf-btn-small"
+            onClick={() => setShowComments(!showComments)}
+          >
+            {showComments ? "Hide Messages" : "Show Messages"}
+          </button>
+        )}
 
-          <p className="mt-1 text-sm text-secondary dark:text-gray-300">{post.description}</p>
+        {/* For LOST items: allow others to mark as found */}
+        {postType === "lost" && !isOwner && item.status !== "resolved" && (
+          <button
+            className="lf-btn-success lf-btn-small"
+            onClick={() => setShowMarkFoundModal(true)}
+          >
+            Mark as Found
+          </button>
+        )}
 
-          <div className="mt-3 grid grid-cols-1 sm:grid-cols-2 gap-2 text-sm text-secondary dark:text-gray-300">
-            <p className="flex items-center gap-2">
-              <MapPin className="h-4 w-4" />
-              {post.location}
-            </p>
-            <p className="flex items-center gap-2">
-              <CalendarDays className="h-4 w-4" />
-              {formatDate(post.date)}
-            </p>
-            <p className="flex items-center gap-2">
-              <Tag className="h-4 w-4" />
-              {post.category}
-            </p>
-            <p>{post.contactInfo ? `Contact: ${post.contactInfo}` : "Contact: Not provided"}</p>
-          </div>
-
-          {Array.isArray(post.matchReasons) && post.matchReasons.length > 0 && (
-            <p className="mt-2 text-xs text-blue-700 dark:text-blue-300">
-              Match reason: {post.matchReasons.join(", ")} (score: {post.matchScore ?? "-"})
-            </p>
-          )}
-
-          {!readOnly && isOwner && (
-            <div className="mt-4 flex flex-wrap gap-2">
-              {!isResolved && (
-                <button
-                  type="button"
-                  onClick={() => onResolve?.(post._id)}
-                  className="inline-flex items-center gap-1 px-3 py-1.5 rounded-md text-sm font-medium bg-green-600 hover:bg-green-700 text-white"
-                >
-                  <CheckCircle2 className="h-4 w-4" />
-                  Mark Resolved
-                </button>
-              )}
-              <button
-                type="button"
-                onClick={() => onDelete?.(post._id)}
-                className="inline-flex items-center gap-1 px-3 py-1.5 rounded-md text-sm font-medium bg-red-600 hover:bg-red-700 text-white"
+        {/* Owner actions */}
+        {isOwner && (
+          <div className="lf-card-actions">
+            {item.status !== "resolved" && (
+              <button 
+                className="lf-btn-success lf-btn-small"
+                onClick={handleResolveClick}
               >
-                <Trash2 className="h-4 w-4" />
-                Delete
+                ✓ Mark as Resolved
               </button>
-            </div>
-          )}
-        </div>
+            )}
+            <button 
+              className="lf-btn-danger lf-btn-small"
+              onClick={handleDeleteClick}
+            >
+              🗑 Delete
+            </button>
+          </div>
+        )}
       </div>
+
+      {/* Comment section for lost item owner */}
+      {showComments && postType === "lost" && isOwner && (
+        <CommentSection postId={item._id} />
+      )}
+
+      {showMarkFoundModal && (
+        <MarkFoundModal
+          post={item}
+          onClose={() => setShowMarkFoundModal(false)}
+        />
+      )}
     </div>
   );
 };

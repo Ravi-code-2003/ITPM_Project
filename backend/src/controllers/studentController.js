@@ -8,6 +8,7 @@ const Rating = require("../models/Rating");
 const Poll = require("../models/Poll");
 const PollProposal = require("../models/PollProposal");
 const Transaction = require("../models/Transaction");
+const Expense = require("../models/Expense");
 
 
 /**
@@ -285,7 +286,19 @@ const createOrder = async (req, res) => {
     } catch (transactionError) {
       console.error("Failed to log order transaction:", transactionError.message);
     }
-    
+
+    try {
+      await Expense.create({
+        userId: studentId,
+        amount: totalAmount,
+        category: "Food",
+        description: `Order ${order._id}`,
+        date: order.createdAt || new Date(),
+      });
+    } catch (expenseError) {
+      console.error("Failed to log order expense:", expenseError.message);
+    }
+
     res.status(201).json({
       success: true,
       order,

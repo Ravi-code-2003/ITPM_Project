@@ -1,5 +1,6 @@
 const AIProviderService = require("./ai/AIProviderService");
 const AIServiceError = require("./ai/AIServiceError");
+const FoodItem = require("../models/FoodItem");
 
 const AI_CONTEXT_LIMIT = parseInt(process.env.AI_CONTEXT_LIMIT, 10) || 5;
 const AI_TEMPERATURE = Number(process.env.AI_TEMPERATURE || 0.2);
@@ -15,6 +16,7 @@ const ROLE_NAME_MAP = {
 };
 
 const aiProviderService = new AIProviderService();
+const mealPlanCache = new Map();
 
 const buildInternalContext = (user) => {
   if (!user) {
@@ -109,4 +111,50 @@ const generateResponse = async (
 module.exports = {
   AIServiceError,
   generateResponse,
+  generateMealPlan: async (budget, preferences = {}) => {
+    const { userId = "anon", month, year, affordableItems = [] } = preferences;
+    const now = new Date();
+    const resolvedMonth = Number(month) || now.getMonth() + 1;
+    const resolvedYear = Number(year) || now.getFullYear();
+    const cacheKey = `mealplan:${userId}:${resolvedYear}-${resolvedMonth}`;
+
+    const cached = mealPlanCache.get(cacheKey);
+    if (cached) {
+      return { ...cached, cached: true };
+    }
+
+    const budgetNumber = Math.max(Number(budget) || 0, 0);
+    const dailyCap = Math.max(100, Math.floor(budgetNumber / 30) || 100);
+
+    const options =
+      affordableItems.length > 0
+        ? affordableItems
+        : await FoodItem.find({ status: "Available", price: { $lte: dailyCap } })
+            .sort({ price: 1 })
+            .limit(25)
+            .select("name price category")
+            .lean();
+
+    const grouped = options.reduce((acc, item) => {
+      const key = (item.category || "General").toLowerCase();
+      if (!acc[key]) acc[key] = [];
+      acc[key].push(item);
+      return acc;
+    }, {});
+
+    const result = {
+      month: resolvedMonth,
+      year: resolvedYear,
+      budget: budgetNumber,
+      meals: {
+        breakfast: (grouped.breakfast || options).slice(0, 5),
+        lunch: (grouped.lunch || options).slice(0, 5),
+        dinner: (grouped.dinner || options).slice(0, 5),
+      },
+      cached: false,
+    };
+
+    mealPlanCache.set(cacheKey, result);
+    return result;
+  },
 };
