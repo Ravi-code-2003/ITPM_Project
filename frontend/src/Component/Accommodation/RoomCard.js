@@ -44,9 +44,9 @@ const RoomCard = ({ room, onViewDetails, showMatchScore = false, matchScore = nu
   const bestOffer = hasOffer ? activeOffers[0] : null;
 
   return (
-    <Card className="overflow-hidden hover:shadow-lg transition-shadow flex flex-col h-full" padding="none">
+    <Card className="overflow-hidden hover:shadow-lg transition-shadow flex flex-col h-full bg-amber-50 dark:bg-gray-800 border border-amber-200 dark:border-gray-700" padding="none">
       {/* Image with Carousel */}
-      <div className="relative h-44 bg-gray-200 group flex-shrink-0">
+      <div className="relative h-44 bg-amber-100/60 dark:bg-gray-700/40 group flex-shrink-0">
         {images && images.length > 0 ? (
           <>
             <img
@@ -55,7 +55,7 @@ const RoomCard = ({ room, onViewDetails, showMatchScore = false, matchScore = nu
               className="w-full h-full object-cover"
               onError={(e) => {
                 e.target.onerror = null;
-                e.target.parentElement.innerHTML = '<div class="w-full h-full flex items-center justify-center bg-gray-300"><span class="text-gray-500">Failed to load image</span></div>';
+                e.target.parentElement.innerHTML = '<div class="w-full h-full flex items-center justify-center bg-amber-100"><span class="text-gray-500">Failed to load image</span></div>';
               }}
             />
             
@@ -64,14 +64,14 @@ const RoomCard = ({ room, onViewDetails, showMatchScore = false, matchScore = nu
               <>
                 <button
                   onClick={handlePrevImage}
-                  className="absolute left-2 top-1/2 -translate-y-1/2 bg-white/90 hover:bg-white rounded-full p-1.5 shadow-md opacity-0 group-hover:opacity-100 transition-opacity z-10"
+                  className="absolute left-2 top-1/2 -translate-y-1/2 bg-amber-50/95 hover:bg-amber-50 rounded-full p-1.5 shadow-md opacity-0 group-hover:opacity-100 transition-opacity z-10"
                   aria-label="Previous image"
                 >
                   <ChevronLeft className="h-4 w-4 text-gray-800" />
                 </button>
                 <button
                   onClick={handleNextImage}
-                  className="absolute right-2 top-1/2 -translate-y-1/2 bg-white/90 hover:bg-white rounded-full p-1.5 shadow-md opacity-0 group-hover:opacity-100 transition-opacity z-10"
+                  className="absolute right-2 top-1/2 -translate-y-1/2 bg-amber-50/95 hover:bg-amber-50 rounded-full p-1.5 shadow-md opacity-0 group-hover:opacity-100 transition-opacity z-10"
                   aria-label="Next image"
                 >
                   <ChevronRight className="h-4 w-4 text-gray-800" />
@@ -94,7 +94,7 @@ const RoomCard = ({ room, onViewDetails, showMatchScore = false, matchScore = nu
             )}
           </>
         ) : (
-          <div className="w-full h-full flex items-center justify-center bg-gray-300">
+          <div className="w-full h-full flex items-center justify-center bg-amber-100">
             <span className="text-gray-500">No Image</span>
           </div>
         )}

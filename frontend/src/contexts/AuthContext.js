@@ -158,7 +158,7 @@ export const AuthProvider = ({ children }) => {
       const message =
         error.response?.data?.message ||
         (error.message === 'Network Error'
-          ? 'Cannot connect to server. Please check backend is running on port 5001.'
+          ? 'Cannot connect to server. Please check backend is running on port 5000.'
           : error.message) ||
         'Login failed';
       dispatch({

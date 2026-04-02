@@ -113,10 +113,18 @@ const RoomDetailModal = ({ room, onClose }) => {
   ];
 
   return (
-    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4 overflow-hidden">
-      <div className="w-full max-w-5xl max-h-[90vh] overflow-y-auto my-8 scrollbar-thin scrollbar-thumb-primary scrollbar-track-transparent">
-        <Card className="w-full">
-          <div className="p-6">
+    <div
+      className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4 overflow-hidden"
+      onClick={(event) => {
+        if (event.target === event.currentTarget) {
+          onClose();
+        }
+      }}
+    >
+      <div className="w-full max-w-4xl my-4" onClick={(event) => event.stopPropagation()}>
+        <Card className="w-full rounded-3xl overflow-hidden shadow-2xl">
+          <div className="max-h-[86vh] overflow-y-auto scrollbar-thin scrollbar-thumb-primary scrollbar-track-transparent">
+            <div className="p-5 sm:p-6">
           {/* Header */}
           <div className="flex justify-between items-start mb-6">
             <div className="flex-1">
@@ -139,7 +147,7 @@ const RoomDetailModal = ({ room, onClose }) => {
           {/* Images */}
           {room.images && room.images.length > 0 && (
             <div className="mb-6">
-              <div className="relative h-96 rounded-lg overflow-hidden mb-4">
+              <div className="relative h-64 sm:h-72 md:h-80 rounded-lg overflow-hidden mb-4">
                 <img
                   src={room.images[selectedImage].startsWith('http') ? room.images[selectedImage] : `http://localhost:5000${room.images[selectedImage]}`}
                   alt={room.title}
@@ -147,12 +155,12 @@ const RoomDetailModal = ({ room, onClose }) => {
                 />
               </div>
               {room.images.length > 1 && (
-                <div className="grid grid-cols-5 gap-2">
+                <div className="grid grid-cols-4 gap-2">
                   {room.images.map((img, index) => (
                     <button
                       key={index}
                       onClick={() => setSelectedImage(index)}
-                      className={`h-20 rounded-lg overflow-hidden ${
+                      className={`h-16 sm:h-20 rounded-lg overflow-hidden ${
                         selectedImage === index ? 'ring-2 ring-primary' : ''
                       }`}
                     >
@@ -168,7 +176,7 @@ const RoomDetailModal = ({ room, onClose }) => {
             </div>
           )}
 
-          <div className="grid gridcols-1 md:grid-cols-3 gap-6 mb-6">
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
             {/* Left Column - Details */}
             <div className="md:col-span-2 space-y-6">
               {/* Price & Type */}
@@ -271,7 +279,7 @@ const RoomDetailModal = ({ room, onClose }) => {
                   <h3 className="text-lg font-semibold text-primary dark:text-gray-100 mb-3">
                     Location
                   </h3>
-                  <div className="h-64 rounded-lg overflow-hidden border-2 border-secondary/20">
+                  <div className="h-56 rounded-lg overflow-hidden border-2 border-secondary/20">
                     <MapContainer
                       center={[
                         room.location.coordinates.coordinates[1],
@@ -299,7 +307,7 @@ const RoomDetailModal = ({ room, onClose }) => {
             {/* Right Column - Owner Info & Request Form */}
             <div className="space-y-4">
               {/* Owner Info */}
-              <div className="bg-background dark:bg-background-dark rounded-lg p-4">
+              <div className="bg-amber-100/70 dark:bg-background-dark rounded-lg p-4 border border-amber-200 dark:border-gray-700">
                 <h3 className="font-semibold text-primary dark:text-gray-100 mb-3">
                   Property Owner
                 </h3>
@@ -323,7 +331,7 @@ const RoomDetailModal = ({ room, onClose }) => {
                       Send Inquiry
                     </Button>
                   ) : (
-                    <div className="bg-background dark:bg-background-dark rounded-lg p-4">
+                    <div className="bg-amber-100/70 dark:bg-background-dark rounded-lg p-4 border border-amber-200 dark:border-gray-700">
                       <h3 className="font-semibold text-primary dark:text-gray-100 mb-3">
                         Send Inquiry
                       </h3>
@@ -337,8 +345,8 @@ const RoomDetailModal = ({ room, onClose }) => {
                             value={requestData.phone}
                             onChange={(e) => handleContactChange('phone', e.target.value)}
                             required
-                            className={`w-full px-3 py-2 text-sm border rounded-lg focus:ring-2 focus:ring-primary dark:bg-surface-dark dark:border-gray-600 dark:text-gray-100 ${
-                              formErrors.phone ? 'border-red-500' : 'border-secondary/30'
+                            className={`w-full px-3 py-2 text-sm border rounded-lg focus:ring-2 focus:ring-primary bg-amber-50 dark:bg-surface-dark dark:border-gray-600 dark:text-gray-100 ${
+                              formErrors.phone ? 'border-red-500' : 'border-amber-200'
                             }`}
                             placeholder="0771234567 or +94771234567"
                           />
@@ -356,8 +364,8 @@ const RoomDetailModal = ({ room, onClose }) => {
                             type="tel"
                             value={requestData.whatsapp}
                             onChange={(e) => handleContactChange('whatsapp', e.target.value)}
-                            className={`w-full px-3 py-2 text-sm border rounded-lg focus:ring-2 focus:ring-primary dark:bg-surface-dark dark:border-gray-600 dark:text-gray-100 ${
-                              formErrors.whatsapp ? 'border-red-500' : 'border-secondary/30'
+                            className={`w-full px-3 py-2 text-sm border rounded-lg focus:ring-2 focus:ring-primary bg-amber-50 dark:bg-surface-dark dark:border-gray-600 dark:text-gray-100 ${
+                              formErrors.whatsapp ? 'border-red-500' : 'border-amber-200'
                             }`}
                             placeholder="0771234567 or +94771234567"
                           />
@@ -377,7 +385,7 @@ const RoomDetailModal = ({ room, onClose }) => {
                               setRequestData({ ...requestData, message: e.target.value })
                             }
                             rows="3"
-                            className="w-full px-3 py-2 text-sm border border-secondary/30 rounded-lg focus:ring-2 focus:ring-primary dark:bg-surface-dark dark:border-gray-600 dark:text-gray-100"
+                            className="w-full px-3 py-2 text-sm border border-amber-200 rounded-lg focus:ring-2 focus:ring-primary bg-amber-50 dark:bg-surface-dark dark:border-gray-600 dark:text-gray-100"
                             placeholder="Any questions or special requests..."
                           />
                         </div>
@@ -402,6 +410,7 @@ const RoomDetailModal = ({ room, onClose }) => {
               )}
             </div>
           </div>
+            </div>
           </div>
         </Card>
       </div>

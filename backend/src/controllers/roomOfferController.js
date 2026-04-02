@@ -45,6 +45,10 @@ const createOffer = async (req, res) => {
       return res.status(404).json({ message: "Room not found" });
     }
 
+    if (!room.isActive) {
+      return res.status(400).json({ message: "Cannot create offers for inactive/deleted rooms" });
+    }
+
     if (room.owner.toString() !== req.user._id.toString()) {
       return res.status(403).json({ message: "Not authorized to create offer for this room" });
     }
@@ -83,6 +87,14 @@ const getRoomOffers = async (req, res) => {
     const { roomId } = req.params;
     const { includeExpired } = req.query;
 
+    const room = await Room.findById(roomId).select("isActive");
+    if (!room || !room.isActive) {
+      return res.status(200).json({
+        success: true,
+        data: [],
+      });
+    }
+
     // Build filter
     const filter = { room: roomId, isActive: true };
     
@@ -109,12 +121,27 @@ const getRoomOffers = async (req, res) => {
 const getMyOffers = async (req, res) => {
   try {
     const offers = await RoomOffer.find({ owner: req.user._id })
-      .populate("room", "title monthlyRent")
+      .populate({
+        path: "room",
+        select: "title monthlyRent isActive",
+        match: { isActive: true },
+      })
       .sort({ createdAt: -1 });
+
+    // Hide offers linked to deleted/inactive rooms and deactivate them for consistency.
+    const invalidOffers = offers.filter((offer) => !offer.room && offer.isActive);
+    if (invalidOffers.length > 0) {
+      await RoomOffer.updateMany(
+        { _id: { $in: invalidOffers.map((offer) => offer._id) } },
+        { $set: { isActive: false } }
+      );
+    }
+
+    const filteredOffers = offers.filter((offer) => Boolean(offer.room));
 
     res.status(200).json({
       success: true,
-      data: offers,
+      data: filteredOffers,
     });
   } catch (error) {
     console.error("Get my offers error:", error);

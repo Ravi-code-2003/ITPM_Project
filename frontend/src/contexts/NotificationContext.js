@@ -1,10 +1,50 @@
 import React, { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react';
 import toast from 'react-hot-toast';
 import { notificationAPI } from '../services/api';
+import { roomRequestService } from '../services/accommodationService';
 import { useAuth } from './AuthContext';
 
 const NotificationContext = createContext(null);
 const POLL_INTERVAL_MS = 10000;
+
+const normalizeNotifications = (items) => {
+  if (!Array.isArray(items)) {
+    return [];
+  }
+
+  return items.filter((item) => item && typeof item === 'object');
+};
+
+const buildStudentActivityNotifications = (requests = []) => {
+  return requests.map((request) => {
+    const roomTitle = request.room?.title || 'Room inquiry';
+    const area = request.room?.location?.area;
+    const status = request.status || 'PENDING';
+
+    const statusTitleMap = {
+      ACCEPTED: 'Request accepted',
+      REJECTED: 'Request rejected',
+      REQUEST_MORE_INFO: 'More information requested',
+      PENDING: 'Request submitted',
+      CANCELLED: 'Request cancelled'
+    };
+
+    const messageParts = [];
+    if (area) messageParts.push(area);
+    if (request.ownerResponse?.responseMessage) messageParts.push(`Owner: ${request.ownerResponse.responseMessage}`);
+
+    return {
+      _id: `activity-${request._id}`,
+      title: `${statusTitleMap[status] || 'Request update'} - ${roomTitle}`,
+      message: messageParts.join(' • ') || `Status: ${status}`,
+      createdAt: request.updatedAt || request.createdAt || new Date().toISOString(),
+      isRead: true,
+      activityType: 'room-request',
+      status,
+      requestId: request._id
+    };
+  });
+};
 
 export const NotificationProvider = ({ children }) => {
   const { isAuthenticated, user } = useAuth();
@@ -29,8 +69,18 @@ export const NotificationProvider = ({ children }) => {
 
     try {
       const response = await notificationAPI.getMyNotifications(20);
-      const list = response.notifications || [];
+      const list = normalizeNotifications(response.notifications);
       const unread = response.unreadCount || 0;
+
+      let mergedNotifications = list;
+      if (user?.role === 'student') {
+        const studentRequestsResponse = await roomRequestService.getStudentRequests();
+        const studentRequests = studentRequestsResponse?.data || [];
+        const activityNotifications = buildStudentActivityNotifications(studentRequests);
+
+        mergedNotifications = [...activityNotifications, ...list]
+          .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+      }
 
       if (silent && previousLatestIdRef.current && list[0]?._id && list[0]._id !== previousLatestIdRef.current) {
         const latest = list[0];
@@ -40,7 +90,7 @@ export const NotificationProvider = ({ children }) => {
       }
 
       previousLatestIdRef.current = list[0]?._id || null;
-      setNotifications(list);
+      setNotifications(mergedNotifications);
       setUnreadCount(unread);
     } catch (error) {
       if (!silent) {
@@ -54,11 +104,17 @@ export const NotificationProvider = ({ children }) => {
   }, [isNotificationRole]);
 
   const markAsRead = useCallback(async (notificationId) => {
+    if (!notificationId) {
+      return;
+    }
+
     const response = await notificationAPI.markAsRead(notificationId);
     const updatedNotification = response.notification;
 
     setNotifications((prev) =>
-      prev.map((item) => (item._id === notificationId ? { ...item, ...updatedNotification } : item))
+      normalizeNotifications(prev).map((item) =>
+        item._id === notificationId ? { ...item, ...updatedNotification } : item
+      )
     );
 
     if (typeof response.unreadCount === 'number') {
@@ -72,7 +128,7 @@ export const NotificationProvider = ({ children }) => {
     const response = await notificationAPI.markAllAsRead();
 
     setNotifications((prev) =>
-      prev.map((item) => ({
+      normalizeNotifications(prev).map((item) => ({
         ...item,
         isRead: true,
         readAt: item.readAt || new Date().toISOString()

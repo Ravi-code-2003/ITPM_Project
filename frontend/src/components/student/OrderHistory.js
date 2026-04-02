@@ -1,12 +1,21 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { Clock, MapPin, Star, Package, Filter, Calendar } from 'lucide-react';
-import { Link } from 'react-router-dom';
+import { Link, useSearchParams } from 'react-router-dom';
 import Button from '../ui/Button';
 import Card from '../ui/Card';
 import api from '../../services/api';
 import toast from 'react-hot-toast';
 
+const normalizeOrders = (items) => {
+  if (!Array.isArray(items)) {
+    return [];
+  }
+
+  return items.filter((item) => item && typeof item === 'object' && item._id);
+};
+
 const OrderHistory = () => {
+  const [searchParams] = useSearchParams();
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(true);
   const [statusFilter, setStatusFilter] = useState('');
@@ -16,13 +25,14 @@ const OrderHistory = () => {
   const [comment, setComment] = useState('');
 
   const statuses = ['pending', 'confirmed', 'ready', 'completed', 'cancelled'];
+  const highlightedOrderId = searchParams.get('orderId');
 
   const fetchOrders = useCallback(async () => {
     try {
       setLoading(true);
       const params = statusFilter ? `?status=${statusFilter}` : '';
       const response = await api.get(`/student/orders${params}`);
-      setOrders(response.data.orders);
+      setOrders(normalizeOrders(response.data?.orders));
     } catch (error) {
       toast.error('Failed to fetch orders');
       console.error('Error fetching orders:', error);
@@ -36,7 +46,7 @@ const OrderHistory = () => {
   }, [fetchOrders]);
 
   const submitRating = async () => {
-    if (!selectedOrder) return;
+    if (!selectedOrder?.restaurantId?._id) return;
 
     try {
       await api.post('/student/rating', {
@@ -94,6 +104,21 @@ const OrderHistory = () => {
     ));
   };
 
+  const displayedOrders = useMemo(() => {
+    const safeOrders = normalizeOrders(orders);
+
+    if (!highlightedOrderId) {
+      return safeOrders;
+    }
+
+    const targetOrder = safeOrders.find((order) => order._id === highlightedOrderId);
+    if (!targetOrder) {
+      return safeOrders;
+    }
+
+    return [targetOrder, ...safeOrders.filter((order) => order._id !== highlightedOrderId)];
+  }, [orders, highlightedOrderId]);
+
   if (loading) {
     return (
       <div className="flex items-center justify-center py-8">
@@ -131,17 +156,26 @@ const OrderHistory = () => {
       </div>
 
       {/* Orders List */}
-      {orders.length > 0 ? (
+      {displayedOrders.length > 0 ? (
         <div className="space-y-4">
-          {orders.map(order => (
-            <Card key={order._id} className="p-6">
+          {displayedOrders.map(order => (
+            <Card
+              key={order._id}
+              className={`p-6 ${highlightedOrderId === order._id ? 'ring-2 ring-primary/40 border-primary/50' : ''}`}
+            >
               <div className="space-y-4">
+                {highlightedOrderId === order._id && (
+                  <div className="inline-flex items-center rounded-full bg-primary/10 text-primary dark:text-primary-light px-3 py-1 text-xs font-semibold">
+                    Latest update
+                  </div>
+                )}
+
                 {/* Order Header */}
                 <div className="flex justify-between items-start">
                   <div>
                     <div className="flex items-center gap-2 mb-1">
                       <h3 className="text-lg font-semibold text-primary dark:text-gray-100">
-                        {order.restaurantId.shopName}
+                        {order.restaurantId?.shopName || 'Restaurant'}
                       </h3>
                       <span className={`inline-flex items-center gap-1 px-2 py-1 text-xs rounded-full ${getStatusColor(order.status)}`}>
                         {getStatusIcon(order.status)}
@@ -152,7 +186,7 @@ const OrderHistory = () => {
                     <div className="flex items-center gap-4 text-sm text-secondary dark:text-gray-400">
                       <div className="flex items-center gap-1">
                         <MapPin className="h-3 w-3" />
-                        {order.restaurantId.location}
+                        {order.restaurantId?.location || 'Location not available'}
                       </div>
                       <div className="flex items-center gap-1">
                         <Calendar className="h-3 w-3" />
@@ -199,11 +233,17 @@ const OrderHistory = () => {
                     </div>
                     
                     <div className="flex gap-3">
-                      <Link to={`/student/restaurant/${order.restaurantId._id}`}>
-                        <Button size="sm" variant="outline">
+                      {order.restaurantId?._id ? (
+                        <Link to={`/student/restaurant/${order.restaurantId._id}`}>
+                          <Button size="sm" variant="outline">
+                            Order Again
+                          </Button>
+                        </Link>
+                      ) : (
+                        <Button size="sm" variant="outline" disabled>
                           Order Again
                         </Button>
-                      </Link>
+                      )}
                       
                       {canRate(order) && (
                         <Button
@@ -261,7 +301,7 @@ const OrderHistory = () => {
               <div className="space-y-4">
                 <div>
                   <p className="text-sm text-gray-600 dark:text-gray-400 mb-2">
-                    How was your experience at {selectedOrder.restaurantId.shopName}?
+                    How was your experience at {selectedOrder.restaurantId?.shopName || 'this restaurant'}?
                   </p>
                   
                   <div className="flex items-center gap-1 mb-4">

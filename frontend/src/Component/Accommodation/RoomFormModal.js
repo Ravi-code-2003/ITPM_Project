@@ -6,6 +6,32 @@ import { roomService } from '../../services/accommodationService';
 import RoomMapPicker from './RoomMapPicker';
 import toast from 'react-hot-toast';
 
+const ALLOWED_IMAGE_TYPES = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp'];
+const ALLOWED_IMAGE_EXTENSIONS = ['jpg', 'jpeg', 'png', 'webp'];
+
+const getTodayDateString = () => {
+  const now = new Date();
+  const offsetMs = now.getTimezoneOffset() * 60000;
+  return new Date(now.getTime() - offsetMs).toISOString().split('T')[0];
+};
+
+const toDateOnly = (dateStr) => {
+  const date = new Date(`${dateStr}T00:00:00`);
+  return Number.isNaN(date.getTime()) ? null : date;
+};
+
+const hasAtLeastOneFacility = (facilities) => Object.values(facilities || {}).some(Boolean);
+
+const isAllowedImageFile = (file) => {
+  const mime = (file.type || '').toLowerCase();
+  if (ALLOWED_IMAGE_TYPES.includes(mime)) {
+    return true;
+  }
+
+  const extension = (file.name || '').split('.').pop()?.toLowerCase();
+  return ALLOWED_IMAGE_EXTENSIONS.includes(extension);
+};
+
 const RoomFormModal = ({ room, onClose, onSaved }) => {
   const modalRef = useRef(null);
   const [formData, setFormData] = useState({
@@ -17,7 +43,7 @@ const RoomFormModal = ({ room, onClose, onSaved }) => {
     roomType: 'single',
     gender: 'any',
     availability: 'AVAILABLE',
-    availableFrom: new Date().toISOString().split('T')[0],
+    availableFrom: getTodayDateString(),
     availableTo: '',
     rules: '',
     facilities: {
@@ -38,19 +64,26 @@ const RoomFormModal = ({ room, onClose, onSaved }) => {
   const [existingImages, setExistingImages] = useState([]);
   const [loading, setLoading] = useState(false);
   const [showMap, setShowMap] = useState(false);
+  const [locationSelected, setLocationSelected] = useState(false);
+  const [fieldErrors, setFieldErrors] = useState({});
+  const [facilityWarning, setFacilityWarning] = useState('');
 
   useEffect(() => {
     if (room) {
+      const normalizedRoomType = ['single', 'double', 'shared'].includes(room.roomType)
+        ? room.roomType
+        : 'single';
+
       setFormData({
         title: room.title || '',
         description: room.description || '',
         monthlyRent: room.monthlyRent || '',
         area: room.location?.area || '',
         address: room.location?.address || '',
-        roomType: room.roomType || 'single',
+        roomType: normalizedRoomType,
         gender: room.gender || 'any',
         availability: room.availability || 'AVAILABLE',
-        availableFrom: room.availableFrom ? new Date(room.availableFrom).toISOString().split('T')[0] : new Date().toISOString().split('T')[0],
+        availableFrom: room.availableFrom ? new Date(room.availableFrom).toISOString().split('T')[0] : getTodayDateString(),
         availableTo: room.availableTo ? new Date(room.availableTo).toISOString().split('T')[0] : '',
         rules: room.rules || '',
         facilities: room.facilities || {
@@ -67,6 +100,13 @@ const RoomFormModal = ({ room, onClose, onSaved }) => {
         longitude: room.location?.coordinates?.coordinates[0] || 79.8612,
       });
       setExistingImages(room.images || []);
+      setLocationSelected(Boolean(room.location?.coordinates?.coordinates?.length === 2));
+    } else {
+      setLocationSelected(false);
+      setFormData((prev) => ({
+        ...prev,
+        availableFrom: getTodayDateString(),
+      }));
     }
   }, [room]);
 
@@ -83,6 +123,8 @@ const RoomFormModal = ({ room, onClose, onSaved }) => {
       ...prev,
       [name]: type === 'checkbox' ? checked : value,
     }));
+
+    setFieldErrors((prev) => ({ ...prev, [name]: '' }));
   };
 
   const handleFacilityChange = (facility) => {
@@ -93,11 +135,23 @@ const RoomFormModal = ({ room, onClose, onSaved }) => {
         [facility]: !prev.facilities[facility], // Toggle boolean value
       },
     }));
+
+    setFacilityWarning('');
   };
 
   const handleImageChange = (e) => {
     const files = Array.from(e.target.files);
     const totalImages = existingImages.length + images.length + files.length;
+
+    if (files.length === 0) {
+      return;
+    }
+
+    const invalidFile = files.find((file) => !isAllowedImageFile(file));
+    if (invalidFile) {
+      toast.error('Only jpg, jpeg, png, and webp images are allowed');
+      return;
+    }
 
     if (totalImages > 5) {
       toast.error('Maximum 5 images allowed');
@@ -105,10 +159,12 @@ const RoomFormModal = ({ room, onClose, onSaved }) => {
     }
 
     setImages((prev) => [...prev, ...files]);
+    setFieldErrors((prev) => ({ ...prev, images: '' }));
   };
 
   const handleRemoveNewImage = (index) => {
     setImages((prev) => prev.filter((_, i) => i !== index));
+    setFieldErrors((prev) => ({ ...prev, images: '' }));
   };
 
   const handleRemoveExistingImage = async (imageUrl) => {
@@ -117,6 +173,7 @@ const RoomFormModal = ({ room, onClose, onSaved }) => {
     try {
       await roomService.deleteRoomImage(room._id, imageUrl);
       setExistingImages((prev) => prev.filter((img) => img !== imageUrl));
+      setFieldErrors((prev) => ({ ...prev, images: '' }));
       toast.success('Image removed');
     } catch (error) {
       toast.error('Failed to remove image');
@@ -129,44 +186,143 @@ const RoomFormModal = ({ room, onClose, onSaved }) => {
       latitude: lat,
       longitude: lng,
     }));
+    setLocationSelected(true);
+    setFieldErrors((prev) => ({ ...prev, location: '' }));
     setShowMap(false);
+  };
+
+  const validateForm = () => {
+    const errors = {};
+    const sanitized = {
+      title: formData.title.trim(),
+      description: formData.description.trim(),
+      monthlyRent: String(formData.monthlyRent).trim(),
+      area: formData.area.trim(),
+      address: formData.address.trim(),
+      roomType: formData.roomType,
+      gender: formData.gender,
+      availability: formData.availability,
+      availableFrom: formData.availableFrom,
+      availableTo: formData.availableTo,
+      rules: formData.rules.trim(),
+      latitude: formData.latitude,
+      longitude: formData.longitude,
+      facilities: { ...formData.facilities },
+    };
+
+    if (!sanitized.title) {
+      errors.title = 'Room Title is required.';
+    } else if (sanitized.title.length < 10 || sanitized.title.length > 1000) {
+      errors.title = 'Room Title must be between 10 and 1000 characters.';
+    } else if (!/[A-Za-z]/.test(sanitized.title)) {
+      errors.title = 'Room Title must contain at least one alphabet letter.';
+    }
+
+    const monthlyRentNumber = Number(sanitized.monthlyRent);
+    if (!sanitized.monthlyRent) {
+      errors.monthlyRent = 'Monthly Rent is required.';
+    } else if (Number.isNaN(monthlyRentNumber)) {
+      errors.monthlyRent = 'Monthly Rent must be a valid number.';
+    } else if (monthlyRentNumber <= 0) {
+      errors.monthlyRent = 'Monthly Rent must be greater than 0.';
+    } else if (monthlyRentNumber < 1000 || monthlyRentNumber > 5000000) {
+      errors.monthlyRent = 'Monthly Rent must be between 1000 and 5000000.';
+    }
+
+    if (!sanitized.description) {
+      errors.description = 'Description is required.';
+    } else if (sanitized.description.length < 20 || sanitized.description.length > 10000) {
+      errors.description = 'Description must be between 20 and 10000 characters.';
+    }
+
+    if (!sanitized.area) {
+      errors.area = 'Area is required.';
+    } else if (!/^[A-Za-z\s]+$/.test(sanitized.area)) {
+      errors.area = 'Area can contain only letters and spaces.';
+    }
+
+    if (!sanitized.address) {
+      errors.address = 'Address is required.';
+    } else if (sanitized.address.length < 10 || sanitized.address.length > 2000) {
+      errors.address = 'Address must be between 10 and 2000 characters.';
+    }
+
+    if (!locationSelected) {
+      errors.location = 'Please select the location from the map.';
+    }
+
+    if (!['single', 'double', 'shared'].includes(sanitized.roomType)) {
+      errors.roomType = 'Room Type must be Single, Double, or Shared.';
+    }
+
+    if (!['male', 'female', 'any'].includes(sanitized.gender)) {
+      errors.gender = 'Gender Preference must be Male, Female, or Any.';
+    }
+
+    if (!['AVAILABLE', 'NOT_AVAILABLE'].includes(sanitized.availability)) {
+      errors.availability = 'Availability must be Available or Not Available.';
+    }
+
+    if (!sanitized.availableFrom) {
+      errors.availableFrom = 'Available From date is required.';
+    } else {
+      const availableFromDate = toDateOnly(sanitized.availableFrom);
+      const todayDate = toDateOnly(getTodayDateString());
+      if (!availableFromDate) {
+        errors.availableFrom = 'Available From date is invalid.';
+      } else if (availableFromDate < todayDate) {
+        errors.availableFrom = 'Available From must be today or a future date.';
+      }
+    }
+
+    if (sanitized.availableTo) {
+      const availableFromDate = toDateOnly(sanitized.availableFrom);
+      const availableToDate = toDateOnly(sanitized.availableTo);
+      if (!availableToDate) {
+        errors.availableTo = 'Available Until date is invalid.';
+      } else if (availableFromDate && availableToDate <= availableFromDate) {
+        errors.availableTo = 'Available Until must be greater than Available From.';
+      }
+    }
+
+    if (sanitized.rules) {
+      if (sanitized.rules.length > 3000) {
+        errors.rules = 'House Rules cannot exceed 3000 characters.';
+      } else if (!/[A-Za-z0-9]/.test(sanitized.rules)) {
+        errors.rules = 'House Rules cannot contain only symbols or spaces.';
+      }
+    }
+
+    const totalImages = existingImages.length + images.length;
+    if (totalImages < 1) {
+      errors.images = 'At least 1 image is required.';
+    } else if (totalImages > 5) {
+      errors.images = 'Maximum 5 images are allowed.';
+    }
+
+    return {
+      errors,
+      sanitized,
+      monthlyRentNumber,
+      facilitiesSelected: hasAtLeastOneFacility(sanitized.facilities),
+    };
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    
-    // Validate required fields before submitting
-    const requiredFields = [
-      { name: 'title', label: 'Room Title', value: formData.title },
-      { name: 'description', label: 'Description', value: formData.description },
-      { name: 'monthlyRent', label: 'Monthly Rent', value: formData.monthlyRent },
-      { name: 'area', label: 'Area', value: formData.area },
-      { name: 'address', label: 'Address', value: formData.address },
-    ];
 
-    const missingFields = requiredFields.filter(field => !field.value || field.value.toString().trim() === '');
-    
-    if (missingFields.length > 0) {
-      toast.error(`Please fill in: ${missingFields.map(f => f.label).join(', ')}`);
-      // Scroll modal to top to show missing fields
-      if (modalRef.current) {
-        modalRef.current.scrollTop = 0;
-      }
-      return;
+    const { errors, sanitized, monthlyRentNumber, facilitiesSelected } = validateForm();
+    setFieldErrors(errors);
+
+    if (!facilitiesSelected) {
+      setFacilityWarning('No facilities selected. You can continue, but adding facilities is recommended.');
+      toast('No facilities selected. You can still continue.', { icon: '⚠️' });
+    } else {
+      setFacilityWarning('');
     }
 
-    // Validate description length
-    if (formData.description.trim().length < 10) {
-      toast.error('Description must be at least 10 characters');
-      if (modalRef.current) {
-        modalRef.current.scrollTop = 0;
-      }
-      return;
-    }
-
-    // Validate title length
-    if (formData.title.trim().length < 5) {
-      toast.error('Room Title must be at least 5 characters');
+    if (Object.keys(errors).length > 0) {
+      toast.error('Please fix the highlighted fields.');
       if (modalRef.current) {
         modalRef.current.scrollTop = 0;
       }
@@ -176,36 +332,31 @@ const RoomFormModal = ({ room, onClose, onSaved }) => {
     setLoading(true);
 
     try {
-      // Log facilities before stringifying
-      console.log('Facilities before stringify:', formData.facilities);
-      console.log('Facilities type:', typeof formData.facilities);
-      
       const submitData = new FormData();
-      submitData.append('title', formData.title);
-      submitData.append('description', formData.description);
-      submitData.append('monthlyRent', formData.monthlyRent);
-      submitData.append('area', formData.area);
-      submitData.append('address', formData.address);
-      submitData.append('latitude', formData.latitude);
-      submitData.append('longitude', formData.longitude);
-      submitData.append('roomType', formData.roomType);
-      submitData.append('gender', formData.gender);
-      submitData.append('availability', formData.availability);
-      submitData.append('availableFrom', formData.availableFrom);
-      if (formData.availableTo) {
-        submitData.append('availableTo', formData.availableTo);
+      submitData.append('title', sanitized.title);
+      submitData.append('description', sanitized.description);
+      submitData.append('monthlyRent', String(monthlyRentNumber));
+      submitData.append('area', sanitized.area);
+      submitData.append('address', sanitized.address);
+      submitData.append('latitude', String(sanitized.latitude));
+      submitData.append('longitude', String(sanitized.longitude));
+      submitData.append('roomType', sanitized.roomType);
+      submitData.append('gender', sanitized.gender);
+      submitData.append('availability', sanitized.availability);
+      submitData.append('availableFrom', sanitized.availableFrom);
+      submitData.append('locationSelected', 'true');
+
+      if (sanitized.availableTo) {
+        submitData.append('availableTo', sanitized.availableTo);
       }
-      submitData.append('rules', formData.rules);
+      submitData.append('rules', sanitized.rules);
       
       // Ensure facilities are boolean values, not strings
       const cleanedFacilities = {};
-      Object.keys(formData.facilities).forEach(key => {
-        cleanedFacilities[key] = Boolean(formData.facilities[key]);
+      Object.keys(sanitized.facilities).forEach((key) => {
+        cleanedFacilities[key] = Boolean(sanitized.facilities[key]);
       });
-      
-      const facilitiesString = JSON.stringify(cleanedFacilities);
-      console.log('Facilities stringified:', facilitiesString);
-      submitData.append('facilities', facilitiesString);
+      submitData.append('facilities', JSON.stringify(cleanedFacilities));
 
       // Append new images
       images.forEach((image) => {
@@ -232,6 +383,14 @@ const RoomFormModal = ({ room, onClose, onSaved }) => {
     } finally {
       setLoading(false);
     }
+  };
+
+  const getFieldClasses = (fieldName) => {
+    const baseClasses = 'w-full px-3 py-2 border rounded-lg focus:ring-2 dark:bg-surface-dark dark:border-gray-600 dark:text-gray-100';
+    const validClasses = 'border-secondary/30 focus:ring-primary';
+    const invalidClasses = 'border-red-500 focus:ring-red-500';
+
+    return `${baseClasses} ${fieldErrors[fieldName] ? invalidClasses : validClasses}`;
   };
 
   return (
@@ -277,9 +436,12 @@ const RoomFormModal = ({ room, onClose, onSaved }) => {
                     value={formData.title}
                     onChange={handleChange}
                     required
-                    className="w-full px-3 py-2 border border-secondary/30 rounded-lg focus:ring-2 focus:ring-primary dark:bg-surface-dark dark:border-gray-600 dark:text-gray-100"
+                    className={getFieldClasses('title')}
                     placeholder="e.g., Cozy Single Room near University"
                   />
+                  {fieldErrors.title && (
+                    <p className="text-xs text-red-600 dark:text-red-400 mt-1">{fieldErrors.title}</p>
+                  )}
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-primary dark:text-gray-300 mb-1">
@@ -291,10 +453,14 @@ const RoomFormModal = ({ room, onClose, onSaved }) => {
                     value={formData.monthlyRent}
                     onChange={handleChange}
                     required
-                    min="0"
-                    className="w-full px-3 py-2 border border-secondary/30 rounded-lg focus:ring-2 focus:ring-primary dark:bg-surface-dark dark:border-gray-600 dark:text-gray-100"
+                    min="1000"
+                    max="5000000"
+                    className={getFieldClasses('monthlyRent')}
                     placeholder="15000"
                   />
+                  {fieldErrors.monthlyRent && (
+                    <p className="text-xs text-red-600 dark:text-red-400 mt-1">{fieldErrors.monthlyRent}</p>
+                  )}
                 </div>
               </div>
               <div className="mt-4">
@@ -307,9 +473,12 @@ const RoomFormModal = ({ room, onClose, onSaved }) => {
                   onChange={handleChange}
                   required
                   rows="3"
-                  className="w-full px-3 py-2 border border-secondary/30 rounded-lg focus:ring-2 focus:ring-primary dark:bg-surface-dark dark:border-gray-600 dark:text-gray-100"
+                  className={getFieldClasses('description')}
                   placeholder="Describe your room..."
                 />
+                {fieldErrors.description && (
+                  <p className="text-xs text-red-600 dark:text-red-400 mt-1">{fieldErrors.description}</p>
+                )}
               </div>
             </div>
 
@@ -329,9 +498,12 @@ const RoomFormModal = ({ room, onClose, onSaved }) => {
                     value={formData.area}
                     onChange={handleChange}
                     required
-                    className="w-full px-3 py-2 border border-secondary/30 rounded-lg focus:ring-2 focus:ring-primary dark:bg-surface-dark dark:border-gray-600 dark:text-gray-100"
-                    placeholder="e.g., Malabe, Nugegoda"
+                    className={getFieldClasses('area')}
+                    placeholder="e.g., Malabe"
                   />
+                  {fieldErrors.area && (
+                    <p className="text-xs text-red-600 dark:text-red-400 mt-1">{fieldErrors.area}</p>
+                  )}
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-primary dark:text-gray-300 mb-1">
@@ -343,9 +515,12 @@ const RoomFormModal = ({ room, onClose, onSaved }) => {
                     value={formData.address}
                     onChange={handleChange}
                     required
-                    className="w-full px-3 py-2 border border-secondary/30 rounded-lg focus:ring-2 focus:ring-primary dark:bg-surface-dark dark:border-gray-600 dark:text-gray-100"
+                    className={getFieldClasses('address')}
                     placeholder="Full address"
                   />
+                  {fieldErrors.address && (
+                    <p className="text-xs text-red-600 dark:text-red-400 mt-1">{fieldErrors.address}</p>
+                  )}
                 </div>
               </div>
               <div className="mt-4">
@@ -354,11 +529,15 @@ const RoomFormModal = ({ room, onClose, onSaved }) => {
                   variant="outline"
                   onClick={() => setShowMap(true)}
                   icon={<MapPin className="h-4 w-4" />}
+                  className={fieldErrors.location ? 'border-red-500 text-red-600' : ''}
                 >
                   {formData.latitude && formData.longitude
                     ? 'Update Location on Map'
                     : 'Set Location on Map'}
                 </Button>
+                {fieldErrors.location && (
+                  <p className="text-xs text-red-600 dark:text-red-400 mt-1">{fieldErrors.location}</p>
+                )}
                 {formData.latitude && formData.longitude && (
                   <p className="text-xs text-secondary dark:text-gray-400 mt-2">
                     Location: {formData.latitude.toFixed(4)}, {formData.longitude.toFixed(4)}
@@ -375,48 +554,56 @@ const RoomFormModal = ({ room, onClose, onSaved }) => {
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <div>
                   <label className="block text-sm font-medium text-primary dark:text-gray-300 mb-1">
-                    Room Type
+                    Room Type *
                   </label>
                   <select
                     name="roomType"
                     value={formData.roomType}
                     onChange={handleChange}
-                    className="w-full px-3 py-2 border border-secondary/30 rounded-lg focus:ring-2 focus:ring-primary dark:bg-surface-dark dark:border-gray-600 dark:text-gray-100"
+                    className={getFieldClasses('roomType')}
                   >
                     <option value="single">Single</option>
                     <option value="double">Double</option>
-                    <option value="studio">Studio</option>
-                    <option value="apartment">Apartment</option>
+                    <option value="shared">Shared</option>
                   </select>
+                  {fieldErrors.roomType && (
+                    <p className="text-xs text-red-600 dark:text-red-400 mt-1">{fieldErrors.roomType}</p>
+                  )}
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-primary dark:text-gray-300 mb-1">
-                    Gender Preference
+                    Gender Preference *
                   </label>
                   <select
                     name="gender"
                     value={formData.gender}
                     onChange={handleChange}
-                    className="w-full px-3 py-2 border border-secondary/30 rounded-lg focus:ring-2 focus:ring-primary dark:bg-surface-dark dark:border-gray-600 dark:text-gray-100"
+                    className={getFieldClasses('gender')}
                   >
                     <option value="any">Any</option>
                     <option value="male">Male</option>
                     <option value="female">Female</option>
                   </select>
+                  {fieldErrors.gender && (
+                    <p className="text-xs text-red-600 dark:text-red-400 mt-1">{fieldErrors.gender}</p>
+                  )}
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-primary dark:text-gray-300 mb-1">
-                    Availability
+                    Availability *
                   </label>
                   <select
                     name="availability"
                     value={formData.availability}
                     onChange={handleChange}
-                    className="w-full px-3 py-2 border border-secondary/30 rounded-lg focus:ring-2 focus:ring-primary dark:bg-surface-dark dark:border-gray-600 dark:text-gray-100"
+                    className={getFieldClasses('availability')}
                   >
                     <option value="AVAILABLE">Available</option>
                     <option value="NOT_AVAILABLE">Not Available</option>
                   </select>
+                  {fieldErrors.availability && (
+                    <p className="text-xs text-red-600 dark:text-red-400 mt-1">{fieldErrors.availability}</p>
+                  )}
                 </div>
               </div>
 
@@ -432,8 +619,12 @@ const RoomFormModal = ({ room, onClose, onSaved }) => {
                     value={formData.availableFrom}
                     onChange={handleChange}
                     required
-                    className="w-full px-3 py-2 border border-secondary/30 rounded-lg focus:ring-2 focus:ring-primary dark:bg-surface-dark dark:border-gray-600 dark:text-gray-100"
+                    min={getTodayDateString()}
+                    className={getFieldClasses('availableFrom')}
                   />
+                  {fieldErrors.availableFrom && (
+                    <p className="text-xs text-red-600 dark:text-red-400 mt-1">{fieldErrors.availableFrom}</p>
+                  )}
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-primary dark:text-gray-300 mb-1">
@@ -445,8 +636,11 @@ const RoomFormModal = ({ room, onClose, onSaved }) => {
                     value={formData.availableTo}
                     onChange={handleChange}
                     min={formData.availableFrom}
-                    className="w-full px-3 py-2 border border-secondary/30 rounded-lg focus:ring-2 focus:ring-primary dark:bg-surface-dark dark:border-gray-600 dark:text-gray-100"
+                    className={getFieldClasses('availableTo')}
                   />
+                  {fieldErrors.availableTo && (
+                    <p className="text-xs text-red-600 dark:text-red-400 mt-1">{fieldErrors.availableTo}</p>
+                  )}
                   <p className="text-xs text-secondary dark:text-gray-400 mt-1">
                     Leave empty if available indefinitely
                   </p>
@@ -477,6 +671,9 @@ const RoomFormModal = ({ room, onClose, onSaved }) => {
                   </label>
                 ))}
               </div>
+              {facilityWarning && (
+                <p className="text-xs text-amber-600 dark:text-amber-400 mt-2">{facilityWarning}</p>
+              )}
             </div>
 
             {/* Rules */}
@@ -489,9 +686,12 @@ const RoomFormModal = ({ room, onClose, onSaved }) => {
                 value={formData.rules}
                 onChange={handleChange}
                 rows="2"
-                className="w-full px-3 py-2 border border-secondary/30 rounded-lg focus:ring-2 focus:ring-primary dark:bg-surface-dark dark:border-gray-600 dark:text-gray-100"
+                className={getFieldClasses('rules')}
                 placeholder="e.g., No smoking, No pets, Quiet hours after 10 PM"
               />
+              {fieldErrors.rules && (
+                <p className="text-xs text-red-600 dark:text-red-400 mt-1">{fieldErrors.rules}</p>
+              )}
             </div>
 
             {/* Images */}
@@ -559,13 +759,17 @@ const RoomFormModal = ({ room, onClose, onSaved }) => {
                     </div>
                     <input
                       type="file"
-                      accept="image/*"
+                      accept=".jpg,.jpeg,.png,.webp,image/jpeg,image/png,image/webp"
                       multiple
                       onChange={handleImageChange}
                       className="hidden"
                     />
                   </label>
                 </div>
+              )}
+
+              {fieldErrors.images && (
+                <p className="text-xs text-red-600 dark:text-red-400 mt-2">{fieldErrors.images}</p>
               )}
             </div>
 

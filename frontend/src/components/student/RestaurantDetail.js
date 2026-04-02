@@ -105,7 +105,9 @@ const RestaurantDetail = () => {
   const checkFavoriteStatus = useCallback(async () => {
     try {
       const response = await api.get('/student/favorites');
-      const favoriteIds = response.data.favorites.map(fav => fav.restaurantId._id);
+      const favoriteIds = (Array.isArray(response.data?.favorites) ? response.data.favorites : [])
+        .map((fav) => fav?.restaurantId?._id)
+        .filter((favoriteId) => typeof favoriteId === 'string' && favoriteId.trim().length > 0);
       setIsFavorite(favoriteIds.includes(id));
     } catch (error) {
       console.error('Error checking favorite status:', error);
@@ -290,7 +292,7 @@ const RestaurantDetail = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-900 py-6">
+    <div className="min-h-screen bg-gradient-to-b from-amber-50 via-white to-white dark:bg-gray-900 py-6">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Breadcrumb Navigation */}
         <div className="mb-6">
@@ -305,13 +307,13 @@ const RestaurantDetail = () => {
         </div>
 
         {/* Restaurant Hero Section */}
-        <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm overflow-hidden mb-8 border border-gray-100 dark:border-gray-700">
+        <div className="bg-amber-50 dark:bg-gray-800 rounded-xl shadow-sm overflow-hidden mb-8 border border-amber-200 dark:border-gray-700">
           <div className="px-6 py-5">
             <div className="flex items-center justify-between">
               {/* Restaurant Info - Left Side */}
               <div className="flex items-center gap-4 flex-1">
                 {/* Restaurant Avatar */}
-                <div className="bg-gray-50 dark:bg-gray-700 rounded-xl p-3 shadow-sm">
+                <div className="bg-amber-100 dark:bg-gray-700 rounded-xl p-3 shadow-sm">
                   <div className="text-2xl">🍽️</div>
                 </div>
                 
@@ -364,7 +366,7 @@ const RestaurantDetail = () => {
                   className={`flex items-center gap-2 px-4 py-2 rounded-lg shadow-sm transition-all text-sm font-semibold ring-1 ${
                     isFavorite 
                       ? 'bg-rose-100 hover:bg-rose-200 text-rose-700 border border-rose-400 ring-rose-200 shadow-none hover:shadow-none dark:bg-rose-900/35 dark:hover:bg-rose-900/45 dark:text-rose-200 dark:border-rose-600 dark:ring-rose-800/60' 
-                      : 'bg-gray-100 hover:bg-gray-200 text-gray-800 border border-gray-300 ring-gray-200 shadow-none hover:shadow-none dark:bg-gray-800 dark:hover:bg-gray-700 dark:text-gray-200 dark:border-gray-500 dark:ring-gray-700/70'
+                      : 'bg-amber-100 hover:bg-amber-200 text-gray-800 border border-amber-300 ring-amber-200 shadow-none hover:shadow-none dark:bg-gray-800 dark:hover:bg-gray-700 dark:text-gray-200 dark:border-gray-500 dark:ring-gray-700/70'
                   }`}
                   title={isFavorite ? 'Remove from Favorites' : 'Add to Favorites'}
                 >
@@ -392,7 +394,7 @@ const RestaurantDetail = () => {
             </h2>
             <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
               {(menu?.offers || []).map(offer => (
-                <div key={offer._id} className="bg-white dark:bg-gray-800 rounded-xl p-5 shadow-md hover:shadow-lg transition-shadow border border-green-200 dark:border-green-700">
+                <div key={offer._id} className="bg-amber-50 dark:bg-gray-800 rounded-xl p-5 shadow-md hover:shadow-lg transition-shadow border border-amber-200 dark:border-green-700">
                   <div className="flex justify-between items-start mb-3">
                     <div className="flex-1">
                       <div className="text-sm text-green-600 dark:text-green-400 font-medium mb-1">
@@ -446,7 +448,7 @@ const RestaurantDetail = () => {
             {enhancedPolls.length > 0 && (
               <div className="space-y-6">
                 {enhancedPolls.map(poll => (
-                  <div key={poll._id} className="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-lg border border-purple-200 dark:border-purple-700">
+                  <div key={poll._id} className="bg-amber-50 dark:bg-gray-800 rounded-xl p-6 shadow-lg border border-amber-200 dark:border-purple-700">
                     <div className="mb-4">
                       <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-2">{poll.title}</h3>
                       {poll.description && (
@@ -484,7 +486,7 @@ const RestaurantDetail = () => {
                             } ${
                               isTopVoted 
                                 ? 'border-green-400 bg-green-50 dark:bg-green-900/20 shadow-md' 
-                                : 'border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-700'
+                                : 'border-amber-200 dark:border-gray-700 bg-amber-50 dark:bg-gray-700'
                             }`}
                             onClick={() => !poll.hasUserVoted && voteInPollProposal(poll._id, proposal._id)}
                           >
@@ -584,7 +586,7 @@ const RestaurantDetail = () => {
                 {polls.filter(poll => poll.foodItemId).map(poll => (
                   <div 
                     key={poll._id}
-                    className={`bg-white dark:bg-gray-800 rounded-xl p-5 shadow-md transition-all duration-200 border border-purple-200 dark:border-purple-700 ${
+                    className={`bg-amber-50 dark:bg-gray-800 rounded-xl p-5 shadow-md transition-all duration-200 border border-amber-200 dark:border-purple-700 ${
                       hasVotedInLegacyPoll
                         ? 'cursor-not-allowed opacity-70'
                         : 'cursor-pointer hover:shadow-lg hover:scale-[1.02]'
@@ -616,7 +618,7 @@ const RestaurantDetail = () => {
         )}
 
         {/* Category Navigation */}
-        <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 p-6 mb-8">
+        <div className="bg-amber-50 dark:bg-gray-800 rounded-xl shadow-sm border border-amber-200 dark:border-gray-700 p-6 mb-8">
           <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
             {/* Header */}
             <div className="flex items-center gap-3">
@@ -640,7 +642,7 @@ const RestaurantDetail = () => {
                 <select
                   value={activeCategory}
                   onChange={(e) => setActiveCategory(e.target.value)}
-                  className="appearance-none bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg px-4 py-2 pr-8 text-gray-900 dark:text-white font-medium focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent min-w-[180px]"
+                  className="appearance-none bg-amber-50 dark:bg-gray-700 border border-amber-200 dark:border-gray-600 rounded-lg px-4 py-2 pr-8 text-gray-900 dark:text-white font-medium focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent min-w-[180px]"
                 >
                   {categories.map(category => {
                     const items = category === 'all' ? 
@@ -735,8 +737,8 @@ const RestaurantDetail = () => {
         <div className="space-y-8">
           {/* Food Items by Category */}
           {activeCategory !== 'combos' && (
-            <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm overflow-hidden">
-              <div className="bg-gradient-to-r from-white to-gray-50 dark:from-gray-800 dark:to-gray-900 px-8 py-6 border-b border-gray-100 dark:border-gray-700">
+            <div className="bg-amber-50 dark:bg-gray-800 rounded-2xl shadow-sm overflow-hidden border border-amber-200 dark:border-gray-700">
+              <div className="bg-gradient-to-r from-amber-50 to-amber-100 dark:from-gray-800 dark:to-gray-900 px-8 py-6 border-b border-amber-200 dark:border-gray-700">
                 <h2 className="text-2xl font-bold capitalize text-gray-900 dark:text-white flex items-center gap-3">
                   <div className="bg-primary/10 p-3 rounded-xl">
                     <span className="text-2xl">
@@ -758,14 +760,14 @@ const RestaurantDetail = () => {
               <div className="p-8">
                 <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-8">
                   {getCategoryItems(activeCategory).map(item => (
-                    <div key={item._id} className="group bg-white dark:bg-gray-800 rounded-2xl overflow-hidden shadow-lg hover:shadow-xl transition-all duration-300 border border-gray-100 dark:border-gray-700 hover:border-primary/20">
+                    <div key={item._id} className="group bg-amber-50 dark:bg-gray-800 rounded-2xl overflow-hidden shadow-lg hover:shadow-xl transition-all duration-300 border border-amber-200 dark:border-gray-700 hover:border-primary/20">
                       {/* Header Section */}
                       <div className="p-6 pb-4">
                         <div className="flex items-start justify-between mb-4">
                           {/* Item Info */}
                           <div className="flex-1">
                             <div className="flex items-center gap-3 mb-3">
-                              <div className="text-2xl bg-gray-50 dark:bg-gray-700 p-2 rounded-xl">
+                              <div className="text-2xl bg-amber-100 dark:bg-gray-700 p-2 rounded-xl">
                                 {item.category === 'breakfast' && '🥐'}
                                 {item.category === 'lunch' && '🍱'}
                                 {item.category === 'dinner' && '🍽️'}
@@ -794,7 +796,7 @@ const RestaurantDetail = () => {
                         </div>
 
                         {/* Price Section */}
-                        <div className="bg-gray-50 dark:bg-gray-700/50 rounded-xl p-4 mb-5">
+                        <div className="bg-amber-100 dark:bg-gray-700/50 rounded-xl p-4 mb-5">
                           <div className="flex items-center justify-between">
                             <div>
                               <p className="text-sm text-gray-600 dark:text-gray-400 mb-1">Price</p>
@@ -847,7 +849,7 @@ const RestaurantDetail = () => {
                 
                 {getCategoryItems(activeCategory).length === 0 && (
                   <div className="text-center py-20">
-                    <div className="bg-gray-50 dark:bg-gray-800 rounded-3xl p-12 border-2 border-dashed border-gray-200 dark:border-gray-700">
+                    <div className="bg-amber-50 dark:bg-gray-800 rounded-3xl p-12 border-2 border-dashed border-amber-200 dark:border-gray-700">
                       <div className="text-gray-300 dark:text-gray-600 text-6xl mb-6">🍽️</div>
                       <h3 className="text-2xl font-bold text-gray-600 dark:text-gray-400 mb-3">
                         {activeCategory === 'all' 
@@ -877,8 +879,8 @@ const RestaurantDetail = () => {
 
           {/* Combo Meals */}
           {activeCategory === 'combos' && menu.comboMeals.length > 0 && (
-            <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm overflow-hidden">
-              <div className="bg-gradient-to-r from-gray-50 to-gray-100 dark:from-gray-700 dark:to-gray-800 px-8 py-6 border-b border-gray-200 dark:border-gray-700">
+            <div className="bg-amber-50 dark:bg-gray-800 rounded-2xl shadow-sm overflow-hidden border border-amber-200 dark:border-gray-700">
+              <div className="bg-gradient-to-r from-amber-50 to-amber-100 dark:from-gray-700 dark:to-gray-800 px-8 py-6 border-b border-amber-200 dark:border-gray-700">
                 <h2 className="text-2xl font-bold text-gray-900 dark:text-white flex items-center gap-3">
                   <div className="bg-primary/10 p-3 rounded-xl">
                     <span className="text-2xl">🍽️</span>
@@ -893,7 +895,7 @@ const RestaurantDetail = () => {
               <div className="p-8">
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
                   {menu.comboMeals.map(combo => (
-                    <div key={combo._id} className="group bg-white dark:bg-gray-800 rounded-2xl overflow-hidden shadow-lg hover:shadow-xl transition-all duration-300 border border-gray-100 dark:border-gray-700 hover:border-primary/20">
+                    <div key={combo._id} className="group bg-amber-50 dark:bg-gray-800 rounded-2xl overflow-hidden shadow-lg hover:shadow-xl transition-all duration-300 border border-amber-200 dark:border-gray-700 hover:border-primary/20">
                       {/* Header Section */}
                       <div className="p-6 pb-4">
                         <div className="flex items-start justify-between mb-4">
@@ -925,7 +927,7 @@ const RestaurantDetail = () => {
                         </div>
 
                         {/* Price Section */}
-                        <div className="bg-gray-50 dark:bg-gray-700/50 rounded-xl p-4 mb-5">
+                        <div className="bg-amber-100 dark:bg-gray-700/50 rounded-xl p-4 mb-5">
                           <div className="flex items-center justify-between">
                             <div>
                               <p className="text-sm text-gray-600 dark:text-gray-400 mb-1">Combo Price</p>
@@ -948,7 +950,7 @@ const RestaurantDetail = () => {
                             <span className="text-base">📋</span>
                             Includes ({combo.items.length} items):
                           </p>
-                          <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-600 overflow-hidden">
+                          <div className="bg-amber-50 dark:bg-gray-800 rounded-xl border border-amber-200 dark:border-gray-600 overflow-hidden">
                             {combo.items.map((item, index) => (
                               <div key={item._id} className={`flex justify-between items-center px-4 py-3 ${
                                 index !== combo.items.length - 1 ? 'border-b border-gray-100 dark:border-gray-700' : ''
@@ -959,7 +961,7 @@ const RestaurantDetail = () => {
                             ))}
                             
                             {/* Total Comparison */}
-                            <div className="bg-gray-50 dark:bg-gray-700/50 px-4 py-3">
+                            <div className="bg-amber-100 dark:bg-gray-700/50 px-4 py-3">
                               <div className="flex justify-between text-sm mb-1">
                                 <span className="text-gray-600 dark:text-gray-400">Individual total:</span>
                                 <span className="line-through text-gray-500 dark:text-gray-500">
@@ -1050,7 +1052,7 @@ const RestaurantDetail = () => {
                     onChange={(e) => setRatingComment(e.target.value)}
                     placeholder="Share your experience..."
                     rows={3}
-                    className="w-full p-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent resize-none bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
+                    className="w-full p-3 border border-amber-200 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent resize-none bg-amber-50 dark:bg-gray-700 text-gray-900 dark:text-gray-100"
                   />
                 </div>
                 

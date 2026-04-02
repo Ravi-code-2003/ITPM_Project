@@ -10,12 +10,24 @@ const {
   getFavorites,
   rateRestaurant,
   getCurrentOffers,
+  getAllComboMeals,
   voteInPoll,
   getPollResults,
   // New enhanced poll methods
   getRestaurantPolls,
   voteInPollProposal
 } = require("../controllers/studentController");
+const {
+  getStudyTrackerSessions,
+  createStudySession,
+} = require("../controllers/studyTrackerController");
+const {
+  getStudentTimetable,
+  createTimetableItem,
+  updateTimetableItem,
+  deleteTimetableItem,
+} = require("../controllers/studyTimetableController");
+
 const router = express.Router();
 
 // Apply middleware to all routes
@@ -46,6 +58,9 @@ router.post("/rating", rateRestaurant);
 // Offers Route
 router.get("/offers", getCurrentOffers);
 
+// Combo Meals Route
+router.get("/combos", getAllComboMeals);
+
 // Poll Routes
 router.post("/poll/vote", voteInPoll);
 router.get("/poll/:restaurantId", getPollResults);
@@ -53,5 +68,19 @@ router.get("/poll/:restaurantId", getPollResults);
 // Enhanced Poll Routes
 router.get("/polls/:restaurantId", getRestaurantPolls);
 router.post("/polls/vote-proposal", voteInPollProposal);
+
+// Study Tracker Routes
+router.route("/study-tracker")
+  .get(getStudyTrackerSessions)
+  .post(createStudySession);
+
+// Study Timetable Routes
+router.route("/timetable")
+  .get(getStudentTimetable)
+  .post(createTimetableItem);
+
+router.route("/timetable/:id")
+  .patch(updateTimetableItem)
+  .delete(deleteTimetableItem);
 
 module.exports = router;

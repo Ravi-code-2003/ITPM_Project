@@ -225,7 +225,7 @@ const AllOffersPage = () => {
       </div>
 
       {/* Search + Filter Row */}
-      <div className="bg-surface dark:bg-surface-dark rounded-xl border border-gray-200 dark:border-gray-700 p-4 shadow-sm">
+      <div className="bg-amber-50 dark:bg-surface-dark rounded-xl border border-amber-200 dark:border-gray-700 p-4 shadow-sm">
         {/* Search */}
         <div className="relative mb-4">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
@@ -234,7 +234,7 @@ const AllOffersPage = () => {
             placeholder="Search offers or restaurants..."
             value={searchQuery}
             onChange={e => setSearchQuery(e.target.value)}
-            className="w-full pl-9 pr-4 py-2.5 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-600 rounded-lg text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent text-sm"
+            className="w-full pl-9 pr-4 py-2.5 bg-amber-50 dark:bg-gray-800 border border-amber-200 dark:border-gray-600 rounded-lg text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent text-sm"
           />
         </div>
 
@@ -253,12 +253,12 @@ const AllOffersPage = () => {
                 className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm font-medium transition-all duration-200 ${
                   isActive
                     ? 'bg-primary text-white shadow-md'
-                    : 'bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700'
+                    : 'bg-amber-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-amber-200 dark:hover:bg-gray-700'
                 }`}
               >
                 <span>{cat.emoji}</span>
                 <span>{cat.label}</span>
-                <span className={`text-xs px-1.5 py-0.5 rounded-full ${isActive ? 'bg-white/20 text-white' : 'bg-gray-200 dark:bg-gray-700 text-gray-500 dark:text-gray-400'}`}>{count}</span>
+                <span className={`text-xs px-1.5 py-0.5 rounded-full ${isActive ? 'bg-white/20 text-white' : 'bg-amber-200 dark:bg-gray-700 text-gray-600 dark:text-gray-400'}`}>{count}</span>
               </button>
             );
           })}
@@ -275,7 +275,7 @@ const AllOffersPage = () => {
 
       {/* Offers Grid */}
       {filteredOffers.length === 0 ? (
-        <div className="text-center py-16 bg-surface dark:bg-surface-dark rounded-xl border border-gray-200 dark:border-gray-700">
+        <div className="text-center py-16 bg-amber-50 dark:bg-surface-dark rounded-xl border border-amber-200 dark:border-gray-700">
           <div className="text-6xl mb-4">🔍</div>
           <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-2">No Offers Found</h3>
           <p className="text-secondary dark:text-gray-400 mb-6 max-w-sm mx-auto">
@@ -307,11 +307,11 @@ const AllOffersPage = () => {
             return (
               <div
                 key={offer._id}
-                className="bg-surface dark:bg-surface-dark rounded-xl border border-gray-200 dark:border-gray-700 shadow-sm hover:shadow-lg hover:-translate-y-0.5 transition-all duration-200 overflow-hidden flex flex-col"
+                className="bg-amber-50 dark:bg-surface-dark rounded-xl border border-amber-200 dark:border-gray-700 shadow-sm hover:shadow-lg hover:-translate-y-0.5 transition-all duration-200 overflow-hidden flex flex-col"
               >
                 {/* Card Top: emoji + discount badge */}
-                <div className="relative bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-800 dark:to-gray-700 p-5 flex items-center gap-4">
-                  <div className="w-16 h-16 bg-white dark:bg-gray-900/50 rounded-2xl flex items-center justify-center text-4xl shadow-sm flex-shrink-0">
+                <div className="relative bg-gradient-to-br from-amber-50 to-amber-100 dark:from-gray-800 dark:to-gray-700 p-5 flex items-center gap-4">
+                  <div className="w-16 h-16 bg-amber-50 dark:bg-gray-900/50 rounded-2xl flex items-center justify-center text-4xl shadow-sm flex-shrink-0">
                     {getCategoryEmoji(offer.foodItemId?.category)}
                   </div>
                   <div className="flex-1 min-w-0">
@@ -401,7 +401,7 @@ const AllOffersPage = () => {
       {/* Compact Stats Bar */}
       {filteredOffers.length > 0 && (
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-          <div className="bg-surface dark:bg-surface-dark rounded-xl border border-gray-200 dark:border-gray-700 p-4 flex items-center gap-3">
+          <div className="bg-amber-50 dark:bg-surface-dark rounded-xl border border-amber-200 dark:border-gray-700 p-4 flex items-center gap-3">
             <div className="w-10 h-10 bg-primary/10 rounded-lg flex items-center justify-center flex-shrink-0">
               <Gift className="w-5 h-5 text-primary" />
             </div>
@@ -410,7 +410,7 @@ const AllOffersPage = () => {
               <p className="text-xs text-secondary dark:text-gray-400">Active Offers</p>
             </div>
           </div>
-          <div className="bg-surface dark:bg-surface-dark rounded-xl border border-gray-200 dark:border-gray-700 p-4 flex items-center gap-3">
+          <div className="bg-amber-50 dark:bg-surface-dark rounded-xl border border-amber-200 dark:border-gray-700 p-4 flex items-center gap-3">
             <div className="w-10 h-10 bg-green-100 dark:bg-green-900/30 rounded-lg flex items-center justify-center flex-shrink-0">
               <Store className="w-5 h-5 text-green-600 dark:text-green-400" />
             </div>
@@ -419,7 +419,7 @@ const AllOffersPage = () => {
               <p className="text-xs text-secondary dark:text-gray-400">Restaurants</p>
             </div>
           </div>
-          <div className="bg-surface dark:bg-surface-dark rounded-xl border border-gray-200 dark:border-gray-700 p-4 flex items-center gap-3">
+          <div className="bg-amber-50 dark:bg-surface-dark rounded-xl border border-amber-200 dark:border-gray-700 p-4 flex items-center gap-3">
             <div className="w-10 h-10 bg-orange-100 dark:bg-orange-900/30 rounded-lg flex items-center justify-center flex-shrink-0">
               <Percent className="w-5 h-5 text-orange-600 dark:text-orange-400" />
             </div>
@@ -430,7 +430,7 @@ const AllOffersPage = () => {
               <p className="text-xs text-secondary dark:text-gray-400">Avg. Discount</p>
             </div>
           </div>
-          <div className="bg-surface dark:bg-surface-dark rounded-xl border border-gray-200 dark:border-gray-700 p-4 flex items-center gap-3">
+          <div className="bg-amber-50 dark:bg-surface-dark rounded-xl border border-amber-200 dark:border-gray-700 p-4 flex items-center gap-3">
             <div className="w-10 h-10 bg-blue-100 dark:bg-blue-900/30 rounded-lg flex items-center justify-center flex-shrink-0">
               <DollarSign className="w-5 h-5 text-blue-600 dark:text-blue-400" />
             </div>

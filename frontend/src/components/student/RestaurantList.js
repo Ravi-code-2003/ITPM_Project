@@ -6,6 +6,24 @@ import Card from '../ui/Card';
 import api from '../../services/api';
 import toast from 'react-hot-toast';
 
+const normalizeRestaurants = (items) => {
+  if (!Array.isArray(items)) {
+    return [];
+  }
+
+  return items.filter((item) => item && typeof item === 'object' && item._id);
+};
+
+const extractFavoriteRestaurantIds = (items) => {
+  if (!Array.isArray(items)) {
+    return [];
+  }
+
+  return items
+    .map((item) => item?.restaurantId?._id)
+    .filter((id) => typeof id === 'string' && id.trim().length > 0);
+};
+
 const RestaurantList = () => {
   const [restaurants, setRestaurants] = useState([]);
   const [favorites, setFavorites] = useState([]);
@@ -23,7 +41,7 @@ const RestaurantList = () => {
     try {
       setLoading(true);
       const response = await api.get('/student/restaurants');
-      setRestaurants(response.data.restaurants);
+      setRestaurants(normalizeRestaurants(response.data?.restaurants));
     } catch (error) {
       toast.error('Failed to fetch restaurants');
       console.error('Error fetching restaurants:', error);
@@ -35,7 +53,7 @@ const RestaurantList = () => {
   const fetchFavorites = async () => {
     try {
       const response = await api.get('/student/favorites');
-      setFavorites(response.data.favorites.map(fav => fav.restaurantId._id));
+      setFavorites(extractFavoriteRestaurantIds(response.data?.favorites));
     } catch (error) {
       console.error('Error fetching favorites:', error);
     }
@@ -75,8 +93,8 @@ const RestaurantList = () => {
 
   const filteredRestaurants = restaurants
     .filter(restaurant => 
-      restaurant.shopName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      restaurant.location.toLowerCase().includes(searchTerm.toLowerCase())
+      (restaurant.shopName || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+      (restaurant.location || '').toLowerCase().includes(searchTerm.toLowerCase())
     )
     .filter(restaurant => 
       filterRating === 0 || restaurant.averageRating >= filterRating
@@ -126,7 +144,7 @@ const RestaurantList = () => {
       </div>
 
       {/* Search and Filters */}
-      <Card className="p-6">
+      <Card className="p-6 bg-amber-50 dark:bg-gray-800 border border-amber-200 dark:border-gray-700">
         <div className="space-y-4">
           {/* Search Bar */}
           <div className="relative">
@@ -136,7 +154,7 @@ const RestaurantList = () => {
               placeholder="Search restaurants or locations..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full pl-10 pr-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary dark:bg-gray-800 dark:text-white"
+              className="w-full pl-10 pr-4 py-2 border border-amber-200 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary bg-amber-50 dark:bg-gray-800 dark:text-white"
             />
           </div>
 
@@ -147,7 +165,7 @@ const RestaurantList = () => {
               <select
                 value={sortBy}
                 onChange={(e) => setSortBy(e.target.value)}
-                className="px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-primary dark:bg-gray-800 dark:text-white text-sm"
+                className="px-3 py-2 border border-amber-200 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-primary bg-amber-50 dark:bg-gray-800 dark:text-white text-sm"
               >
                 <option value="name">Sort by Name</option>
                 <option value="rating">Sort by Rating</option>
@@ -159,7 +177,7 @@ const RestaurantList = () => {
               <select
                 value={filterRating}
                 onChange={(e) => setFilterRating(parseInt(e.target.value))}
-                className="px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-primary dark:bg-gray-800 dark:text-white text-sm"
+                className="px-3 py-2 border border-amber-200 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-primary bg-amber-50 dark:bg-gray-800 dark:text-white text-sm"
               >
                 <option value="0">All Ratings</option>
                 <option value="4">4+ Stars</option>
@@ -181,7 +199,7 @@ const RestaurantList = () => {
       {/* Restaurants Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {filteredRestaurants.map(restaurant => (
-          <Card key={restaurant._id} className="overflow-hidden hover:shadow-lg transition-shadow">
+          <Card key={restaurant._id} className="overflow-hidden hover:shadow-lg transition-shadow bg-amber-50 dark:bg-gray-800 border border-amber-200 dark:border-gray-700">
             <div className="p-6">
               {/* Header */}
               <div className="flex justify-between items-start mb-4">
@@ -241,7 +259,7 @@ const RestaurantList = () => {
 
       {/* No Results */}
       {filteredRestaurants.length === 0 && (
-        <Card className="p-8 text-center">
+        <Card className="p-8 text-center bg-amber-50 dark:bg-gray-800 border border-amber-200 dark:border-gray-700">
           <div className="text-gray-500 dark:text-gray-400">
             {searchTerm || filterRating > 0 ? (
               <>
