@@ -10,6 +10,7 @@ const {
   getFavorites,
   rateRestaurant,
   getCurrentOffers,
+  getAllComboMeals,
   voteInPoll,
   getPollResults,
   getBudgetTracker,
@@ -58,6 +59,9 @@ router.post("/rating", rateRestaurant);
 
 // Offers Route
 router.get("/offers", getCurrentOffers);
+
+// Combo Meals Route
+router.get("/combos", getAllComboMeals);
 
 // Poll Routes
 router.post("/poll/vote", voteInPoll);

@@ -1,24 +1,49 @@
-import React, { useState } from 'react';
-import { Utensils, Tag } from 'lucide-react';
+import React, { useEffect, useState } from 'react';
+import { useSearchParams } from 'react-router-dom';
+import { LayoutDashboard, Utensils, Tag, ShoppingBag, Heart, Box } from 'lucide-react';
 import RestaurantList from '../components/student/RestaurantList';
+import RestaurantOverview from '../components/student/RestaurantOverview';
+import OrderHistory from '../components/student/OrderHistory';
+import FavoritesPage from '../components/student/FavoritesPage';
 import AllOffersPage from './AllOffersPage';
+import AllCombosPage from './AllCombosPage';
 
 const RestaurantsPage = () => {
-  const [activeTab, setActiveTab] = useState('restaurants');
+  const [activeTab, setActiveTab] = useState('overview');
+  const [searchParams] = useSearchParams();
 
   const tabs = [
+    { id: 'overview', label: 'Overview', icon: LayoutDashboard },
     { id: 'restaurants', label: 'Find Restaurants', icon: Utensils },
-    { id: 'offers', label: 'Special Offers', icon: Tag }
+    { id: 'offers', label: 'Special Offers', icon: Tag },
+    { id: 'combos', label: 'Combo Meals', icon: Box },
+    { id: 'orders', label: 'Order History', icon: ShoppingBag },
+    { id: 'favorites', label: 'Favorites', icon: Heart }
   ];
+
+  useEffect(() => {
+    const tabFromQuery = searchParams.get('tab');
+    if (tabFromQuery && tabs.some((tab) => tab.id === tabFromQuery)) {
+      setActiveTab(tabFromQuery);
+    }
+  }, [searchParams]);
 
   const renderTabContent = () => {
     switch (activeTab) {
+      case 'overview':
+        return <RestaurantOverview onOpenTab={setActiveTab} />;
       case 'restaurants':
         return <RestaurantList />;
       case 'offers':
         return <AllOffersPage />;
+      case 'combos':
+        return <AllCombosPage />;
+      case 'orders':
+        return <OrderHistory />;
+      case 'favorites':
+        return <FavoritesPage />;
       default:
-        return <RestaurantList />;
+        return <RestaurantOverview onOpenTab={setActiveTab} />;
     }
   };
 

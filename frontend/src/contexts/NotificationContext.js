@@ -61,7 +61,7 @@ export const NotificationProvider = ({ children }) => {
 
     try {
       const response = await notificationAPI.getMyNotifications(20);
-      const list = response.notifications || [];
+      const list = normalizeNotifications(response.notifications);
       const unread = response.unreadCount || 0;
 
       let mergedNotifications = list;
@@ -96,11 +96,17 @@ export const NotificationProvider = ({ children }) => {
   }, [isNotificationRole]);
 
   const markAsRead = useCallback(async (notificationId) => {
+    if (!notificationId) {
+      return;
+    }
+
     const response = await notificationAPI.markAsRead(notificationId);
     const updatedNotification = response.notification;
 
     setNotifications((prev) =>
-      prev.map((item) => (item._id === notificationId ? { ...item, ...updatedNotification } : item))
+      normalizeNotifications(prev).map((item) =>
+        item._id === notificationId ? { ...item, ...updatedNotification } : item
+      )
     );
 
     if (typeof response.unreadCount === 'number') {
@@ -114,7 +120,7 @@ export const NotificationProvider = ({ children }) => {
     const response = await notificationAPI.markAllAsRead();
 
     setNotifications((prev) =>
-      prev.map((item) => ({
+      normalizeNotifications(prev).map((item) => ({
         ...item,
         isRead: true,
         readAt: item.readAt || new Date().toISOString()

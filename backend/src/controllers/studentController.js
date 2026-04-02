@@ -411,10 +411,14 @@ const getFavorites = async (req, res) => {
         }
       })
       .sort({ createdAt: -1 });
+
+    const validFavorites = favorites.filter(
+      (favorite) => favorite?.restaurantId && favorite.restaurantId?._id
+    );
     
     // Get ratings for each favorite restaurant
     const favoritesWithRatings = await Promise.all(
-      favorites.map(async (favorite) => {
+      validFavorites.map(async (favorite) => {
         const ratings = await Rating.aggregate([
           { $match: { restaurantId: favorite.restaurantId._id } },
           {
@@ -427,8 +431,10 @@ const getFavorites = async (req, res) => {
         ]);
         
         const favoriteObj = favorite.toObject();
-        favoriteObj.restaurantId.averageRating = ratings.length > 0 ? ratings[0].averageRating : 0;
-        favoriteObj.restaurantId.totalRatings = ratings.length > 0 ? ratings[0].totalRatings : 0;
+        if (favoriteObj.restaurantId) {
+          favoriteObj.restaurantId.averageRating = ratings.length > 0 ? ratings[0].averageRating : 0;
+          favoriteObj.restaurantId.totalRatings = ratings.length > 0 ? ratings[0].totalRatings : 0;
+        }
         
         return favoriteObj;
       })
@@ -541,6 +547,39 @@ const getCurrentOffers = async (req, res) => {
     res.json({
       success: true,
       offers: filteredOffers
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: error.message
+    });
+  }
+};
+
+/**
+ * GET /api/student/combos
+ * Get all available combo meals across restaurants
+ */
+const getAllComboMeals = async (req, res) => {
+  try {
+    const { restaurantId } = req.query;
+
+    const query = {
+      status: 'Available'
+    };
+
+    if (restaurantId) {
+      query.restaurantId = restaurantId;
+    }
+
+    const combos = await ComboMeal.find(query)
+      .populate('restaurantId', 'shopName location')
+      .populate('items', 'name price category')
+      .sort({ totalPrice: 1, createdAt: -1 });
+
+    res.json({
+      success: true,
+      combos
     });
   } catch (error) {
     res.status(500).json({
@@ -856,6 +895,7 @@ module.exports = {
   getFavorites,
   rateRestaurant,
   getCurrentOffers,
+  getAllComboMeals,
   voteInPoll,
   getPollResults,
   getBudgetTracker,

@@ -56,7 +56,7 @@ const getNotificationTargetPath = (notification, userRole) => {
   const orderQuery = orderId ? `&orderId=${encodeURIComponent(orderId)}` : '';
 
   if (userRole === 'student') {
-    return '/student/notifications';
+    return `/restaurants?tab=orders${orderQuery}`;
   }
 
   if (userRole === 'shop-owner') {
@@ -97,7 +97,13 @@ const NotificationBell = () => {
     return () => document.removeEventListener('mousedown', handleOutsideClick);
   }, [isOpen]);
 
-  const visibleNotifications = useMemo(() => notifications, [notifications]);
+  const visibleNotifications = useMemo(
+    () =>
+      (Array.isArray(notifications) ? notifications : [])
+        .filter((item) => item && typeof item === 'object' && item._id)
+        .slice(0, 8),
+    [notifications]
+  );
 
   if (!isNotificationRole) {
     return null;
@@ -112,6 +118,10 @@ const NotificationBell = () => {
   };
 
   const handleNotificationClick = async (notification) => {
+    if (!notification?._id) {
+      return;
+    }
+
     if (!notification.isRead) {
       await markAsRead(notification._id);
     }

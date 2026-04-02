@@ -114,7 +114,9 @@ const RestaurantDetail = () => {
   const checkFavoriteStatus = async () => {
     try {
       const response = await api.get('/student/favorites');
-      const favoriteIds = response.data.favorites.map(fav => fav.restaurantId._id);
+      const favoriteIds = (Array.isArray(response.data?.favorites) ? response.data.favorites : [])
+        .map((fav) => fav?.restaurantId?._id)
+        .filter((favoriteId) => typeof favoriteId === 'string' && favoriteId.trim().length > 0);
       setIsFavorite(favoriteIds.includes(id));
     } catch (error) {
       console.error('Error checking favorite status:', error);
