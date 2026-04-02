@@ -89,7 +89,7 @@ const createOrUpdateBudget = async (userId, { amount, type }) => {
   };
 
   // First, try to update an existing budget for this period/type.
-  let budget = await Budget.findOneAndUpdate(periodOverlapQuery, payload, { returnDocument: "after" })
+  let budget = await Budget.findOneAndUpdate(periodOverlapQuery, payload, { new: true })
     .select("amount totalBudget type startDate endDate")
     .lean();
 
@@ -117,7 +117,7 @@ const createOrUpdateBudget = async (userId, { amount, type }) => {
         budget = await Budget.findOneAndUpdate(
           { userId, type: budgetType },
           payload,
-          { returnDocument: "after", sort: { createdAt: -1 } }
+          { new: true, sort: { createdAt: -1 } }
         )
           .select("amount totalBudget type startDate endDate")
           .lean();
@@ -125,7 +125,7 @@ const createOrUpdateBudget = async (userId, { amount, type }) => {
           budget = await Budget.findOneAndUpdate(
             { userId },
             payload,
-            { returnDocument: "after", sort: { createdAt: -1 } }
+            { new: true, sort: { createdAt: -1 } }
           )
             .select("amount totalBudget type startDate endDate")
             .lean();

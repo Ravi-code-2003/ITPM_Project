@@ -2,6 +2,10 @@ const express = require("express");
 const cors = require("cors");
 const dotenv = require("dotenv");
 const path = require("path");
+
+// Load environment variables FIRST - before importing services
+dotenv.config({ path: path.join(__dirname, '../.env') });
+
 const connectDB = require("./config/db");
 
 // Import routes
@@ -22,10 +26,6 @@ const notificationRoutes = require("./routes/notificationRoutes");
 const claimRoutes = require("./routes/claimRoutes");
 const shopRoutes = require("./routes/shopRoutes");
 const aiRoutes = require("./routes/aiRoutes");
-const notificationRoutes = require("./routes/notificationRoutes");
-
-// Load environment variables
-dotenv.config();
 
 const app = express();
 

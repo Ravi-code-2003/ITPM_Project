@@ -171,12 +171,25 @@ const chatWithAI = async (req, res) => {
 
     let dbContext = null;
     try {
+      console.log("🔄 Building database context for message:", sanitizedMessage);
       dbContext = await buildDatabaseContext(sanitizedMessage);
+      if (dbContext) {
+        console.log("✅ Database context built successfully");
+        console.log("   Data available:", dbContext.dataAvailable);
+      } else {
+        console.log("⚠️  No database context (message doesn't match any categories)");
+      }
     } catch (contextError) {
       // Context enrichment is optional; core chat should still work.
-      console.error("AI DB context build error:", contextError);
+      console.error("❌ AI DB context build error:", contextError.message);
       dbContext = null;
     }
+
+    console.log("📨 Calling generateResponse with:");
+    console.log(`   Message: "${sanitizedMessage}"`);
+    console.log(`   User Role: ${req.user?.role}`);
+    console.log(`   DB Context: ${dbContext ? "YES" : "NO"}`);
+    console.log(`   Context Messages: ${contextMessages.length}`);
 
     const reply = await generateResponse(sanitizedMessage, {
       user: req.user,

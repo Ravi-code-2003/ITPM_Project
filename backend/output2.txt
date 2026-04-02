@@ -1,0 +1,8 @@
+createOrUpdateBudget called for "69947fb0f473f6cdfe0444db" {"userId":"69947fb0f473f6cdfe0444db","amount":5000,"totalBudget":5000,"type":"monthly","startDate":"2026-03-31T18:30:00.000Z","endDate":"2026-04-30T18:29:59.999Z"}
+overlap query is {"userId":"69947fb0f473f6cdfe0444db","type":"monthly","startDate":{"$lte":"2026-04-30T18:29:59.999Z"},"endDate":{"$gte":"2026-03-31T18:30:00.000Z"}}
+first findOneAndUpdate returned: null
+creating budget...
+CREATE ERROR: E11000 duplicate key error collection: StudentConnect.budgets index: studentId_1 dup key: { studentId: null } 11000
+First fallback budget: null
+Second fallback budget: null
+Final returned budget: null

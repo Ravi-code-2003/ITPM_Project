@@ -29,15 +29,12 @@ import Insights from "../../components/budget/Insights";
 import api, { budgetAPI } from "../../services/api";
 import { useCart } from "../../contexts/CartContext";
 import toast from "react-hot-toast";
-import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
 import { BookOpen, Home, Store, MapPin, CheckCircle, XCircle, Clock } from 'lucide-react';
-import Button from '../../components/ui/Button';
-import Card, { CardHeader, CardTitle, CardDescription, CardContent } from '../../components/ui/Card';
 import { roomRequestService } from '../../services/accommodationService';
 
 const StudentDashboard = () => {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const { getCartCount } = useCart();
 
   const [activeTab, setActiveTab] = useState("overview");
@@ -127,6 +124,35 @@ const StudentDashboard = () => {
     }, 30000);
     return () => clearInterval(intervalId);
   }, [activeTab]);
+
+  const [requests, setRequests] = useState([]);
+  const [roomLoading, setRoomLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchRequests = async () => {
+      try {
+        const response = await roomRequestService.getStudentRequests();
+        setRequests(response.data || []);
+      } catch (error) {
+        console.error('Failed to fetch requests:', error);
+      } finally {
+        setRoomLoading(false);
+      }
+    };
+    fetchRequests();
+  }, []);
+
+  const getStatusIcon = (status) => {
+    if (status === 'ACCEPTED') return <CheckCircle className="h-5 w-5 text-green-500" />;
+    if (status === 'REJECTED') return <XCircle className="h-5 w-5 text-red-500" />;
+    return <Clock className="h-5 w-5 text-yellow-500" />;
+  };
+
+  const getStatusBadge = (status) => {
+    if (status === 'ACCEPTED') return 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400';
+    if (status === 'REJECTED') return 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400';
+    return 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400';
+  };
 
   const tabs = [
     { id: "overview", label: "Overview", icon: Calendar },
@@ -228,7 +254,7 @@ const StudentDashboard = () => {
                     {recentOrders.map((order) => (
                       <div key={order._id} className="flex justify-between items-center p-3 bg-gray-50 dark:bg-gray-800 rounded-lg">
                         <div>
-                          <p className="font-medium text-primary dark:text-gray-100">{order.restaurantId.shopName}</p>
+                          <p className="font-medium text-primary dark:text-gray-100">{order.restaurantId?.shopName || 'Restaurant'}</p>
                           <p className="text-sm text-secondary dark:text-gray-400">
                             {new Date(order.createdAt).toLocaleDateString()} • {order.status}
                           </p>
@@ -265,33 +291,6 @@ const StudentDashboard = () => {
       default:
         return null;
     }
-  const [requests, setRequests] = useState([]);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    const fetchRequests = async () => {
-      try {
-        const response = await roomRequestService.getStudentRequests();
-        setRequests(response.data || []);
-      } catch (error) {
-        console.error('Failed to fetch requests:', error);
-      } finally {
-        setLoading(false);
-      }
-    };
-    fetchRequests();
-  }, []);
-
-  const getStatusIcon = (status) => {
-    if (status === 'ACCEPTED') return <CheckCircle className="h-5 w-5 text-green-500" />;
-    if (status === 'REJECTED') return <XCircle className="h-5 w-5 text-red-500" />;
-    return <Clock className="h-5 w-5 text-yellow-500" />;
-  };
-
-  const getStatusBadge = (status) => {
-    if (status === 'ACCEPTED') return 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400';
-    if (status === 'REJECTED') return 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400';
-    return 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400';
   };
 
   return (

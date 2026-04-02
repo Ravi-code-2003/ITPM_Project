@@ -1,3 +1,5 @@
+const groqService = require("../services/groqService");
+
 const WINDOW_MS = parseInt(process.env.AI_RATE_LIMIT_WINDOW_MS, 10) || 60 * 1000;
 const MAX_REQUESTS = parseInt(process.env.AI_RATE_LIMIT_MAX, 10) || 10;
 
@@ -21,7 +23,7 @@ const aiRateLimiter = (req, res, next) => {
 
   if (bucket.count > MAX_REQUESTS) {
     return res.status(429).json({
-      message: "Rate limit exceeded for AI requests. Please try again shortly.",
+      message: groqService.getRateLimitResponse(),
     });
   }
 

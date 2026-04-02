@@ -1,0 +1,3 @@
+User: "69947fb0f473f6cdfe0444db"
+Budget created/updated: {"amount":5000,"totalBudget":5000,"type":"monthly","startDate":"2026-03-31T18:30:00.000Z","endDate":"2026-04-30T18:29:59.999Z"}
+Summary: {"totalBudget":5000,"totalSpent":0,"remaining":5000,"budgetType":"monthly","expenses":[],"pagination":{"page":1,"limit":10}}

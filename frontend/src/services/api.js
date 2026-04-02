@@ -393,6 +393,8 @@ export const lostFoundAPI = {
     const response = await api.get(`/lostfound/matches/${lostId}`);
     return response.data;
   },
+};
+
 export const notificationAPI = {
   getMyNotifications: async (limit = 20, unreadOnly = false) => {
     const params = new URLSearchParams({
