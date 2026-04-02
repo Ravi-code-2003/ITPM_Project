@@ -106,11 +106,11 @@ const CartPage = () => {
 
   if (cart.items.length === 0) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-900 dark:to-gray-800 py-8">
+      <div className="min-h-screen bg-gradient-to-b from-amber-50 via-white to-white dark:from-gray-900 dark:to-gray-800 py-8">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl border border-gray-200 dark:border-gray-700 overflow-hidden">
+          <div className="bg-amber-50 dark:bg-gray-800 rounded-2xl shadow-xl border border-amber-200 dark:border-gray-700 overflow-hidden">
             <div className="text-center py-20 px-8">
-              <div className="bg-gray-100 dark:bg-gray-700 w-24 h-24 rounded-full flex items-center justify-center mx-auto mb-8">
+              <div className="bg-amber-100 dark:bg-gray-700 w-24 h-24 rounded-full flex items-center justify-center mx-auto mb-8">
                 <ShoppingCart className="h-12 w-12 text-gray-400 dark:text-gray-500" />
               </div>
               <h1 className="text-4xl font-bold text-gray-900 dark:text-white mb-6">
@@ -134,10 +134,10 @@ const CartPage = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-900 dark:to-gray-800 py-8">
+    <div className="min-h-screen bg-gradient-to-b from-amber-50 via-white to-white dark:from-gray-900 dark:to-gray-800 py-8">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Professional Header */}
-        <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl border border-gray-200 dark:border-gray-700 p-8 mb-8">
+        <div className="bg-amber-50 dark:bg-gray-800 rounded-2xl shadow-xl border border-amber-200 dark:border-gray-700 p-8 mb-8">
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-4">
               <div className="bg-primary/10 dark:bg-primary/20 p-3 rounded-full">
@@ -166,7 +166,7 @@ const CartPage = () => {
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           {/* Cart Items */}
           <div className="lg:col-span-2">
-            <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl border border-gray-200 dark:border-gray-700 overflow-hidden">
+            <div className="bg-amber-50 dark:bg-gray-800 rounded-2xl shadow-xl border border-amber-200 dark:border-gray-700 overflow-hidden">
               <div className="p-8">
                 <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-8 flex items-center">
                   <div className="bg-primary/10 dark:bg-primary/20 p-2 rounded-lg mr-3">
@@ -177,7 +177,7 @@ const CartPage = () => {
                 
                 <div className="space-y-6">
                   {cart.items.map((item) => (
-                    <div key={`${item.id}-${item.isCombo}`} className="flex items-center justify-between bg-gradient-to-r from-gray-50 to-gray-100 dark:from-gray-700 dark:to-gray-800 rounded-xl p-6 border border-gray-200 dark:border-gray-600 hover:shadow-md transition-all duration-200">
+                    <div key={`${item.id}-${item.isCombo}`} className="flex items-center justify-between bg-gradient-to-r from-amber-50 to-amber-100 dark:from-gray-700 dark:to-gray-800 rounded-xl p-6 border border-amber-200 dark:border-gray-600 hover:shadow-md transition-all duration-200">
                       <div className="flex-1">
                         <div className="flex items-center gap-3 mb-3">
                           <h3 className="font-bold text-lg text-gray-900 dark:text-white">
@@ -190,14 +190,14 @@ const CartPage = () => {
                           )}
                         </div>
                         <div className="text-sm text-gray-600 dark:text-gray-300 capitalize font-medium">
-                          <span className="bg-gray-200 dark:bg-gray-600 px-2 py-1 rounded text-xs mr-2">{item.category}</span>
+                          <span className="bg-amber-200 dark:bg-gray-600 px-2 py-1 rounded text-xs mr-2">{item.category}</span>
                           <span className="text-primary dark:text-accent font-semibold">LKR {item.price.toFixed(2)}</span> each
                         </div>
                       </div>
                       
                       <div className="flex items-center gap-4">
                         {/* Quantity Controls */}
-                        <div className="flex items-center gap-2 bg-white dark:bg-gray-700 rounded-xl border-2 border-gray-200 dark:border-gray-500 p-1 shadow-sm">
+                        <div className="flex items-center gap-2 bg-amber-50 dark:bg-gray-700 rounded-xl border-2 border-amber-200 dark:border-gray-500 p-1 shadow-sm">
                           <button
                             onClick={() => handleQuantityChange(item.id, item.isCombo, -1)}
                             className="h-10 w-10 p-0 text-gray-600 hover:text-white dark:text-gray-300 dark:hover:text-white hover:bg-primary dark:hover:bg-primary rounded-lg flex items-center justify-center transition-all duration-200 font-bold"
@@ -216,7 +216,7 @@ const CartPage = () => {
                         </div>
                         
                         {/* Item Total */}
-                        <div className="text-xl font-bold text-primary dark:text-accent min-w-[5rem] text-right bg-gray-100 dark:bg-gray-600 px-3 py-2 rounded-lg">
+                        <div className="text-xl font-bold text-primary dark:text-accent min-w-[5rem] text-right bg-amber-100 dark:bg-gray-600 px-3 py-2 rounded-lg">
                           LKR {(item.price * item.quantity).toFixed(2)}
                         </div>
                         
@@ -238,7 +238,7 @@ const CartPage = () => {
 
           {/* Order Summary */}
           <div className="lg:col-span-1">
-            <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl border border-gray-200 dark:border-gray-700 sticky top-6">
+            <div className="bg-amber-50 dark:bg-gray-800 rounded-2xl shadow-xl border border-amber-200 dark:border-gray-700 sticky top-6">
               <div className="p-8">
                 <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-8 flex items-center">
                   <div className="bg-primary/10 dark:bg-primary/20 p-2 rounded-lg mr-3">

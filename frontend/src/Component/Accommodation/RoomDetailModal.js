@@ -115,7 +115,7 @@ const RoomDetailModal = ({ room, onClose }) => {
   return (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4 overflow-hidden">
       <div className="w-full max-w-5xl max-h-[90vh] overflow-y-auto my-8 scrollbar-thin scrollbar-thumb-primary scrollbar-track-transparent">
-        <Card className="w-full">
+        <Card className="w-full bg-amber-50 dark:bg-gray-800 border border-amber-200 dark:border-gray-700">
           <div className="p-6">
           {/* Header */}
           <div className="flex justify-between items-start mb-6">
@@ -299,7 +299,7 @@ const RoomDetailModal = ({ room, onClose }) => {
             {/* Right Column - Owner Info & Request Form */}
             <div className="space-y-4">
               {/* Owner Info */}
-              <div className="bg-background dark:bg-background-dark rounded-lg p-4">
+              <div className="bg-amber-100/70 dark:bg-background-dark rounded-lg p-4 border border-amber-200 dark:border-gray-700">
                 <h3 className="font-semibold text-primary dark:text-gray-100 mb-3">
                   Property Owner
                 </h3>
@@ -323,7 +323,7 @@ const RoomDetailModal = ({ room, onClose }) => {
                       Send Inquiry
                     </Button>
                   ) : (
-                    <div className="bg-background dark:bg-background-dark rounded-lg p-4">
+                    <div className="bg-amber-100/70 dark:bg-background-dark rounded-lg p-4 border border-amber-200 dark:border-gray-700">
                       <h3 className="font-semibold text-primary dark:text-gray-100 mb-3">
                         Send Inquiry
                       </h3>
@@ -337,8 +337,8 @@ const RoomDetailModal = ({ room, onClose }) => {
                             value={requestData.phone}
                             onChange={(e) => handleContactChange('phone', e.target.value)}
                             required
-                            className={`w-full px-3 py-2 text-sm border rounded-lg focus:ring-2 focus:ring-primary dark:bg-surface-dark dark:border-gray-600 dark:text-gray-100 ${
-                              formErrors.phone ? 'border-red-500' : 'border-secondary/30'
+                            className={`w-full px-3 py-2 text-sm border rounded-lg focus:ring-2 focus:ring-primary bg-amber-50 dark:bg-surface-dark dark:border-gray-600 dark:text-gray-100 ${
+                              formErrors.phone ? 'border-red-500' : 'border-amber-200'
                             }`}
                             placeholder="0771234567 or +94771234567"
                           />
@@ -356,8 +356,8 @@ const RoomDetailModal = ({ room, onClose }) => {
                             type="tel"
                             value={requestData.whatsapp}
                             onChange={(e) => handleContactChange('whatsapp', e.target.value)}
-                            className={`w-full px-3 py-2 text-sm border rounded-lg focus:ring-2 focus:ring-primary dark:bg-surface-dark dark:border-gray-600 dark:text-gray-100 ${
-                              formErrors.whatsapp ? 'border-red-500' : 'border-secondary/30'
+                            className={`w-full px-3 py-2 text-sm border rounded-lg focus:ring-2 focus:ring-primary bg-amber-50 dark:bg-surface-dark dark:border-gray-600 dark:text-gray-100 ${
+                              formErrors.whatsapp ? 'border-red-500' : 'border-amber-200'
                             }`}
                             placeholder="0771234567 or +94771234567"
                           />
@@ -377,7 +377,7 @@ const RoomDetailModal = ({ room, onClose }) => {
                               setRequestData({ ...requestData, message: e.target.value })
                             }
                             rows="3"
-                            className="w-full px-3 py-2 text-sm border border-secondary/30 rounded-lg focus:ring-2 focus:ring-primary dark:bg-surface-dark dark:border-gray-600 dark:text-gray-100"
+                            className="w-full px-3 py-2 text-sm border border-amber-200 rounded-lg focus:ring-2 focus:ring-primary bg-amber-50 dark:bg-surface-dark dark:border-gray-600 dark:text-gray-100"
                             placeholder="Any questions or special requests..."
                           />
                         </div>

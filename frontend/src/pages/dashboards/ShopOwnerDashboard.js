@@ -154,7 +154,7 @@ const ShopOwnerDashboard = () => {
 
                 <div
                   onClick={() => setActiveTab('menu')}
-                  className="group cursor-pointer rounded-2xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 p-6 hover:border-purple-400 hover:shadow-lg transition-all"
+                  className="group cursor-pointer rounded-2xl border border-amber-200 dark:border-gray-700 bg-amber-50 dark:bg-gray-800 p-6 hover:border-purple-400 hover:shadow-lg transition-all"
                 >
                   <div className="bg-purple-100 dark:bg-purple-900/30 p-3 rounded-xl w-fit mb-4 group-hover:bg-purple-200 dark:group-hover:bg-purple-900/50 transition-colors">
                     <Package className="h-6 w-6 text-purple-600 dark:text-purple-400" />
@@ -165,7 +165,7 @@ const ShopOwnerDashboard = () => {
 
                 <div
                   onClick={() => setActiveTab('offers')}
-                  className="group cursor-pointer rounded-2xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 p-6 hover:border-orange-400 hover:shadow-lg transition-all"
+                  className="group cursor-pointer rounded-2xl border border-amber-200 dark:border-gray-700 bg-amber-50 dark:bg-gray-800 p-6 hover:border-orange-400 hover:shadow-lg transition-all"
                 >
                   <div className="bg-orange-100 dark:bg-orange-900/30 p-3 rounded-xl w-fit mb-4 group-hover:bg-orange-200 dark:group-hover:bg-orange-900/50 transition-colors">
                     <Store className="h-6 w-6 text-orange-600 dark:text-orange-400" />
@@ -176,7 +176,7 @@ const ShopOwnerDashboard = () => {
 
                 <div
                   onClick={() => setActiveTab('combos')}
-                  className="group cursor-pointer rounded-2xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 p-6 hover:border-pink-400 hover:shadow-lg transition-all"
+                  className="group cursor-pointer rounded-2xl border border-amber-200 dark:border-gray-700 bg-amber-50 dark:bg-gray-800 p-6 hover:border-pink-400 hover:shadow-lg transition-all"
                 >
                   <div className="bg-pink-100 dark:bg-pink-900/30 p-3 rounded-xl w-fit mb-4 group-hover:bg-pink-200 dark:group-hover:bg-pink-900/50 transition-colors">
                     <Plus className="h-6 w-6 text-pink-600 dark:text-pink-400" />
@@ -187,7 +187,7 @@ const ShopOwnerDashboard = () => {
 
                 <div
                   onClick={() => setActiveTab('polls')}
-                  className="group cursor-pointer rounded-2xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 p-6 hover:border-blue-400 hover:shadow-lg transition-all"
+                  className="group cursor-pointer rounded-2xl border border-amber-200 dark:border-gray-700 bg-amber-50 dark:bg-gray-800 p-6 hover:border-blue-400 hover:shadow-lg transition-all"
                 >
                   <div className="bg-blue-100 dark:bg-blue-900/30 p-3 rounded-xl w-fit mb-4 group-hover:bg-blue-200 dark:group-hover:bg-blue-900/50 transition-colors">
                     <Vote className="h-6 w-6 text-blue-600 dark:text-blue-400" />
@@ -198,7 +198,7 @@ const ShopOwnerDashboard = () => {
 
                 <div
                   onClick={() => setActiveTab('orders')}
-                  className="group cursor-pointer rounded-2xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 p-6 hover:border-green-400 hover:shadow-lg transition-all"
+                  className="group cursor-pointer rounded-2xl border border-amber-200 dark:border-gray-700 bg-amber-50 dark:bg-gray-800 p-6 hover:border-green-400 hover:shadow-lg transition-all"
                 >
                   <div className="bg-green-100 dark:bg-green-900/30 p-3 rounded-xl w-fit mb-4 group-hover:bg-green-200 dark:group-hover:bg-green-900/50 transition-colors">
                     <ShoppingBag className="h-6 w-6 text-green-600 dark:text-green-400" />
@@ -209,7 +209,7 @@ const ShopOwnerDashboard = () => {
 
                 <div
                   onClick={() => setActiveTab('analytics')}
-                  className="group cursor-pointer rounded-2xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 p-6 hover:border-teal-400 hover:shadow-lg transition-all"
+                  className="group cursor-pointer rounded-2xl border border-amber-200 dark:border-gray-700 bg-amber-50 dark:bg-gray-800 p-6 hover:border-teal-400 hover:shadow-lg transition-all"
                 >
                   <div className="bg-teal-100 dark:bg-teal-900/30 p-3 rounded-xl w-fit mb-4 group-hover:bg-teal-200 dark:group-hover:bg-teal-900/50 transition-colors">
                     <TrendingUp className="h-6 w-6 text-teal-600 dark:text-teal-400" />
@@ -255,7 +255,7 @@ const ShopOwnerDashboard = () => {
   };
 
   return (
-    <div className="min-h-screen bg-background dark:bg-background-dark py-8">
+    <div className="min-h-screen bg-gradient-to-b from-amber-50 via-white to-white dark:bg-background-dark py-8">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="mb-8">
           <h1 className="text-3xl font-bold text-primary dark:text-gray-100">Shop Owner Dashboard</h1>
