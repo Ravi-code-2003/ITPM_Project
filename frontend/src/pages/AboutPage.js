@@ -9,7 +9,7 @@ const AboutPage = () => {
         {/* Hero Section */}
         <div className="text-center mb-16">
           <h1 className="text-4xl md:text-5xl font-bold text-primary dark:text-gray-100 mb-4">
-            About Student Connect
+            About UniCore
           </h1>
           <p className="text-xl text-gray-600 dark:text-gray-400 max-w-3xl mx-auto">
             Connecting students with essential campus services and opportunities to enhance their university experience.
@@ -78,7 +78,7 @@ const AboutPage = () => {
           <CardContent className="p-8">
             <h2 className="text-3xl font-bold mb-4 text-white">Our Story</h2>
             <p className="text-lg text-white/90 max-w-4xl mx-auto">
-              Student Connect was founded by university students who experienced the challenges of finding reliable
+              UniCore was founded by university students who experienced the challenges of finding reliable
               services near campus. We created this platform to help every student have a smoother, more connected
               university experience.
             </p>

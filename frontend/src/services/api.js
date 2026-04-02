@@ -3,10 +3,15 @@ import toast from 'react-hot-toast';
 
 // Debug mode
 const DEBUG = process.env.NODE_ENV === 'development';
+const API_BASE_URL =
+  process.env.REACT_APP_API_URL ||
+  (process.env.NODE_ENV === 'development'
+    ? 'http://localhost:5000/api'
+    : '/api');
 
 // Create axios instance
 const api = axios.create({
-  baseURL: process.env.REACT_APP_API_URL || 'http://localhost:5001/api',
+  baseURL: API_BASE_URL,
   headers: {
     'Content-Type': 'application/json',
   },
@@ -87,7 +92,7 @@ api.interceptors.response.use(
     const message = error.response?.data?.message || error.message || 'Network error occurred';
     
     // Don't show toast for certain paths to avoid conflicts
-    const skipPaths = ['/auth/login', '/auth/register'];
+    const skipPaths = ['/auth/login', '/auth/register', '/requests', '/room-requests'];
     const isSkip = skipPaths.some(path => error.config?.url?.includes(path));
     
     if (!isSkip) {
@@ -388,6 +393,26 @@ export const lostFoundAPI = {
     const response = await api.get(`/lostfound/matches/${lostId}`);
     return response.data;
   },
+export const notificationAPI = {
+  getMyNotifications: async (limit = 20, unreadOnly = false) => {
+    const params = new URLSearchParams({
+      limit: String(limit),
+      unreadOnly: String(unreadOnly)
+    });
+
+    const response = await api.get(`/notifications?${params.toString()}`);
+    return response.data;
+  },
+
+  markAsRead: async (notificationId) => {
+    const response = await api.patch(`/notifications/${notificationId}/read`);
+    return response.data;
+  },
+
+  markAllAsRead: async () => {
+    const response = await api.patch('/notifications/read-all');
+    return response.data;
+  }
 };
 
 export default api;

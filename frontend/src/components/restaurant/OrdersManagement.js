@@ -6,6 +6,7 @@ import api from '../../services/api';
 import toast from 'react-hot-toast';
 
 const STATUS_OPTIONS = ['all', 'pending', 'confirmed', 'ready', 'completed', 'cancelled'];
+const ORDER_PROGRESS_FLOW = ['pending', 'confirmed', 'ready', 'completed'];
 
 const OrdersManagement = () => {
   const [orders, setOrders] = useState([]);
@@ -55,6 +56,17 @@ const OrdersManagement = () => {
     } catch (error) {
       toast.error('Failed to update order status');
     }
+  };
+
+  const isNextProgressStep = (currentStatus, targetStatus) => {
+    const currentIndex = ORDER_PROGRESS_FLOW.indexOf(currentStatus);
+    const targetIndex = ORDER_PROGRESS_FLOW.indexOf(targetStatus);
+
+    if (currentIndex === -1 || targetIndex === -1) {
+      return false;
+    }
+
+    return targetIndex === currentIndex + 1;
   };
 
   return (
@@ -174,7 +186,12 @@ const OrdersManagement = () => {
                         size="sm"
                         variant={order.status === status ? 'default' : 'outline'}
                         onClick={() => updateOrderStatus(order._id, status)}
-                        disabled={order.status === status || order.status === 'cancelled'}
+                        disabled={
+                          order.status === status ||
+                          order.status === 'cancelled' ||
+                          order.status === 'completed' ||
+                          !isNextProgressStep(order.status, status)
+                        }
                         className="text-xs capitalize"
                       >
                         {status}

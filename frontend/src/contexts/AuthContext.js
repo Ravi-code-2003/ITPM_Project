@@ -155,7 +155,12 @@ export const AuthProvider = ({ children }) => {
         });
       }
       
-      const message = error.response?.data?.message || 'Login failed';
+      const message =
+        error.response?.data?.message ||
+        (error.message === 'Network Error'
+          ? 'Cannot connect to server. Please check backend is running on port 5001.'
+          : error.message) ||
+        'Login failed';
       dispatch({
         type: AUTH_ACTIONS.SET_ERROR,
         payload: message,

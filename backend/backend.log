@@ -1,0 +1,47 @@
+
+> backend@1.0.0 dev
+> nodemon src/server.js
+
+[33m[nodemon] 3.1.11[39m
+[33m[nodemon] to restart at any time, enter `rs`[39m
+[33m[nodemon] watching path(s): *.*[39m
+[33m[nodemon] watching extensions: js,mjs,cjs,json[39m
+[32m[nodemon] starting `node src/server.js`[39m
+[dotenv@17.2.4] injecting env (16) from .env -- tip: 🔐 prevent building .env in docker: https://dotenvx.com/prebuild
+🌐 CORS: Allowed origins: [
+  'http://localhost:3000',
+  'http://localhost:3001',
+  'http://127.0.0.1:3000',
+  'http://127.0.0.1:3001',
+  'http://localhost:3001'
+]
+🚀 Server running on port 5000
+📱 Environment: development
+🌐 Frontend URL: http://localhost:3001
+📧 Email configured: ✅
+☁️  Cloudinary configured: ✅
+MongoDB connected ✅
+Email send error: TypeError: nodemailer.createTransporter is not a function
+    at createTransporter (C:\Users\athur\OneDrive\Desktop\ITPM_Project\backend\src\utils\emailService.js:5:21)
+    at sendEmail (C:\Users\athur\OneDrive\Desktop\ITPM_Project\backend\src\utils\emailService.js:19:25)
+    at sendRejectionEmail (C:\Users\athur\OneDrive\Desktop\ITPM_Project\backend\src\utils\emailService.js:131:16)
+    at rejectUser (C:\Users\athur\OneDrive\Desktop\ITPM_Project\backend\src\controllers\adminController.js:238:29)
+    at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+Failed to send rejection email to aathuraliyaravindu151@gmail.com
+[32m[nodemon] restarting due to changes...[39m
+[32m[nodemon] restarting due to changes...[39m
+[32m[nodemon] starting `node src/server.js`[39m
+[dotenv@17.2.4] injecting env (16) from .env -- tip: ⚙️  load multiple .env files with { path: ['.env.local', '.env'] }
+🌐 CORS: Allowed origins: [
+  'http://localhost:3000',
+  'http://localhost:3001',
+  'http://127.0.0.1:3000',
+  'http://127.0.0.1:3001',
+  'http://localhost:3001'
+]
+🚀 Server running on port 5000
+📱 Environment: development
+🌐 Frontend URL: http://localhost:3001
+📧 Email configured: ✅
+☁️  Cloudinary configured: ✅
+MongoDB connected ✅
