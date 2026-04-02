@@ -87,14 +87,14 @@ const AccommodationBrowsePage = () => {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-background dark:bg-background-dark flex justify-center items-center">
+      <div className="min-h-screen bg-gradient-to-b from-amber-50 via-white to-white dark:bg-background-dark flex justify-center items-center">
         <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-background dark:bg-background-dark py-8">
+    <div className="min-h-screen bg-gradient-to-b from-amber-50 via-white to-white dark:bg-background-dark py-8">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Header */}
         <div className="mb-8">
@@ -145,7 +145,7 @@ const AccommodationBrowsePage = () => {
 
         {/* Filter Panel */}
         {showFilters && (
-          <Card className="mb-6">
+          <Card className="mb-6 bg-amber-50/85 dark:bg-gray-800/70 border border-amber-200 dark:border-gray-700">
             <CardContent className="p-6">
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <div>
@@ -157,7 +157,7 @@ const AccommodationBrowsePage = () => {
                     value={filters.area}
                     onChange={(e) => handleFilterChange('area', e.target.value)}
                     placeholder="e.g., Malabe, Nugegoda"
-                    className="w-full px-3 py-2 border border-secondary/30 rounded-lg focus:ring-2 focus:ring-primary dark:bg-surface-dark dark:border-gray-600 dark:text-gray-100"
+                    className="w-full px-3 py-2 border border-amber-200 rounded-lg bg-amber-50 focus:ring-2 focus:ring-primary dark:bg-surface-dark dark:border-gray-600 dark:text-gray-100"
                   />
                 </div>
 
@@ -170,7 +170,7 @@ const AccommodationBrowsePage = () => {
                     value={filters.minRent}
                     onChange={(e) => handleFilterChange('minRent', e.target.value)}
                     placeholder="5000"
-                    className="w-full px-3 py-2 border border-secondary/30 rounded-lg focus:ring-2 focus:ring-primary dark:bg-surface-dark dark:border-gray-600 dark:text-gray-100"
+                    className="w-full px-3 py-2 border border-amber-200 rounded-lg bg-amber-50 focus:ring-2 focus:ring-primary dark:bg-surface-dark dark:border-gray-600 dark:text-gray-100"
                   />
                 </div>
 
@@ -183,7 +183,7 @@ const AccommodationBrowsePage = () => {
                     value={filters.maxRent}
                     onChange={(e) => handleFilterChange('maxRent', e.target.value)}
                     placeholder="50000"
-                    className="w-full px-3 py-2 border border-secondary/30 rounded-lg focus:ring-2 focus:ring-primary dark:bg-surface-dark dark:border-gray-600 dark:text-gray-100"
+                    className="w-full px-3 py-2 border border-amber-200 rounded-lg bg-amber-50 focus:ring-2 focus:ring-primary dark:bg-surface-dark dark:border-gray-600 dark:text-gray-100"
                   />
                 </div>
 
@@ -194,7 +194,7 @@ const AccommodationBrowsePage = () => {
                   <select
                     value={filters.roomType}
                     onChange={(e) => handleFilterChange('roomType', e.target.value)}
-                    className="w-full px-3 py-2 border border-secondary/30 rounded-lg focus:ring-2 focus:ring-primary dark:bg-surface-dark dark:border-gray-600 dark:text-gray-100"
+                    className="w-full px-3 py-2 border border-amber-200 rounded-lg bg-amber-50 focus:ring-2 focus:ring-primary dark:bg-surface-dark dark:border-gray-600 dark:text-gray-100"
                   >
                     <option value="">All Types</option>
                     <option value="single">Single</option>
@@ -211,7 +211,7 @@ const AccommodationBrowsePage = () => {
                   <select
                     value={filters.gender}
                     onChange={(e) => handleFilterChange('gender', e.target.value)}
-                    className="w-full px-3 py-2 border border-secondary/30 rounded-lg focus:ring-2 focus:ring-primary dark:bg-surface-dark dark:border-gray-600 dark:text-gray-100"
+                    className="w-full px-3 py-2 border border-amber-200 rounded-lg bg-amber-50 focus:ring-2 focus:ring-primary dark:bg-surface-dark dark:border-gray-600 dark:text-gray-100"
                   >
                     <option value="">Any</option>
                     <option value="male">Male</option>
@@ -298,7 +298,7 @@ const AccommodationBrowsePage = () => {
                     hover
                   >
                     {/* Image */}
-                    <div className="relative h-48 bg-secondary/10">
+                    <div className="relative h-48 bg-amber-100/60 dark:bg-gray-700/40">
                       {room.images && room.images.length > 0 ? (
                         <img
                           src={room.images[0]}

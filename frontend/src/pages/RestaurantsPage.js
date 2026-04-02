@@ -23,7 +23,7 @@ const RestaurantsPage = () => {
   };
 
   return (
-    <div className="min-h-screen bg-background dark:bg-background-dark py-8">
+    <div className="min-h-screen bg-gradient-to-b from-amber-50 via-white to-white dark:bg-background-dark py-8">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="mb-8">
           <h1 className="text-3xl font-bold text-primary dark:text-gray-100">Food & Dining</h1>

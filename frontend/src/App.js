@@ -38,6 +38,7 @@ import ShopOwnerDashboard from './pages/dashboards/ShopOwnerDashboard';
 import HouseOwnerDashboard from './pages/dashboards/HouseOwnerDashboard';
 import EducationProviderDashboard from './pages/dashboards/EducationProviderDashboard';
 import ExamStudyTrackerPage from './pages/ExamStudyTrackerPage';
+import StudentTimetablePage from './pages/StudentTimetablePage';
 import AIChatPage from './pages/AIChatPage';
 
 // Student Components  
@@ -233,6 +234,26 @@ function App() {
                       <RoleRoute roles={['student']}>
                         <Layout showFooter={false}>
                           <CartPage />
+                        </Layout>
+                      </RoleRoute>
+                    }
+                  />
+                  <Route
+                    path="/student/study-tracker"
+                    element={
+                      <RoleRoute roles={['student']}>
+                        <Layout showFooter={false}>
+                          <ExamStudyTrackerPage />
+                        </Layout>
+                      </RoleRoute>
+                    }
+                  />
+                  <Route
+                    path="/student/timetable"
+                    element={
+                      <RoleRoute roles={['student']}>
+                        <Layout showFooter={false}>
+                          <StudentTimetablePage />
                         </Layout>
                       </RoleRoute>
                     }

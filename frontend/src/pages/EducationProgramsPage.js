@@ -456,6 +456,14 @@ const EducationProgramsPage = () => {
               </div>
 
               <button
+                onClick={() => navigate('/student/timetable')}
+                className="inline-flex items-center gap-2 bg-amber-100 hover:bg-amber-200 text-amber-800 dark:bg-amber-900/40 dark:hover:bg-amber-900/60 dark:text-amber-200 font-semibold px-4 py-1.5 rounded-xl border border-amber-300 dark:border-amber-700 shadow-sm transition-all duration-200"
+              >
+                <CalendarDays className="h-4 w-4" />
+                Student Timetable
+              </button>
+
+              <button
                 onClick={() => {
                   if (!isStudent) {
                     toast.error('Please sign in with a student account to request materials.');

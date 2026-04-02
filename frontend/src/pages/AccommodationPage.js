@@ -470,7 +470,7 @@ const AccommodationPage = () => {
               onClick={() => setShowDatePicker(false)}
             >
               <div 
-                className="bg-white dark:bg-surface-dark rounded-lg shadow-2xl max-w-4xl w-full mx-4 mb-20"
+                className="bg-amber-50 dark:bg-surface-dark rounded-lg shadow-2xl max-w-4xl w-full mx-4 mb-20 border border-amber-200 dark:border-gray-700"
                 onClick={(e) => e.stopPropagation()}
               >
                 {/* Header with tabs and close */}
@@ -481,7 +481,7 @@ const AccommodationPage = () => {
                       className={`px-4 py-1.5 rounded-full text-xs font-medium transition ${
                         !isFlexible
                           ? 'bg-gray-900 text-white dark:bg-white dark:text-gray-900'
-                          : 'bg-gray-100 text-gray-700 dark:bg-gray-700 dark:text-gray-300'
+                          : 'bg-amber-100 text-gray-700 dark:bg-gray-700 dark:text-gray-300'
                       }`}
                     >
                       Choose dates
@@ -491,7 +491,7 @@ const AccommodationPage = () => {
                       className={`px-4 py-1.5 rounded-full text-xs font-medium transition ${
                         isFlexible
                           ? 'bg-gray-900 text-white dark:bg-white dark:text-gray-900'
-                          : 'bg-gray-100 text-gray-700 dark:bg-gray-700 dark:text-gray-300'
+                          : 'bg-amber-100 text-gray-700 dark:bg-gray-700 dark:text-gray-300'
                       }`}
                     >
                       I'm flexible
@@ -643,7 +643,7 @@ const AccommodationPage = () => {
                                       ${
                                         isPast
                                           ? 'text-gray-300 dark:text-gray-600 cursor-not-allowed'
-                                          : 'hover:bg-gray-100 dark:hover:bg-gray-700'
+                                          : 'hover:bg-amber-100 dark:hover:bg-gray-700'
                                       }
                                       ${
                                         isSelected
@@ -652,7 +652,7 @@ const AccommodationPage = () => {
                                       }
                                       ${
                                         inRange && !isSelected
-                                          ? 'bg-gray-200 dark:bg-gray-700'
+                                          ? 'bg-amber-100 dark:bg-gray-700'
                                           : ''
                                       }
                                     `}
@@ -725,7 +725,7 @@ const AccommodationPage = () => {
               onClick={() => setShowFilters(false)}
             >
               <div 
-                className="bg-white dark:bg-surface-dark rounded-lg shadow-2xl max-w-2xl w-full mx-4 mb-20 p-8 border border-secondary/20"
+                className="bg-amber-50 dark:bg-surface-dark rounded-lg shadow-2xl max-w-2xl w-full mx-4 mb-20 p-8 border border-amber-200 dark:border-gray-700"
                 onClick={(e) => e.stopPropagation()}
               >
                 <div className="flex justify-between items-center mb-4">
@@ -740,7 +740,7 @@ const AccommodationPage = () => {
                     placeholder="Min"
                     value={filters.minRent}
                     onChange={(e) => handleFilterChange('minRent', e.target.value)}
-                    className="w-full px-3 py-2 border rounded-lg dark:bg-surface-dark dark:border-gray-600"
+                    className="w-full px-3 py-2 border border-amber-200 rounded-lg bg-amber-50 dark:bg-surface-dark dark:border-gray-600"
                   />
                 </div>
                 <div>
@@ -750,7 +750,7 @@ const AccommodationPage = () => {
                     placeholder="Max"
                     value={filters.maxRent}
                     onChange={(e) => handleFilterChange('maxRent', e.target.value)}
-                    className="w-full px-3 py-2 border rounded-lg dark:bg-surface-dark dark:border-gray-600"
+                    className="w-full px-3 py-2 border border-amber-200 rounded-lg bg-amber-50 dark:bg-surface-dark dark:border-gray-600"
                   />
                 </div>
                 <div>
@@ -758,7 +758,7 @@ const AccommodationPage = () => {
                   <select
                     value={filters.roomType}
                     onChange={(e) => handleFilterChange('roomType', e.target.value)}
-                    className="w-full px-3 py-2 border rounded-lg dark:bg-surface-dark dark:border-gray-600"
+                    className="w-full px-3 py-2 border border-amber-200 rounded-lg bg-amber-50 dark:bg-surface-dark dark:border-gray-600"
                   >
                     <option value="">All Types</option>
                     <option value="single">Single</option>
@@ -772,7 +772,7 @@ const AccommodationPage = () => {
                   <select
                     value={filters.gender}
                     onChange={(e) => handleFilterChange('gender', e.target.value)}
-                    className="w-full px-3 py-2 border rounded-lg dark:bg-surface-dark dark:border-gray-600"
+                    className="w-full px-3 py-2 border border-amber-200 rounded-lg bg-amber-50 dark:bg-surface-dark dark:border-gray-600"
                   >
                     <option value="">Any</option>
                     <option value="male">Male</option>
@@ -784,7 +784,7 @@ const AccommodationPage = () => {
                   <select
                     value={filters.campusId}
                     onChange={(e) => handleFilterChange('campusId', e.target.value)}
-                    className="w-full px-3 py-2 border rounded-lg dark:bg-surface-dark dark:border-gray-600"
+                    className="w-full px-3 py-2 border border-amber-200 rounded-lg bg-amber-50 dark:bg-surface-dark dark:border-gray-600"
                   >
                     <option value="">All Campuses</option>
                     {campuses.map(campus => (
@@ -798,7 +798,7 @@ const AccommodationPage = () => {
                     type="date"
                     value={filters.moveInDate}
                     onChange={(e) => handleFilterChange('moveInDate', e.target.value)}
-                    className="w-full px-3 py-2 border rounded-lg dark:bg-surface-dark dark:border-gray-600"
+                    className="w-full px-3 py-2 border border-amber-200 rounded-lg bg-amber-50 dark:bg-surface-dark dark:border-gray-600"
                   />
                 </div>
                 <div className="md:col-span-3">
@@ -849,7 +849,7 @@ const AccommodationPage = () => {
               onClick={() => setShowMatchModal(false)}
             >
               <div 
-                className="bg-white dark:bg-surface-dark rounded-lg shadow-2xl max-w-xl w-full mx-4 mb-20 p-8 border border-secondary/20"
+                className="bg-amber-50 dark:bg-surface-dark rounded-lg shadow-2xl max-w-xl w-full mx-4 mb-20 p-8 border border-amber-200 dark:border-gray-700"
                 onClick={(e) => e.stopPropagation()}
               >
                 <div className="flex justify-between items-center mb-4">
@@ -865,7 +865,7 @@ const AccommodationPage = () => {
                     placeholder="e.g., 15000"
                     value={matchFilters.maxBudget}
                     onChange={(e) => setMatchFilters(prev => ({ ...prev, maxBudget: e.target.value }))}
-                    className="w-full px-3 py-2 border rounded-lg dark:bg-surface-dark dark:border-gray-600"
+                    className="w-full px-3 py-2 border border-amber-200 rounded-lg bg-amber-50 dark:bg-surface-dark dark:border-gray-600"
                   />
                 </div>
                 <div>
@@ -1071,7 +1071,7 @@ const FlexibleDatesSection = ({ selectedDuration, setSelectedDuration, selectedM
           return (
             <button
               key={val}
-              className={`px-4 py-2 border-2 rounded-full text-xs font-medium transition ${selectedDuration === val ? 'border-gray-900 dark:border-white bg-gray-100 dark:bg-gray-800' : 'border-gray-300 dark:border-gray-600 hover:bg-gray-100 dark:hover:bg-gray-800'}`}
+              className={`px-4 py-2 border-2 rounded-full text-xs font-medium transition ${selectedDuration === val ? 'border-gray-900 dark:border-white bg-amber-100 dark:bg-gray-800' : 'border-amber-200 dark:border-gray-600 bg-amber-50 hover:bg-amber-100 dark:hover:bg-gray-800'}`}
               onClick={() => setSelectedDuration(val)}
             >
               {label}
@@ -1086,7 +1086,7 @@ const FlexibleDatesSection = ({ selectedDuration, setSelectedDuration, selectedM
         When are you moving in? {selectedMonths.length > 0 && <span className="text-xs text-gray-500">({selectedMonths.length} selected)</span>}
       </h3>
       <div className="flex items-center gap-2 max-w-3xl mx-auto">
-        <button className="p-1 hover:bg-gray-100 dark:hover:bg-gray-700 rounded" onClick={onPrevMonth}>
+        <button className="p-1 hover:bg-amber-100 dark:hover:bg-gray-700 rounded" onClick={onPrevMonth}>
           <ChevronLeft className="h-5 w-5" />
         </button>
         <div className="flex-1 grid grid-cols-6 gap-2">
@@ -1098,7 +1098,7 @@ const FlexibleDatesSection = ({ selectedDuration, setSelectedDuration, selectedM
                 className={`flex flex-col items-center justify-center p-3 border-2 rounded-lg transition ${
                   isSelected 
                     ? 'border-gray-900 dark:border-white bg-gray-900 dark:bg-white text-white dark:text-gray-900' 
-                    : 'border-gray-200 dark:border-gray-700 hover:border-gray-900 dark:hover:border-white'
+                    : 'border-amber-200 dark:border-gray-700 bg-amber-50 hover:border-amber-300 dark:hover:border-white'
                 }`}
                 onClick={() => onMonthToggle(month)}
               >
@@ -1109,7 +1109,7 @@ const FlexibleDatesSection = ({ selectedDuration, setSelectedDuration, selectedM
             );
           })}
         </div>
-        <button className="p-1 hover:bg-gray-100 dark:hover:bg-gray-700 rounded" onClick={onNextMonth}>
+        <button className="p-1 hover:bg-amber-100 dark:hover:bg-gray-700 rounded" onClick={onNextMonth}>
           <ChevronRight className="h-5 w-5" />
         </button>
       </div>
