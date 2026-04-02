@@ -30,11 +30,6 @@ import api, { budgetAPI } from "../../services/api";
 import { useCart } from "../../contexts/CartContext";
 import toast from "react-hot-toast";
 import { BookOpen, Home, Store, MapPin, CheckCircle, XCircle, Clock } from 'lucide-react';
-import React, { useEffect, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { BookOpen, CheckCircle, Clock, Home, MapPin, Store, XCircle } from 'lucide-react';
-import Button from '../../components/ui/Button';
-import Card, { CardHeader, CardTitle, CardContent } from '../../components/ui/Card';
 import { roomRequestService } from '../../services/accommodationService';
 
 const normalizeRequests = (items) => {
