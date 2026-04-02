@@ -1,6 +1,6 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { BookOpen, Home, Store } from 'lucide-react';
+import { BookOpen, CheckCircle, Clock, Home, MapPin, Store, XCircle } from 'lucide-react';
 import Button from '../../components/ui/Button';
 import Card, { CardHeader, CardTitle, CardContent } from '../../components/ui/Card';
 import { roomRequestService } from '../../services/accommodationService';

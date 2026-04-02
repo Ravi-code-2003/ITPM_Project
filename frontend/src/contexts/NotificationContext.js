@@ -7,6 +7,14 @@ import { useAuth } from './AuthContext';
 const NotificationContext = createContext(null);
 const POLL_INTERVAL_MS = 10000;
 
+const normalizeNotifications = (items) => {
+  if (!Array.isArray(items)) {
+    return [];
+  }
+
+  return items.filter((item) => item && typeof item === 'object');
+};
+
 const buildStudentActivityNotifications = (requests = []) => {
   return requests.map((request) => {
     const roomTitle = request.room?.title || 'Room inquiry';
