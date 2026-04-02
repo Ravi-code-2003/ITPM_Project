@@ -1,32 +1,7 @@
 {
   "Version": 1,
   "WorkspaceRootPath": "C:\\Users\\DELL\\OneDrive - Sri Lanka Institute of Information Technology\\Documents\\GitHub\\ITPM_Project\\",
-  "Documents": [
-    {
-      "AbsoluteMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|C:\\Users\\DELL\\OneDrive - Sri Lanka Institute of Information Technology\\Documents\\GitHub\\ITPM_Project\\backend\\src\\controllers\\studentController.js||{14D17961-FE51-464D-9111-C4AF11D7D99A}",
-      "RelativeMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|solutionrelative:backend\\src\\controllers\\studentController.js||{14D17961-FE51-464D-9111-C4AF11D7D99A}"
-    },
-    {
-      "AbsoluteMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|C:\\Users\\DELL\\OneDrive - Sri Lanka Institute of Information Technology\\Documents\\GitHub\\ITPM_Project\\backend\\src\\models\\Transaction.js||{14D17961-FE51-464D-9111-C4AF11D7D99A}",
-      "RelativeMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|solutionrelative:backend\\src\\models\\Transaction.js||{14D17961-FE51-464D-9111-C4AF11D7D99A}"
-    },
-    {
-      "AbsoluteMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|C:\\Users\\DELL\\OneDrive - Sri Lanka Institute of Information Technology\\Documents\\GitHub\\ITPM_Project\\backend\\src\\controllers\\budgetManagerController.js||{14D17961-FE51-464D-9111-C4AF11D7D99A}",
-      "RelativeMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|solutionrelative:backend\\src\\controllers\\budgetManagerController.js||{14D17961-FE51-464D-9111-C4AF11D7D99A}"
-    },
-    {
-      "AbsoluteMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|C:\\Users\\DELL\\OneDrive - Sri Lanka Institute of Information Technology\\Documents\\GitHub\\ITPM_Project\\backend\\src\\routes\\studentRoutes.js||{14D17961-FE51-464D-9111-C4AF11D7D99A}",
-      "RelativeMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|solutionrelative:backend\\src\\routes\\studentRoutes.js||{14D17961-FE51-464D-9111-C4AF11D7D99A}"
-    },
-    {
-      "AbsoluteMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|C:\\Users\\DELL\\OneDrive - Sri Lanka Institute of Information Technology\\Documents\\GitHub\\ITPM_Project\\backend\\src\\routes\\transactionRoutes.js||{14D17961-FE51-464D-9111-C4AF11D7D99A}",
-      "RelativeMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|solutionrelative:backend\\src\\routes\\transactionRoutes.js||{14D17961-FE51-464D-9111-C4AF11D7D99A}"
-    },
-    {
-      "AbsoluteMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|C:\\Users\\DELL\\OneDrive - Sri Lanka Institute of Information Technology\\Documents\\GitHub\\ITPM_Project\\backend\\src\\controllers\\transactionController.js||{14D17961-FE51-464D-9111-C4AF11D7D99A}",
-      "RelativeMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|solutionrelative:backend\\src\\controllers\\transactionController.js||{14D17961-FE51-464D-9111-C4AF11D7D99A}"
-    }
-  ],
+  "Documents": [],
   "DocumentGroupContainers": [
     {
       "Orientation": 0,
@@ -34,85 +9,11 @@
       "DocumentGroups": [
         {
           "DockedWidth": 200,
-          "SelectedChildIndex": 3,
+          "SelectedChildIndex": -1,
           "Children": [
             {
-              "$type": "Document",
-              "DocumentIndex": 3,
-              "Title": "studentRoutes.js",
-              "DocumentMoniker": "C:\\Users\\DELL\\OneDrive - Sri Lanka Institute of Information Technology\\Documents\\GitHub\\ITPM_Project\\backend\\src\\routes\\studentRoutes.js",
-              "RelativeDocumentMoniker": "backend\\src\\routes\\studentRoutes.js",
-              "ToolTip": "C:\\Users\\DELL\\OneDrive - Sri Lanka Institute of Information Technology\\Documents\\GitHub\\ITPM_Project\\backend\\src\\routes\\studentRoutes.js",
-              "RelativeToolTip": "backend\\src\\routes\\studentRoutes.js",
-              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA==",
-              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.001646|",
-              "WhenOpened": "2026-04-01T07:02:09.15Z",
-              "EditorCaption": ""
-            },
-            {
-              "$type": "Document",
-              "DocumentIndex": 2,
-              "Title": "budgetManagerController.js",
-              "DocumentMoniker": "C:\\Users\\DELL\\OneDrive - Sri Lanka Institute of Information Technology\\Documents\\GitHub\\ITPM_Project\\backend\\src\\controllers\\budgetManagerController.js",
-              "RelativeDocumentMoniker": "backend\\src\\controllers\\budgetManagerController.js",
-              "ToolTip": "C:\\Users\\DELL\\OneDrive - Sri Lanka Institute of Information Technology\\Documents\\GitHub\\ITPM_Project\\backend\\src\\controllers\\budgetManagerController.js",
-              "RelativeToolTip": "backend\\src\\controllers\\budgetManagerController.js",
-              "ViewState": "AgIAAAAAAAAAAAAAAAAAAI4AAAAAAAAAAAAAAA==",
-              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.001646|",
-              "WhenOpened": "2026-04-01T07:02:05.193Z",
-              "EditorCaption": ""
-            },
-            {
-              "$type": "Document",
-              "DocumentIndex": 1,
-              "Title": "Transaction.js",
-              "DocumentMoniker": "C:\\Users\\DELL\\OneDrive - Sri Lanka Institute of Information Technology\\Documents\\GitHub\\ITPM_Project\\backend\\src\\models\\Transaction.js",
-              "RelativeDocumentMoniker": "backend\\src\\models\\Transaction.js",
-              "ToolTip": "C:\\Users\\DELL\\OneDrive - Sri Lanka Institute of Information Technology\\Documents\\GitHub\\ITPM_Project\\backend\\src\\models\\Transaction.js",
-              "RelativeToolTip": "backend\\src\\models\\Transaction.js",
-              "ViewState": "AgIAAAAAAAAAAAAAAAAAAA4AAAAAAAAAAAAAAA==",
-              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.001646|",
-              "WhenOpened": "2026-04-01T07:01:47.2Z",
-              "EditorCaption": ""
-            },
-            {
-              "$type": "Document",
-              "DocumentIndex": 0,
-              "Title": "studentController.js",
-              "DocumentMoniker": "C:\\Users\\DELL\\OneDrive - Sri Lanka Institute of Information Technology\\Documents\\GitHub\\ITPM_Project\\backend\\src\\controllers\\studentController.js",
-              "RelativeDocumentMoniker": "backend\\src\\controllers\\studentController.js",
-              "ToolTip": "C:\\Users\\DELL\\OneDrive - Sri Lanka Institute of Information Technology\\Documents\\GitHub\\ITPM_Project\\backend\\src\\controllers\\studentController.js",
-              "RelativeToolTip": "backend\\src\\controllers\\studentController.js",
-              "ViewState": "AgIAAAAAAAAAAAAAAAAAAPAAAAALAAAAAAAAAA==",
-              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.001646|",
-              "WhenOpened": "2026-03-14T13:25:48.042Z",
-              "EditorCaption": ""
-            },
-            {
-              "$type": "Document",
-              "DocumentIndex": 5,
-              "Title": "transactionController.js",
-              "DocumentMoniker": "C:\\Users\\DELL\\OneDrive - Sri Lanka Institute of Information Technology\\Documents\\GitHub\\ITPM_Project\\backend\\src\\controllers\\transactionController.js",
-              "RelativeDocumentMoniker": "backend\\src\\controllers\\transactionController.js",
-              "ToolTip": "C:\\Users\\DELL\\OneDrive - Sri Lanka Institute of Information Technology\\Documents\\GitHub\\ITPM_Project\\backend\\src\\controllers\\transactionController.js",
-              "RelativeToolTip": "backend\\src\\controllers\\transactionController.js",
-              "ViewState": "AgIAAAAAAAAAAAAAAAAAACoAAAAAAAAAAAAAAA==",
-              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.001646|",
-              "WhenOpened": "2026-04-01T07:02:30.561Z",
-              "EditorCaption": ""
-            },
-            {
-              "$type": "Document",
-              "DocumentIndex": 4,
-              "Title": "transactionRoutes.js",
-              "DocumentMoniker": "C:\\Users\\DELL\\OneDrive - Sri Lanka Institute of Information Technology\\Documents\\GitHub\\ITPM_Project\\backend\\src\\routes\\transactionRoutes.js",
-              "RelativeDocumentMoniker": "backend\\src\\routes\\transactionRoutes.js",
-              "ToolTip": "C:\\Users\\DELL\\OneDrive - Sri Lanka Institute of Information Technology\\Documents\\GitHub\\ITPM_Project\\backend\\src\\routes\\transactionRoutes.js",
-              "RelativeToolTip": "backend\\src\\routes\\transactionRoutes.js",
-              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAoAAAAAAAAAAAAAAA==",
-              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.001646|",
-              "WhenOpened": "2026-04-01T07:02:22.464Z",
-              "EditorCaption": ""
+              "$type": "Bookmark",
+              "Name": "ST:128:0:{116d2292-e37d-41cd-a077-ebacac4c8cc4}"
             }
           ]
         }
