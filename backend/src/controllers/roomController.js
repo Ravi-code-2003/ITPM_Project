@@ -8,13 +8,39 @@ const joi = require("joi");
 
 // Validation schema for room creation/update
 const roomSchema = joi.object({
-  title: joi.string().required().min(5).max(100).trim(),
-  description: joi.string().required().min(10).trim(),
-  monthlyRent: joi.number().required().min(0),
-  area: joi.string().required().trim(),
-  address: joi.string().required().trim(),
+  title: joi.string().trim().required().min(10).max(1000).pattern(/[A-Za-z]/).messages({
+    "string.empty": "Room Title is required",
+    "string.min": "Room Title must be at least 10 characters",
+    "string.max": "Room Title cannot exceed 1000 characters",
+    "string.pattern.base": "Room Title must contain at least one alphabet letter",
+  }),
+  description: joi.string().trim().required().min(20).max(10000).messages({
+    "string.empty": "Description is required",
+    "string.min": "Description must be at least 20 characters",
+    "string.max": "Description cannot exceed 10000 characters",
+  }),
+  monthlyRent: joi.number().required().greater(0).min(1000).max(5000000).messages({
+    "number.base": "Monthly Rent must be a number",
+    "number.greater": "Monthly Rent must be greater than 0",
+    "number.min": "Monthly Rent must be at least 1000",
+    "number.max": "Monthly Rent cannot exceed 5000000",
+    "any.required": "Monthly Rent is required",
+  }),
+  area: joi.string().trim().required().pattern(/^[A-Za-z\s]+$/).messages({
+    "string.empty": "Area is required",
+    "string.pattern.base": "Area can contain only letters and spaces",
+  }),
+  address: joi.string().trim().required().min(10).max(2000).messages({
+    "string.empty": "Address is required",
+    "string.min": "Address must be at least 10 characters",
+    "string.max": "Address cannot exceed 2000 characters",
+  }),
   latitude: joi.number().required().min(-90).max(90),
   longitude: joi.number().required().min(-180).max(180),
+  locationSelected: joi.boolean().valid(true).required().messages({
+    "any.only": "Please select the location from the map",
+    "any.required": "Location selection is required",
+  }),
   facilities: joi.object({
     wifi: joi.boolean().optional(),
     water: joi.boolean().optional(),
@@ -25,12 +51,30 @@ const roomSchema = joi.object({
     furnished: joi.boolean().optional(),
     kitchen: joi.boolean().optional(),
   }).unknown(true).optional(), // Allow unknown facility keys and make the whole object optional
-  availability: joi.string().valid("AVAILABLE", "NOT_AVAILABLE").optional(),
-  availableFrom: joi.date().optional(),
+  availability: joi.string().required().valid("AVAILABLE", "NOT_AVAILABLE").messages({
+    "any.only": "Availability must be Available or Not Available",
+    "any.required": "Availability is required",
+  }),
+  availableFrom: joi.date().required().messages({
+    "date.base": "Available From must be a valid date",
+    "any.required": "Available From is required",
+  }),
   availableTo: joi.date().allow(null).optional(),
-  roomType: joi.string().valid("single", "double", "studio", "apartment").optional(),
-  gender: joi.string().valid("male", "female", "any").optional(),
-  rules: joi.string().allow("").trim().optional(),
+  roomType: joi.string().required().valid("single", "double", "shared").messages({
+    "any.only": "Room Type must be Single, Double, or Shared",
+    "any.required": "Room Type is required",
+  }),
+  gender: joi.string().required().valid("male", "female", "any").messages({
+    "any.only": "Gender Preference must be Male, Female, or Any",
+    "any.required": "Gender Preference is required",
+  }),
+  rules: joi.string().trim().allow("").max(3000).custom((value, helpers) => {
+    if (!value) return value;
+    if (!/[A-Za-z0-9]/.test(value)) {
+      return helpers.message("House Rules cannot contain only symbols or spaces");
+    }
+    return value;
+  }).optional(),
 }).unknown(true);
 
 // @desc    Get all rooms (with filters)
@@ -224,29 +268,17 @@ const getRoomById = async (req, res) => {
 // @access  Private (House Owner only)
 const createRoom = async (req, res) => {
   try {
-    // Log received data for debugging
-    console.log('Creating room - received data:', {
-      ...req.body,
-      facilities: req.body.facilities,
-      facilitiesType: typeof req.body.facilities
-    });
-
     // Parse facilities if it's a JSON string
     if (req.body.facilities && typeof req.body.facilities === 'string') {
       try {
         req.body.facilities = JSON.parse(req.body.facilities);
-        console.log('Parsed facilities:', req.body.facilities);
-        console.log('Parsed facilities type:', typeof req.body.facilities);
-        console.log('Parsed facilities is object:', typeof req.body.facilities === 'object');
       } catch (e) {
-        console.error('Failed to parse facilities:', e);
         return res.status(400).json({ message: "Invalid facilities format - JSON parse failed" });
       }
     }
 
     // If facilities is undefined or null, set default empty object
     if (!req.body.facilities) {
-      console.log('No facilities provided, setting empty object');
       req.body.facilities = {};
     }
 
@@ -259,16 +291,38 @@ const createRoom = async (req, res) => {
       });
     }
 
-    console.log('Final facilities before validation:', req.body.facilities);
-
     // Validate request body
     const { error, value } = roomSchema.validate(req.body);
     if (error) {
-      console.error('Validation error:', error.details);
       return res.status(400).json({
         message: "Validation error",
         details: error.details[0].message,
       });
+    }
+
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    const availableFromDate = new Date(value.availableFrom);
+    availableFromDate.setHours(0, 0, 0, 0);
+
+    if (availableFromDate < today) {
+      return res.status(400).json({
+        message: "Validation error",
+        details: "Available From must be today or a future date",
+      });
+    }
+
+    if (value.availableTo) {
+      const availableToDate = new Date(value.availableTo);
+      availableToDate.setHours(0, 0, 0, 0);
+
+      if (availableToDate <= availableFromDate) {
+        return res.status(400).json({
+          message: "Validation error",
+          details: "Available Until must be greater than Available From",
+        });
+      }
     }
 
     const {
@@ -290,15 +344,17 @@ const createRoom = async (req, res) => {
 
     // Handle image uploads (up to 5 images)
     let imageUrls = [];
-    if (req.files && req.files.length > 0) {
-      if (req.files.length > 5) {
-        return res.status(400).json({ message: "Maximum 5 images allowed" });
-      }
-
-      imageUrls = await Promise.all(
-        req.files.map((file) => uploadToCloudinary(file.path))
-      );
+    if (!req.files || req.files.length === 0) {
+      return res.status(400).json({ message: "At least 1 image is required" });
     }
+
+    if (req.files.length > 5) {
+      return res.status(400).json({ message: "Maximum 5 images allowed" });
+    }
+
+    imageUrls = await Promise.all(
+      req.files.map((file) => uploadToCloudinary(file.path))
+    );
 
     // Create room
     const room = await Room.create({
@@ -360,6 +416,11 @@ const updateRoom = async (req, res) => {
       }
     }
 
+    // Keep backward compatibility for clients that do not send locationSelected.
+    if (req.body.locationSelected === undefined) {
+      req.body.locationSelected = true;
+    }
+
     // Validate request body
     const { error, value } = roomSchema.validate(req.body);
     if (error) {
@@ -367,6 +428,31 @@ const updateRoom = async (req, res) => {
         message: "Validation error",
         details: error.details[0].message,
       });
+    }
+
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    const availableFromDate = new Date(value.availableFrom);
+    availableFromDate.setHours(0, 0, 0, 0);
+
+    if (availableFromDate < today) {
+      return res.status(400).json({
+        message: "Validation error",
+        details: "Available From must be today or a future date",
+      });
+    }
+
+    if (value.availableTo) {
+      const availableToDate = new Date(value.availableTo);
+      availableToDate.setHours(0, 0, 0, 0);
+
+      if (availableToDate <= availableFromDate) {
+        return res.status(400).json({
+          message: "Validation error",
+          details: "Available Until must be greater than Available From",
+        });
+      }
     }
 
     const {
@@ -401,6 +487,10 @@ const updateRoom = async (req, res) => {
       newImageUrls = await Promise.all(
         req.files.map((file) => uploadToCloudinary(file.path))
       );
+    }
+
+    if (room.images.length + newImageUrls.length < 1) {
+      return res.status(400).json({ message: "At least 1 image is required" });
     }
 
     // Update fields

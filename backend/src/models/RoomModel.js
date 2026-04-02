@@ -10,28 +10,36 @@ const roomSchema = new mongoose.Schema({
     type: String,
     required: [true, "Room title is required"],
     trim: true,
-    maxlength: 100,
+    minlength: 10,
+    maxlength: 1000,
+    match: [/[A-Za-z]/, "Room title must contain at least one alphabet"],
   },
   description: {
     type: String,
     required: [true, "Description is required"],
     trim: true,
+    minlength: 20,
+    maxlength: 10000,
   },
   monthlyRent: {
     type: Number,
     required: [true, "Monthly rent is required"],
-    min: 0,
+    min: 1000,
+    max: 5000000,
   },
   location: {
     area: {
       type: String,
       required: [true, "Area is required"],
       trim: true,
+      match: [/^[A-Za-z\s]+$/, "Area can contain only letters and spaces"],
     },
     address: {
       type: String,
       required: [true, "Address is required"],
       trim: true,
+      minlength: 10,
+      maxlength: 2000,
     },
     coordinates: {
       type: {
@@ -75,7 +83,7 @@ const roomSchema = new mongoose.Schema({
   ],
   roomType: {
     type: String,
-    enum: ["single", "double", "studio", "apartment"],
+    enum: ["single", "double", "shared"],
     default: "single",
   },
   gender: {
@@ -86,6 +94,16 @@ const roomSchema = new mongoose.Schema({
   rules: {
     type: String,
     trim: true,
+    maxlength: 3000,
+    validate: {
+      validator: function validateRules(value) {
+        if (!value) {
+          return true;
+        }
+        return /[A-Za-z0-9]/.test(value);
+      },
+      message: "House rules cannot contain only symbols or spaces",
+    },
   },
   viewsCount: {
     type: Number,

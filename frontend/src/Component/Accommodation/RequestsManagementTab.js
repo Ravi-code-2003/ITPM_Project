@@ -1,21 +1,73 @@
 import React, { useState, useEffect } from 'react';
 import { User, Check } from 'lucide-react';
+import * as yup from 'yup';
 import Button from '../../components/ui/Button';
 import Card, { CardContent } from '../../components/ui/Card';
 import { roomRequestService } from '../../services/accommodationService';
 import toast from 'react-hot-toast';
+
+const RESPONSE_STATUSES = ['ACCEPTED', 'REJECTED', 'REQUEST_MORE_INFO'];
+const CONTACT_METHODS = ['whatsapp', 'phone', 'email'];
+
+const initialResponseData = {
+  status: 'ACCEPTED',
+  preferredContactMethod: 'whatsapp',
+  availableVisitingTimes: '',
+  responseMessage: '',
+};
+
+const trimText = (value) => (typeof value === 'string' ? value.trim() : value);
+
+export const bookingResponseValidationSchema = yup.object({
+  status: yup
+    .string()
+    .oneOf(RESPONSE_STATUSES, 'Response must be Accept, Reject, or Request More Info')
+    .required('Response is required'),
+
+  preferredContactMethod: yup
+    .string()
+    .transform(trimText)
+    .when('status', {
+      is: 'ACCEPTED',
+      then: (schema) =>
+        schema
+          .oneOf(CONTACT_METHODS, 'Preferred Contact Method must be WhatsApp, Phone, or Email')
+          .required('Preferred Contact Method is required when Response is Accept'),
+      otherwise: (schema) => schema.notRequired(),
+    }),
+
+  availableVisitingTimes: yup
+    .string()
+    .transform(trimText)
+    .when('status', {
+      is: 'ACCEPTED',
+      then: (schema) =>
+        schema
+          .required('Available Visiting Times is required when Response is Accept')
+          .min(5, 'Available Visiting Times must be at least 5 characters')
+          .max(100, 'Available Visiting Times cannot exceed 100 characters'),
+      otherwise: (schema) => schema.notRequired(),
+    }),
+
+  responseMessage: yup
+    .string()
+    .transform(trimText)
+    .max(500, 'Message to Student cannot exceed 500 characters')
+    .when('status', {
+      is: (status) => status === 'REJECTED' || status === 'REQUEST_MORE_INFO',
+      then: (schema) =>
+        schema.required('Message to Student is required when Response is Reject or Request More Info'),
+      otherwise: (schema) => schema.notRequired(),
+    }),
+});
 
 const RequestsManagementTab = ({ onUpdate }) => {
   const [requests, setRequests] = useState([]);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState('PENDING');
   const [respondingTo, setRespondingTo] = useState(null);
-  const [responseData, setResponseData] = useState({
-    status: 'ACCEPTED',
-    preferredContactMethod: 'whatsapp',
-    availableVisitingTimes: '',
-    responseMessage: '',
-  });
+  const [responseData, setResponseData] = useState(initialResponseData);
+  const [responseErrors, setResponseErrors] = useState({});
 
   useEffect(() => {
     fetchRequests();
@@ -37,24 +89,89 @@ const RequestsManagementTab = ({ onUpdate }) => {
 
   const handleRespond = (request) => {
     setRespondingTo(request._id);
-    setResponseData({
-      status: 'ACCEPTED',
-      preferredContactMethod: 'whatsapp',
-      availableVisitingTimes: '',
-      responseMessage: '',
-    });
+    setResponseData(initialResponseData);
+    setResponseErrors({});
+  };
+
+  const handleResponseFieldChange = (field, value) => {
+    if (field === 'status') {
+      setResponseData((prev) => ({
+        ...prev,
+        status: value,
+        preferredContactMethod: value === 'ACCEPTED' ? (prev.preferredContactMethod || 'whatsapp') : '',
+        availableVisitingTimes: value === 'ACCEPTED' ? prev.availableVisitingTimes : '',
+      }));
+
+      setResponseErrors((prev) => ({
+        ...prev,
+        status: '',
+        preferredContactMethod: '',
+        availableVisitingTimes: '',
+        responseMessage: '',
+      }));
+      return;
+    }
+
+    setResponseData((prev) => ({
+      ...prev,
+      [field]: value,
+    }));
+
+    setResponseErrors((prev) => ({
+      ...prev,
+      [field]: '',
+    }));
+  };
+
+  const getFieldClassName = (field) => {
+    const base = 'w-full px-3 py-2 border rounded-lg focus:ring-2 dark:bg-surface-dark dark:border-gray-600 dark:text-gray-100';
+    const valid = 'border-secondary/30 focus:ring-primary';
+    const invalid = 'border-red-500 focus:ring-red-500';
+    return `${base} ${responseErrors[field] ? invalid : valid}`;
   };
 
   const handleSubmitResponse = async (e) => {
     e.preventDefault();
 
     try {
-      await roomRequestService.respondToRequest(respondingTo, responseData);
+      const trimmedPayload = {
+        status: responseData.status,
+        preferredContactMethod: trimText(responseData.preferredContactMethod),
+        availableVisitingTimes: trimText(responseData.availableVisitingTimes),
+        responseMessage: trimText(responseData.responseMessage),
+      };
+
+      const validated = await bookingResponseValidationSchema.validate(trimmedPayload, {
+        abortEarly: false,
+      });
+
+      const payload = {
+        status: validated.status,
+        preferredContactMethod: validated.status === 'ACCEPTED' ? validated.preferredContactMethod : undefined,
+        availableVisitingTimes: validated.status === 'ACCEPTED' ? validated.availableVisitingTimes : '',
+        responseMessage: validated.responseMessage || '',
+      };
+
+      await roomRequestService.respondToRequest(respondingTo, payload);
       toast.success('Response sent successfully');
       setRespondingTo(null);
+      setResponseData(initialResponseData);
+      setResponseErrors({});
       fetchRequests();
     } catch (error) {
-      toast.error(error.response?.data?.message || 'Failed to respond to request');
+      if (error.name === 'ValidationError') {
+        const formErrors = {};
+        error.inner.forEach((validationError) => {
+          if (validationError.path && !formErrors[validationError.path]) {
+            formErrors[validationError.path] = validationError.message;
+          }
+        });
+        setResponseErrors(formErrors);
+        toast.error('Please fix the highlighted fields');
+        return;
+      }
+
+      toast.error(error.response?.data?.details || error.response?.data?.message || 'Failed to respond to request');
     }
   };
 
@@ -63,11 +180,12 @@ const RequestsManagementTab = ({ onUpdate }) => {
       PENDING: 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400',
       ACCEPTED: 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400',
       REJECTED: 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400',
+      REQUEST_MORE_INFO: 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400',
     };
 
     return (
-      <span className={`px-2 py-1 rounded-full text-xs font-semibold ${styles[status]}`}>
-        {status}
+      <span className={`px-2 py-1 rounded-full text-xs font-semibold ${styles[status] || styles.PENDING}`}>
+        {status.replaceAll('_', ' ')}
       </span>
     );
   };
@@ -93,14 +211,14 @@ const RequestsManagementTab = ({ onUpdate }) => {
           </p>
         </div>
         <div className="flex gap-2">
-          {['ALL', 'PENDING', 'ACCEPTED', 'REJECTED'].map((status) => (
+          {['ALL', 'PENDING', 'ACCEPTED', 'REJECTED', 'REQUEST_MORE_INFO'].map((status) => (
             <Button
               key={status}
               variant={filter === status ? 'primary' : 'outline'}
               size="sm"
               onClick={() => setFilter(status)}
             >
-              {status}
+              {status.replaceAll('_', ' ')}
             </Button>
           ))}
         </div>
@@ -223,72 +341,93 @@ const RequestsManagementTab = ({ onUpdate }) => {
                   <div>
                     {respondingTo === request._id ? (
                       <form onSubmit={handleSubmitResponse} className="space-y-4">
+                        {responseData.status !== 'ACCEPTED' && (
+                          <div className="rounded-lg bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 p-3 text-sm text-blue-700 dark:text-blue-300">
+                            Preferred Contact Method and Available Visiting Times are only needed when response is Accept.
+                          </div>
+                        )}
+
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                           <div>
                             <label className="block text-sm font-medium text-primary dark:text-gray-300 mb-1">
-                              Response
+                              Response *
                             </label>
                             <select
                               value={responseData.status}
-                              onChange={(e) =>
-                                setResponseData({ ...responseData, status: e.target.value })
-                              }
-                              className="w-full px-3 py-2 border border-secondary/30 rounded-lg focus:ring-2 focus:ring-primary dark:bg-surface-dark dark:border-gray-600 dark:text-gray-100"
+                              onChange={(e) => handleResponseFieldChange('status', e.target.value)}
+                              className={getFieldClassName('status')}
                             >
                               <option value="ACCEPTED">Accept</option>
                               <option value="REJECTED">Reject</option>
+                              <option value="REQUEST_MORE_INFO">Request More Info</option>
                             </select>
+                            {responseErrors.status && (
+                              <p className="text-xs text-red-600 dark:text-red-400 mt-1">{responseErrors.status}</p>
+                            )}
                           </div>
                           <div>
                             <label className="block text-sm font-medium text-primary dark:text-gray-300 mb-1">
-                              Preferred Contact Method
+                              Preferred Contact Method {responseData.status === 'ACCEPTED' ? '*' : '(Disabled)'}
                             </label>
                             <select
                               value={responseData.preferredContactMethod}
-                              onChange={(e) =>
-                                setResponseData({ ...responseData, preferredContactMethod: e.target.value })
-                              }
-                              className="w-full px-3 py-2 border border-secondary/30 rounded-lg focus:ring-2 focus:ring-primary dark:bg-surface-dark dark:border-gray-600 dark:text-gray-100"
+                              onChange={(e) => handleResponseFieldChange('preferredContactMethod', e.target.value)}
+                              disabled={responseData.status !== 'ACCEPTED'}
+                              className={`${getFieldClassName('preferredContactMethod')} ${
+                                responseData.status !== 'ACCEPTED' ? 'opacity-60 cursor-not-allowed bg-gray-100 dark:bg-gray-800' : ''
+                              }`}
                             >
-                              <option value="call">Call</option>
                               <option value="whatsapp">WhatsApp</option>
+                              <option value="phone">Phone</option>
                               <option value="email">Email</option>
                             </select>
+                            {responseErrors.preferredContactMethod && (
+                              <p className="text-xs text-red-600 dark:text-red-400 mt-1">{responseErrors.preferredContactMethod}</p>
+                            )}
                           </div>
                         </div>
                         <div>
                           <label className="block text-sm font-medium text-primary dark:text-gray-300 mb-1">
-                            Available Visiting Times
+                            Available Visiting Times {responseData.status === 'ACCEPTED' ? '*' : '(Disabled)'}
                           </label>
                           <input
                             type="text"
                             value={responseData.availableVisitingTimes}
-                            onChange={(e) =>
-                              setResponseData({ ...responseData, availableVisitingTimes: e.target.value })
-                            }
-                            className="w-full px-3 py-2 border border-secondary/30 rounded-lg focus:ring-2 focus:ring-primary dark:bg-surface-dark dark:border-gray-600 dark:text-gray-100"
+                            onChange={(e) => handleResponseFieldChange('availableVisitingTimes', e.target.value)}
+                            disabled={responseData.status !== 'ACCEPTED'}
+                            className={`${getFieldClassName('availableVisitingTimes')} ${
+                              responseData.status !== 'ACCEPTED' ? 'opacity-60 cursor-not-allowed bg-gray-100 dark:bg-gray-800' : ''
+                            }`}
                             placeholder="e.g., Weekdays 2-5 PM, Weekends anytime"
                           />
+                          {responseErrors.availableVisitingTimes && (
+                            <p className="text-xs text-red-600 dark:text-red-400 mt-1">{responseErrors.availableVisitingTimes}</p>
+                          )}
                         </div>
                         <div>
                           <label className="block text-sm font-medium text-primary dark:text-gray-300 mb-1">
-                            Message to Student (Optional)
+                            Message to Student {responseData.status === 'ACCEPTED' ? '(Optional)' : '*'}
                           </label>
                           <textarea
                             value={responseData.responseMessage}
-                            onChange={(e) =>
-                              setResponseData({ ...responseData, responseMessage: e.target.value })
-                            }
+                            onChange={(e) => handleResponseFieldChange('responseMessage', e.target.value)}
                             rows="2"
-                            className="w-full px-3 py-2 border border-secondary/30 rounded-lg focus:ring-2 focus:ring-primary dark:bg-surface-dark dark:border-gray-600 dark:text-gray-100"
-                            placeholder="Any additional information..."
+                            className={getFieldClassName('responseMessage')}
+                            placeholder={responseData.status === 'ACCEPTED' ? 'Any additional information...' : 'Required message for student'}
                           />
+                          {responseErrors.responseMessage && (
+                            <p className="text-xs text-red-600 dark:text-red-400 mt-1">{responseErrors.responseMessage}</p>
+                          )}
                         </div>
                         <div className="flex gap-2 justify-end">
                           <Button
                             type="button"
                             variant="outline"
-                            onClick={() => setRespondingTo(null)}
+                            onClick={() => {
+                              setRespondingTo(null);
+                              setResponseErrors({});
+                              setResponseData(initialResponseData);
+                            }}
                           >
                             Cancel
                           </Button>

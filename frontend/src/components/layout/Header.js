@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Link, useNavigate, useLocation } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
 import { useCart } from '../../contexts/CartContext';
 import Button from '../ui/Button';
@@ -27,7 +27,6 @@ const Header = () => {
   const { isAuthenticated, user, logout } = useAuth();
   const { getCartCount } = useCart();
   const navigate = useNavigate();
-  const location = useLocation();
 
   const handleLogout = () => {
     logout();
@@ -48,21 +47,6 @@ const Header = () => {
 
     return dashboardRoutes[user.role] || '/dashboard';
   };
-
-  const getCurrentPageName = () => {
-    const path = location.pathname;
-    if (path.includes('dashboard')) {
-      if (path.includes('admin')) return 'Admin Dashboard';
-      if (path.includes('student')) return 'Student Dashboard';
-      if (path.includes('shop-owner')) return 'Shop Owner Dashboard';
-      if (path.includes('house-owner')) return 'House Owner Dashboard';
-      if (path.includes('education-path')) return 'Education Provider Dashboard';
-      return 'Dashboard';
-    }
-    return null;
-  };
-
-  const isDashboardPage = location.pathname.includes('dashboard');
 
   const publicNavItems = [
     { name: 'Home', href: '/', icon: Home },
@@ -91,11 +75,6 @@ const Header = () => {
               </div>
               <div>
                 <span className="text-xl font-bold text-primary dark:text-gray-100">UniCore</span>
-                {isDashboardPage && getCurrentPageName() && (
-                  <div className="text-xs text-secondary dark:text-gray-400">
-                    {getCurrentPageName()}
-                  </div>
-                )}
               </div>
             </Link>
           </div>

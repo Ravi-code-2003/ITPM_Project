@@ -321,119 +321,146 @@ const AccommodationPage = () => {
     ];
   };
 
-  const dummyAccommodations = [
-    // Keep old data for reference, but use rooms state for rendering
-  ];
+  const isAnyFilterApplied = Boolean(
+    filters.area ||
+      filters.minRent ||
+      filters.maxRent ||
+      filters.roomType ||
+      filters.gender ||
+      filters.wifi ||
+      filters.parking ||
+      filters.attachedBathroom ||
+      filters.campusId ||
+      selectedDates.moveIn ||
+      showMatchFilter
+  );
 
   return (
-    <div className="min-h-screen bg-background dark:bg-background-dark py-8">
-      <div className="container mx-auto px-4">
+    <div className="min-h-screen py-8 bg-gradient-to-b from-amber-50 via-white to-white dark:bg-background-dark">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Header */}
         <div className="mb-6">
           <h1 className="text-3xl font-bold text-primary dark:text-gray-100 mb-2">
             Find Your Perfect Room
           </h1>
-          <p className="text-secondary dark:text-gray-400">
+          <p className="text-secondary dark:text-gray-400 mt-2">
             Browse available accommodations near your campus
           </p>
         </div>
 
         {/* Search & Filter Bar */}
-        <div className="p-4 mb-6">
-          <div className="flex flex-col lg:flex-row gap-4 items-center">
-            {/* Search Input with Integrated Button */}
-            <div className="flex-1 w-full lg:max-w-md">
+        <div className="mb-8">
+          <Card className="p-6 rounded-2xl border border-gray-200 bg-gray-50/80 dark:bg-gray-900/30 dark:border-gray-700 shadow-sm">
+            <div className="space-y-4">
               <div className="relative">
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-5 w-5" />
                 <input
                   type="text"
                   placeholder="Search by area..."
                   value={filters.area}
                   onChange={(e) => handleFilterChange('area', e.target.value)}
                   onKeyPress={(e) => e.key === 'Enter' && fetchRooms()}
-                  className="w-full pl-5 pr-14 py-3 border-2 border-gray-300 dark:border-gray-600 rounded-full dark:bg-surface-dark dark:text-gray-100 focus:outline-none focus:border-primary text-base"
+                  className="w-full pl-10 pr-20 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary bg-white dark:bg-gray-800 dark:text-white"
                 />
                 {filters.area && (
                   <button
                     onClick={() => handleFilterChange('area', '')}
-                    className="absolute right-14 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                    className="absolute right-12 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
                   >
                     <X className="h-4 w-4" />
                   </button>
                 )}
                 <button
                   onClick={fetchRooms}
-                  className="absolute right-1.5 top-1/2 -translate-y-1/2 bg-orange-500 hover:bg-orange-600 text-white rounded-full p-2 transition-colors"
+                  className="absolute right-2 top-1/2 -translate-y-1/2 bg-red-600 hover:bg-red-700 text-white rounded-md p-2 transition-colors"
                 >
-                  <Search className="h-5 w-5" />
+                  <Search className="h-4 w-4" />
                 </button>
               </div>
-            </div>
 
-            {/* Filter Buttons */}
-            <div className="flex flex-wrap gap-2 items-center">
-              <button
-                onClick={() => setShowFilters(!showFilters)}
-                className={`px-4 py-2 rounded-full border text-sm font-medium transition-colors ${
-                  showFilters
-                    ? 'bg-gray-900 text-white border-gray-900 dark:bg-white dark:text-gray-900'
-                    : 'bg-white text-gray-700 border-gray-300 hover:border-gray-400 dark:bg-surface-dark dark:text-gray-300 dark:border-gray-600'
-                }`}
-              >
-                <Filter className="h-4 w-4 inline mr-1" />
-                Filters
-              </button>
-              <button
-                onClick={() => {
-                  if (showMatchFilter) {
-                    setShowMatchFilter(false);
-                    fetchRooms();
-                  } else {
-                    setShowMatchModal(true);
-                  }
-                }}
-                className={`px-4 py-2 rounded-full border text-sm font-medium transition-colors ${
-                  showMatchFilter
-                    ? 'bg-gray-900 text-white border-gray-900 dark:bg-white dark:text-gray-900'
-                    : 'bg-white text-gray-700 border-gray-300 hover:border-gray-400 dark:bg-surface-dark dark:text-gray-300 dark:border-gray-600'
-                }`}
-              >
-                Match My Needs
-              </button>
-              <button
-                onClick={() => setShowDatePicker(!showDatePicker)}
-                className={`px-4 py-2 rounded-full border text-sm font-medium transition-colors ${
-                  selectedDates.moveIn
-                    ? 'bg-gray-900 text-white border-gray-900 dark:bg-white dark:text-gray-900'
-                    : 'bg-white text-gray-700 border-gray-300 hover:border-gray-400 dark:bg-surface-dark dark:text-gray-300 dark:border-gray-600'
-                }`}
-              >
-                <Calendar className="h-4 w-4 inline mr-1" />
-                {selectedDates.moveIn ? new Date(selectedDates.moveIn).toLocaleDateString('en-GB', { day: '2-digit', month: 'short' }) : 'Dates'}
-              </button>
-              <button
-                onClick={() => setShowMap(!showMap)}
-                className={`px-4 py-2 rounded-full border text-sm font-medium transition-colors ${
-                  showMap
-                    ? 'bg-gray-900 text-white border-gray-900 dark:bg-white dark:text-gray-900'
-                    : 'bg-white text-gray-700 border-gray-300 hover:border-gray-400 dark:bg-surface-dark dark:text-gray-300 dark:border-gray-600'
-                }`}
-              >
-                {showMap ? <List className="h-4 w-4" /> : <MapIcon className="h-4 w-4" />}
-              </button>
-              {(filters.area || filters.minRent || filters.maxRent || selectedDates.moveIn) && (
+              <div className="flex flex-wrap gap-3 items-center">
+                <button
+                  onClick={() => setShowFilters(!showFilters)}
+                  className={`px-4 py-2 border rounded-md text-sm font-medium flex items-center gap-2 transition-colors ${
+                    showFilters
+                      ? 'border-primary text-primary bg-primary/5 dark:text-primary-200'
+                      : 'border-gray-300 text-gray-700 hover:border-gray-400 dark:border-gray-600 dark:text-gray-300'
+                  }`}
+                >
+                  <Filter className="h-4 w-4" />
+                  Filters
+                </button>
+
                 <button
                   onClick={() => {
-                    handleResetFilters();
-                    setSelectedDates({ moveIn: '', moveOut: '' });
-                    setTimeout(() => fetchRooms(), 100);
+                    if (showMatchFilter) {
+                      setShowMatchFilter(false);
+                      fetchRooms();
+                    } else {
+                      setShowMatchModal(true);
+                    }
                   }}
-                  className="px-4 py-2 rounded-full text-sm font-medium text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 underline"
+                  className={`px-4 py-2 border rounded-md text-sm font-medium transition-colors ${
+                    showMatchFilter
+                      ? 'border-primary text-primary bg-primary/5 dark:text-primary-200'
+                      : 'border-gray-300 text-gray-700 hover:border-gray-400 dark:border-gray-600 dark:text-gray-300'
+                  }`}
                 >
-                  Clear all
+                  Match My Needs
                 </button>
-              )}
+
+                <button
+                  onClick={() => setShowDatePicker(!showDatePicker)}
+                  className={`px-4 py-2 border rounded-md text-sm font-medium flex items-center gap-2 transition-colors ${
+                    selectedDates.moveIn
+                      ? 'border-primary text-primary bg-primary/5 dark:text-primary-200'
+                      : 'border-gray-300 text-gray-700 hover:border-gray-400 dark:border-gray-600 dark:text-gray-300'
+                  }`}
+                >
+                  <Calendar className="h-4 w-4" />
+                  {selectedDates.moveIn
+                    ? new Date(selectedDates.moveIn).toLocaleDateString('en-GB', {
+                        day: '2-digit',
+                        month: 'short',
+                      })
+                    : 'Dates'}
+                </button>
+
+                <button
+                  onClick={handleSortByDistance}
+                  className="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-md text-sm font-medium text-gray-700 hover:border-gray-400 dark:text-gray-300 transition-colors"
+                >
+                  Sort by Distance
+                </button>
+
+                <button
+                  onClick={() => setShowMap(!showMap)}
+                  className={`px-4 py-2 border rounded-md text-sm font-medium flex items-center gap-2 transition-colors ${
+                    showMap
+                      ? 'border-primary text-primary bg-primary/5 dark:text-primary-200'
+                      : 'border-gray-300 text-gray-700 hover:border-gray-400 dark:border-gray-600 dark:text-gray-300'
+                  }`}
+                >
+                  {showMap ? <List className="h-4 w-4" /> : <MapIcon className="h-4 w-4" />}
+                  {showMap ? 'List View' : 'Map View'}
+                </button>
+
+                {isAnyFilterApplied && (
+                  <button
+                    onClick={() => {
+                      handleResetFilters();
+                      setSelectedDates({ moveIn: '', moveOut: '' });
+                      setShowMatchFilter(false);
+                      setTimeout(() => fetchRooms(), 100);
+                    }}
+                    className="px-2 py-2 text-sm font-medium text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 underline"
+                  >
+                    Clear all
+                  </button>
+                )}
+              </div>
             </div>
-          </div>
+          </Card>
         </div>
 
         {/* Date Picker Modal */}
@@ -878,10 +905,15 @@ const AccommodationPage = () => {
         )}
 
         {/* Results */}
-        <div className="flex items-center justify-between mb-4">
-          <p className="text-secondary dark:text-gray-400">
-            {filteredRooms.length} rooms found
+        <div className="flex flex-wrap items-center justify-between gap-2 mb-6 mt-10">
+          <p className="text-secondary dark:text-gray-400 text-lg">
+            {filteredRooms.length} {filteredRooms.length === 1 ? 'room found' : 'rooms found'}
           </p>
+          {showMatchFilter && (
+            <span className="text-sm text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/30 px-2 py-1 rounded">
+              Showing best matches for your needs
+            </span>
+          )}
         </div>
 
         {/* Map + List View */}
@@ -889,13 +921,16 @@ const AccommodationPage = () => {
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             <div className="max-h-[800px] overflow-y-auto pr-2">
               {loading ? (
-                <p>Loading...</p>
+                <div className="flex items-center justify-center py-10">
+                  <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-primary"></div>
+                </div>
               ) : filteredRooms.length === 0 ? (
-                <Card className="p-8 text-center">
-                  <p className="text-secondary">No rooms found matching your criteria</p>
+                <Card className="p-8 text-center border border-gray-100 dark:border-gray-700">
+                  <p className="text-lg text-primary dark:text-gray-100 mb-2">No rooms found</p>
+                  <p className="text-secondary dark:text-gray-400">Try adjusting your filters and search keywords</p>
                 </Card>
               ) : (
-                <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
                   {filteredRooms.map(room => (
                     <RoomCard
                       key={room._id}
@@ -914,7 +949,7 @@ const AccommodationPage = () => {
                 center={getMapCenter()}
                 zoom={12}
                 style={{ height: '100%', width: '100%' }}
-                className="rounded-lg"
+                className="rounded-xl"
               >
                 <TileLayer
                   attribution='&copy; OpenStreetMap'
@@ -973,10 +1008,24 @@ const AccommodationPage = () => {
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {loading ? (
-              <p>Loading...</p>
+              <div className="md:col-span-2 lg:col-span-3 flex items-center justify-center py-10">
+                <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-primary"></div>
+              </div>
             ) : filteredRooms.length === 0 ? (
-              <Card className="p-8 text-center md:col-span-2 lg:col-span-3">
-                <p className="text-secondary">No rooms found matching your criteria</p>
+              <Card className="p-8 text-center md:col-span-2 lg:col-span-3 border border-gray-100 dark:border-gray-700">
+                <p className="text-lg text-primary dark:text-gray-100 mb-2">No rooms found</p>
+                <p className="text-secondary dark:text-gray-400 mb-4">Try adjusting your filters and search keywords</p>
+                <Button
+                  variant="outline"
+                  onClick={() => {
+                    handleResetFilters();
+                    setSelectedDates({ moveIn: '', moveOut: '' });
+                    setShowMatchFilter(false);
+                    setTimeout(() => fetchRooms(), 100);
+                  }}
+                >
+                  Clear Filters
+                </Button>
               </Card>
             ) : (
               filteredRooms.map(room => (

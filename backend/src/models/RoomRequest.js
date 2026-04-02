@@ -32,13 +32,13 @@ const roomRequestSchema = new mongoose.Schema({
   },
   status: {
     type: String,
-    enum: ["PENDING", "ACCEPTED", "REJECTED"],
+    enum: ["PENDING", "ACCEPTED", "REJECTED", "REQUEST_MORE_INFO"],
     default: "PENDING",
   },
   ownerResponse: {
     preferredContactMethod: {
       type: String,
-      enum: ["call", "whatsapp", "email"],
+      enum: ["phone", "whatsapp", "email", "call"],
     },
     availableVisitingTimes: {
       type: String,

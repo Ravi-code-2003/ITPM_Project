@@ -19,13 +19,44 @@ const formatNotificationTime = (dateString) => {
   return date.toLocaleDateString();
 };
 
+const getActivityStatusBadgeClass = (status) => {
+  if (status === 'ACCEPTED') {
+    return 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400';
+  }
+
+  if (status === 'REJECTED') {
+    return 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400';
+  }
+
+  if (status === 'REQUEST_MORE_INFO') {
+    return 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400';
+  }
+
+  return 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400';
+};
+
+const buildStudentActivityPath = (notification) => {
+  const params = new URLSearchParams();
+
+  if (notification?.requestId) {
+    params.set('requestId', notification.requestId);
+  }
+
+  const query = params.toString();
+  return query ? `/student/notifications?${query}` : '/student/notifications';
+};
+
 const getNotificationTargetPath = (notification, userRole) => {
+  if (notification?.activityType === 'room-request') {
+    return buildStudentActivityPath(notification);
+  }
+
   const rawOrderId = notification?.orderId;
   const orderId = typeof rawOrderId === 'string' ? rawOrderId : rawOrderId?._id;
   const orderQuery = orderId ? `&orderId=${encodeURIComponent(orderId)}` : '';
 
   if (userRole === 'student') {
-    return `/student/dashboard?tab=orders${orderQuery}`;
+    return '/student/notifications';
   }
 
   if (userRole === 'shop-owner') {
@@ -66,7 +97,7 @@ const NotificationBell = () => {
     return () => document.removeEventListener('mousedown', handleOutsideClick);
   }, [isOpen]);
 
-  const visibleNotifications = useMemo(() => notifications.slice(0, 8), [notifications]);
+  const visibleNotifications = useMemo(() => notifications, [notifications]);
 
   if (!isNotificationRole) {
     return null;
@@ -87,6 +118,22 @@ const NotificationBell = () => {
 
     setIsOpen(false);
     navigate(getNotificationTargetPath(notification, user?.role));
+  };
+
+  const handleSeeAllClick = () => {
+    setIsOpen(false);
+
+    if (user?.role === 'student') {
+      navigate('/student/notifications');
+      return;
+    }
+
+    if (user?.role === 'shop-owner') {
+      navigate('/shop-owner/dashboard?tab=orders');
+      return;
+    }
+
+    navigate('/');
   };
 
   const handleMarkAllAsRead = async () => {
@@ -130,32 +177,64 @@ const NotificationBell = () => {
               <div className="p-4 text-sm text-secondary dark:text-gray-400">Loading...</div>
             ) : visibleNotifications.length > 0 ? (
               visibleNotifications.map((notification) => (
-                <button
-                  type="button"
+                <div
                   key={notification._id}
-                  onClick={() => handleNotificationClick(notification)}
                   className={`w-full text-left px-4 py-3 border-b border-gray-100 dark:border-gray-700/70 hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors ${
                     notification.isRead ? 'opacity-70' : 'bg-blue-50/50 dark:bg-blue-900/10'
                   }`}
                 >
-                  <div className="flex items-start justify-between gap-2">
-                    <p className="font-medium text-sm text-gray-900 dark:text-gray-100">
-                      {notification.title}
+                  <button
+                    type="button"
+                    onClick={() => handleNotificationClick(notification)}
+                    className="w-full text-left"
+                  >
+                    <div className="flex items-start justify-between gap-2">
+                      <p className="font-medium text-sm text-gray-900 dark:text-gray-100">
+                        {notification.title}
+                      </p>
+                      {notification.activityType === 'room-request' && notification.status ? (
+                        <span
+                          className={`text-[10px] font-semibold px-2 py-1 rounded-full ${getActivityStatusBadgeClass(notification.status)}`}
+                        >
+                          {notification.status}
+                        </span>
+                      ) : !notification.isRead && (
+                        <span className="mt-1 h-2 w-2 rounded-full bg-blue-500"></span>
+                      )}
+                    </div>
+                    <p className="text-sm text-gray-600 dark:text-gray-300 mt-1">{notification.message}</p>
+                    <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                      {formatNotificationTime(notification.createdAt)}
                     </p>
-                    {!notification.isRead && (
-                      <span className="mt-1 h-2 w-2 rounded-full bg-blue-500"></span>
-                    )}
+                  </button>
+
+                  <div className="flex justify-end mt-1">
+                    <button
+                      type="button"
+                      onClick={() => handleNotificationClick(notification)}
+                      className="text-xs font-semibold text-amber-500 hover:text-amber-600"
+                    >
+                      View full notification
+                    </button>
                   </div>
-                  <p className="text-sm text-gray-600 dark:text-gray-300 mt-1">{notification.message}</p>
-                  <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-                    {formatNotificationTime(notification.createdAt)}
-                  </p>
-                </button>
+                </div>
               ))
             ) : (
               <div className="p-4 text-sm text-secondary dark:text-gray-400">No notifications yet.</div>
             )}
           </div>
+
+          {!loading && visibleNotifications.length > 0 && (
+            <div className="px-4 py-3 border-t border-gray-100 dark:border-gray-700 flex justify-center">
+              <button
+                type="button"
+                onClick={handleSeeAllClick}
+                className="text-sm font-semibold text-amber-500 hover:text-amber-600"
+              >
+                See all
+              </button>
+            </div>
+          )}
         </div>
       )}
     </div>

@@ -11,10 +11,58 @@ const requestSchema = joi.object({
 
 // Validation schema for responding to a request
 const responseSchema = joi.object({
-  status: joi.string().valid("ACCEPTED", "REJECTED").required(),
-  preferredContactMethod: joi.string().valid("call", "whatsapp", "email").optional(),
-  availableVisitingTimes: joi.string().trim().allow("").optional(),
-  responseMessage: joi.string().trim().allow("").optional(),
+  status: joi
+    .string()
+    .required()
+    .valid("ACCEPTED", "REJECTED", "REQUEST_MORE_INFO")
+    .messages({
+      "any.required": "Response is required",
+      "any.only": "Response must be Accept, Reject, or Request More Info",
+    }),
+  preferredContactMethod: joi.when("status", {
+    is: "ACCEPTED",
+    then: joi
+      .string()
+      .trim()
+      .required()
+      .valid("whatsapp", "phone", "email")
+      .messages({
+        "any.required": "Preferred Contact Method is required when Response is Accept",
+        "any.only": "Preferred Contact Method must be WhatsApp, Phone, or Email",
+      }),
+    otherwise: joi.string().trim().allow("").optional(),
+  }),
+  availableVisitingTimes: joi.when("status", {
+    is: "ACCEPTED",
+    then: joi
+      .string()
+      .trim()
+      .required()
+      .min(5)
+      .max(100)
+      .messages({
+        "any.required": "Available Visiting Times is required when Response is Accept",
+        "string.empty": "Available Visiting Times is required when Response is Accept",
+        "string.min": "Available Visiting Times must be at least 5 characters",
+        "string.max": "Available Visiting Times cannot exceed 100 characters",
+      }),
+    otherwise: joi.string().trim().allow("").optional(),
+  }),
+  responseMessage: joi
+    .string()
+    .trim()
+    .max(500)
+    .when("status", {
+      is: joi.valid("REJECTED", "REQUEST_MORE_INFO"),
+      then: joi.required().messages({
+        "any.required": "Message to Student is required when Response is Reject or Request More Info",
+        "string.empty": "Message to Student is required when Response is Reject or Request More Info",
+      }),
+      otherwise: joi.allow("").optional(),
+    })
+    .messages({
+      "string.max": "Message to Student cannot exceed 500 characters",
+    }),
 });
 
 // @desc    Create a room request (student sends request to owner)
@@ -143,7 +191,16 @@ const respondToRequest = async (req, res) => {
       });
     }
 
-    const { status, preferredContactMethod, availableVisitingTimes, responseMessage } = value;
+    const status = value.status;
+    const preferredContactMethod = typeof value.preferredContactMethod === "string"
+      ? value.preferredContactMethod.trim()
+      : "";
+    const availableVisitingTimes = typeof value.availableVisitingTimes === "string"
+      ? value.availableVisitingTimes.trim()
+      : "";
+    const responseMessage = typeof value.responseMessage === "string"
+      ? value.responseMessage.trim()
+      : "";
 
     const roomRequest = await RoomRequest.findById(req.params.id);
 
@@ -163,8 +220,8 @@ const respondToRequest = async (req, res) => {
     // Update request
     roomRequest.status = status;
     roomRequest.ownerResponse = {
-      preferredContactMethod,
-      availableVisitingTimes,
+      preferredContactMethod: status === "ACCEPTED" ? preferredContactMethod : undefined,
+      availableVisitingTimes: status === "ACCEPTED" ? availableVisitingTimes : "",
       responseMessage,
       respondedAt: new Date(),
     };

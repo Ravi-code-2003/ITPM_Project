@@ -16,6 +16,7 @@ import ContactPage from './pages/ContactPage';
 import EducationProgramsPage from './pages/EducationProgramsPage';
 import RestaurantsPage from './pages/RestaurantsPage';
 import AccommodationPage from './pages/AccommodationPage';
+import StudentNotificationsPage from './pages/StudentNotificationsPage';
 
 // Auth Pages
 import LoginPage from './pages/LoginPage';
@@ -202,6 +203,16 @@ function App() {
                       <RoleRoute roles={['student']}>
                         <Layout showFooter={false}>
                           <StudentDashboard />
+                        </Layout>
+                      </RoleRoute>
+                    }
+                  />
+                  <Route
+                    path="/student/notifications"
+                    element={
+                      <RoleRoute roles={['student']}>
+                        <Layout>
+                          <StudentNotificationsPage />
                         </Layout>
                       </RoleRoute>
                     }
