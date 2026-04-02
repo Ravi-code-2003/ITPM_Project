@@ -465,6 +465,15 @@ const ExamStudyTrackerPage = () => {
 
           <div className="flex flex-col sm:flex-row gap-3 w-full lg:w-auto">
             <Button
+              variant="secondary"
+              size="sm"
+              className="w-full sm:w-auto !bg-amber-100 hover:!bg-amber-200 !text-amber-800 !border-amber-300 hover:!border-amber-400 dark:!bg-amber-900/40 dark:hover:!bg-amber-900/60 dark:!text-amber-200 dark:!border-amber-700"
+              icon={<Calendar className="h-4 w-4" />}
+              onClick={() => navigate('/student/timetable')}
+            >
+              Student Timetable
+            </Button>
+            <Button
               variant="outline"
               size="sm"
               className="w-full sm:w-auto !bg-white dark:!bg-surface-dark !shadow-sm"
@@ -472,24 +481,6 @@ const ExamStudyTrackerPage = () => {
               onClick={() => navigate('/education-programs')}
             >
               Back to Programs
-            </Button>
-            <Button
-              variant="secondary"
-              size="sm"
-              className="w-full sm:w-auto"
-              icon={<Calendar className="h-4 w-4" />}
-              onClick={downloadWeeklyReport}
-            >
-              Export Report
-            </Button>
-            <Button
-              variant="secondary"
-              size="sm"
-              className="w-full sm:w-auto"
-              icon={<Calendar className="h-4 w-4" />}
-              onClick={() => navigate('/student/timetable')}
-            >
-              Student Timetable
             </Button>
           </div>
         </div>

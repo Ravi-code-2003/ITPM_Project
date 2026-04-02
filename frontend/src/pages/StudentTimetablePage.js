@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { ArrowLeft, Calendar, CheckCircle2, PlusCircle, Trash2 } from 'lucide-react';
+import { BookOpen, Calendar, CheckCircle2, PlusCircle, Timer, Trash2 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import toast from 'react-hot-toast';
 import Card, { CardContent, CardHeader, CardTitle } from '../components/ui/Card';
@@ -154,15 +154,25 @@ const StudentTimetablePage = () => {
             </p>
           </div>
 
-          <Button
-            variant="outline"
-            size="sm"
-            className="w-full sm:w-auto !bg-white dark:!bg-surface-dark !shadow-sm"
-            icon={<ArrowLeft className="h-4 w-4" />}
-            onClick={() => navigate('/student/study-tracker')}
-          >
-            Back to Study Tracker
-          </Button>
+          <div className="w-full lg:w-auto flex flex-col sm:flex-row gap-2">
+            <button
+              type="button"
+              onClick={() => navigate('/student/study-tracker')}
+              className="w-full sm:w-auto inline-flex items-center justify-center gap-2 text-white font-semibold px-5 py-2.5 rounded-xl shadow-sm transition-colors bg-red-600 hover:bg-red-700"
+            >
+              <Timer className="h-4 w-4" />
+              Study Tracker
+            </button>
+
+            <button
+              type="button"
+              onClick={() => navigate('/education-programs')}
+              className="w-full sm:w-auto inline-flex items-center justify-center gap-2 bg-amber-100 hover:bg-amber-200 text-amber-800 dark:bg-amber-900/40 dark:hover:bg-amber-900/60 dark:text-amber-200 font-semibold px-5 py-2.5 rounded-xl border border-amber-300 dark:border-amber-700 shadow-sm transition-all duration-200"
+            >
+              <BookOpen className="h-4 w-4" />
+              Study Materials
+            </button>
+          </div>
         </div>
 
         <Card className="border border-amber-200 dark:border-amber-700 bg-white dark:bg-surface-dark shadow-lg">
