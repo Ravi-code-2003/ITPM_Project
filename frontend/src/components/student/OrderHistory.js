@@ -1,12 +1,13 @@
-import React, { useState, useEffect } from 'react';
+import React, { useMemo, useState, useEffect } from 'react';
 import { Clock, MapPin, Star, Package, Filter, Calendar } from 'lucide-react';
-import { Link } from 'react-router-dom';
+import { Link, useSearchParams } from 'react-router-dom';
 import Button from '../ui/Button';
 import Card from '../ui/Card';
 import api from '../../services/api';
 import toast from 'react-hot-toast';
 
 const OrderHistory = () => {
+  const [searchParams] = useSearchParams();
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(true);
   const [statusFilter, setStatusFilter] = useState('');
@@ -16,6 +17,7 @@ const OrderHistory = () => {
   const [comment, setComment] = useState('');
 
   const statuses = ['pending', 'confirmed', 'ready', 'completed', 'cancelled'];
+  const highlightedOrderId = searchParams.get('orderId');
 
   useEffect(() => {
     fetchOrders();
@@ -94,6 +96,19 @@ const OrderHistory = () => {
     ));
   };
 
+  const displayedOrders = useMemo(() => {
+    if (!highlightedOrderId) {
+      return orders;
+    }
+
+    const targetOrder = orders.find((order) => order._id === highlightedOrderId);
+    if (!targetOrder) {
+      return orders;
+    }
+
+    return [targetOrder, ...orders.filter((order) => order._id !== highlightedOrderId)];
+  }, [orders, highlightedOrderId]);
+
   if (loading) {
     return (
       <div className="flex items-center justify-center py-8">
@@ -131,11 +146,20 @@ const OrderHistory = () => {
       </div>
 
       {/* Orders List */}
-      {orders.length > 0 ? (
+      {displayedOrders.length > 0 ? (
         <div className="space-y-4">
-          {orders.map(order => (
-            <Card key={order._id} className="p-6">
+          {displayedOrders.map(order => (
+            <Card
+              key={order._id}
+              className={`p-6 ${highlightedOrderId === order._id ? 'ring-2 ring-primary/40 border-primary/50' : ''}`}
+            >
               <div className="space-y-4">
+                {highlightedOrderId === order._id && (
+                  <div className="inline-flex items-center rounded-full bg-primary/10 text-primary dark:text-primary-light px-3 py-1 text-xs font-semibold">
+                    Latest update
+                  </div>
+                )}
+
                 {/* Order Header */}
                 <div className="flex justify-between items-start">
                   <div>

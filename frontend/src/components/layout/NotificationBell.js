@@ -25,7 +25,7 @@ const getNotificationTargetPath = (notification, userRole) => {
   const orderQuery = orderId ? `&orderId=${encodeURIComponent(orderId)}` : '';
 
   if (userRole === 'student') {
-    return `/student/dashboard?tab=orders${orderQuery}`;
+    return `/restaurants?tab=orders${orderQuery}`;
   }
 
   if (userRole === 'shop-owner') {

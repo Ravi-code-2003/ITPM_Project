@@ -551,6 +551,39 @@ const getCurrentOffers = async (req, res) => {
 };
 
 /**
+ * GET /api/student/combos
+ * Get all available combo meals across restaurants
+ */
+const getAllComboMeals = async (req, res) => {
+  try {
+    const { restaurantId } = req.query;
+
+    const query = {
+      status: 'Available'
+    };
+
+    if (restaurantId) {
+      query.restaurantId = restaurantId;
+    }
+
+    const combos = await ComboMeal.find(query)
+      .populate('restaurantId', 'shopName location')
+      .populate('items', 'name price category')
+      .sort({ totalPrice: 1, createdAt: -1 });
+
+    res.json({
+      success: true,
+      combos
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: error.message
+    });
+  }
+};
+
+/**
  * POST /api/student/poll/vote
  * Vote for today's special
  */
@@ -856,6 +889,7 @@ module.exports = {
   getFavorites,
   rateRestaurant,
   getCurrentOffers,
+  getAllComboMeals,
   voteInPoll,
   getPollResults,
   getBudgetTracker,
