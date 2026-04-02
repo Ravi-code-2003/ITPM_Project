@@ -6,6 +6,24 @@ import Card from '../ui/Card';
 import api from '../../services/api';
 import toast from 'react-hot-toast';
 
+const normalizeRestaurants = (items) => {
+  if (!Array.isArray(items)) {
+    return [];
+  }
+
+  return items.filter((item) => item && typeof item === 'object' && item._id);
+};
+
+const extractFavoriteRestaurantIds = (items) => {
+  if (!Array.isArray(items)) {
+    return [];
+  }
+
+  return items
+    .map((item) => item?.restaurantId?._id)
+    .filter((id) => typeof id === 'string' && id.trim().length > 0);
+};
+
 const RestaurantList = () => {
   const [restaurants, setRestaurants] = useState([]);
   const [favorites, setFavorites] = useState([]);
@@ -23,7 +41,7 @@ const RestaurantList = () => {
     try {
       setLoading(true);
       const response = await api.get('/student/restaurants');
-      setRestaurants(response.data.restaurants);
+      setRestaurants(normalizeRestaurants(response.data?.restaurants));
     } catch (error) {
       toast.error('Failed to fetch restaurants');
       console.error('Error fetching restaurants:', error);
@@ -35,7 +53,7 @@ const RestaurantList = () => {
   const fetchFavorites = async () => {
     try {
       const response = await api.get('/student/favorites');
-      setFavorites(response.data.favorites.map(fav => fav.restaurantId._id));
+      setFavorites(extractFavoriteRestaurantIds(response.data?.favorites));
     } catch (error) {
       console.error('Error fetching favorites:', error);
     }
@@ -79,8 +97,8 @@ const RestaurantList = () => {
 
   const filteredRestaurants = restaurants
     .filter(restaurant => 
-      restaurant.shopName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      restaurant.location.toLowerCase().includes(searchTerm.toLowerCase())
+      (restaurant.shopName || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+      (restaurant.location || '').toLowerCase().includes(searchTerm.toLowerCase())
     )
     .filter(restaurant => 
       filterRating === 0 || restaurant.averageRating >= filterRating

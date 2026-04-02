@@ -6,6 +6,16 @@ import { useAuth } from './AuthContext';
 const NotificationContext = createContext(null);
 const POLL_INTERVAL_MS = 10000;
 
+const normalizeNotifications = (list) => {
+  if (!Array.isArray(list)) {
+    return [];
+  }
+
+  return list
+    .filter((item) => item && typeof item === 'object')
+    .filter((item) => typeof item._id === 'string' && item._id.trim().length > 0);
+};
+
 export const NotificationProvider = ({ children }) => {
   const { isAuthenticated, user } = useAuth();
   const [notifications, setNotifications] = useState([]);
@@ -29,7 +39,7 @@ export const NotificationProvider = ({ children }) => {
 
     try {
       const response = await notificationAPI.getMyNotifications(20);
-      const list = response.notifications || [];
+      const list = normalizeNotifications(response.notifications);
       const unread = response.unreadCount || 0;
 
       if (silent && previousLatestIdRef.current && list[0]?._id && list[0]._id !== previousLatestIdRef.current) {
@@ -54,11 +64,17 @@ export const NotificationProvider = ({ children }) => {
   }, [isNotificationRole]);
 
   const markAsRead = useCallback(async (notificationId) => {
+    if (!notificationId) {
+      return;
+    }
+
     const response = await notificationAPI.markAsRead(notificationId);
     const updatedNotification = response.notification;
 
     setNotifications((prev) =>
-      prev.map((item) => (item._id === notificationId ? { ...item, ...updatedNotification } : item))
+      normalizeNotifications(prev).map((item) =>
+        item._id === notificationId ? { ...item, ...updatedNotification } : item
+      )
     );
 
     if (typeof response.unreadCount === 'number') {
@@ -72,7 +88,7 @@ export const NotificationProvider = ({ children }) => {
     const response = await notificationAPI.markAllAsRead();
 
     setNotifications((prev) =>
-      prev.map((item) => ({
+      normalizeNotifications(prev).map((item) => ({
         ...item,
         isRead: true,
         readAt: item.readAt || new Date().toISOString()

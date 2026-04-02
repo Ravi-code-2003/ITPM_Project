@@ -411,10 +411,14 @@ const getFavorites = async (req, res) => {
         }
       })
       .sort({ createdAt: -1 });
+
+    const validFavorites = favorites.filter(
+      (favorite) => favorite?.restaurantId && favorite.restaurantId?._id
+    );
     
     // Get ratings for each favorite restaurant
     const favoritesWithRatings = await Promise.all(
-      favorites.map(async (favorite) => {
+      validFavorites.map(async (favorite) => {
         const ratings = await Rating.aggregate([
           { $match: { restaurantId: favorite.restaurantId._id } },
           {
@@ -427,8 +431,10 @@ const getFavorites = async (req, res) => {
         ]);
         
         const favoriteObj = favorite.toObject();
-        favoriteObj.restaurantId.averageRating = ratings.length > 0 ? ratings[0].averageRating : 0;
-        favoriteObj.restaurantId.totalRatings = ratings.length > 0 ? ratings[0].totalRatings : 0;
+        if (favoriteObj.restaurantId) {
+          favoriteObj.restaurantId.averageRating = ratings.length > 0 ? ratings[0].averageRating : 0;
+          favoriteObj.restaurantId.totalRatings = ratings.length > 0 ? ratings[0].totalRatings : 0;
+        }
         
         return favoriteObj;
       })

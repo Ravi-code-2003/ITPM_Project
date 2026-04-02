@@ -6,6 +6,16 @@ import Card from '../ui/Card';
 import api from '../../services/api';
 import toast from 'react-hot-toast';
 
+const normalizeFavorites = (items) => {
+  if (!Array.isArray(items)) {
+    return [];
+  }
+
+  return items.filter(
+    (item) => item && typeof item === 'object' && item._id && item.restaurantId && item.restaurantId._id
+  );
+};
+
 const FavoritesPage = () => {
   const [favorites, setFavorites] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -18,7 +28,7 @@ const FavoritesPage = () => {
     try {
       setLoading(true);
       const response = await api.get('/student/favorites');
-      setFavorites(response.data.favorites);
+      setFavorites(normalizeFavorites(response.data?.favorites));
     } catch (error) {
       toast.error('Failed to fetch favorites');
       console.error('Error fetching favorites:', error);
@@ -30,7 +40,7 @@ const FavoritesPage = () => {
   const removeFavorite = async (restaurantId) => {
     try {
       await api.post('/student/favorites', { restaurantId });
-      setFavorites(favorites.filter(fav => fav.restaurantId._id !== restaurantId));
+      setFavorites((prev) => normalizeFavorites(prev).filter((fav) => fav.restaurantId._id !== restaurantId));
       toast.success('Removed from favorites');
     } catch (error) {
       toast.error('Failed to remove from favorites');

@@ -14,6 +14,32 @@ import Button from '../ui/Button';
 import api from '../../services/api';
 import toast from 'react-hot-toast';
 
+const normalizeRestaurants = (items) => {
+  if (!Array.isArray(items)) {
+    return [];
+  }
+
+  return items.filter((item) => item && typeof item === 'object' && item._id);
+};
+
+const normalizeOrders = (items) => {
+  if (!Array.isArray(items)) {
+    return [];
+  }
+
+  return items.filter((item) => item && typeof item === 'object' && item._id);
+};
+
+const normalizeFavorites = (items) => {
+  if (!Array.isArray(items)) {
+    return [];
+  }
+
+  return items.filter(
+    (item) => item && typeof item === 'object' && item._id && item.restaurantId
+  );
+};
+
 const RestaurantOverview = ({ onOpenTab }) => {
   const [loading, setLoading] = useState(true);
   const [stats, setStats] = useState({
@@ -34,17 +60,39 @@ const RestaurantOverview = ({ onOpenTab }) => {
     try {
       setLoading(true);
 
-      const [restaurantsResponse, offersResponse, ordersResponse, favoritesResponse] = await Promise.all([
+      const [restaurantsResult, offersResult, ordersResult, favoritesResult] = await Promise.allSettled([
         api.get('/student/restaurants'),
         api.get('/student/offers'),
         api.get('/student/orders?limit=5'),
         api.get('/student/favorites')
       ]);
 
-      const restaurants = restaurantsResponse.data.restaurants || [];
-      const offers = offersResponse.data.offers || [];
-      const orders = ordersResponse.data.orders || [];
-      const favorites = favoritesResponse.data.favorites || [];
+      const restaurants =
+        restaurantsResult.status === 'fulfilled'
+          ? normalizeRestaurants(restaurantsResult.value?.data?.restaurants)
+          : [];
+      const offers =
+        offersResult.status === 'fulfilled' && Array.isArray(offersResult.value?.data?.offers)
+          ? offersResult.value.data.offers.filter((item) => item && typeof item === 'object')
+          : [];
+      const orders =
+        ordersResult.status === 'fulfilled'
+          ? normalizeOrders(ordersResult.value?.data?.orders)
+          : [];
+      const favorites =
+        favoritesResult.status === 'fulfilled'
+          ? normalizeFavorites(favoritesResult.value?.data?.favorites)
+          : [];
+
+      const allFailed =
+        restaurantsResult.status === 'rejected' &&
+        offersResult.status === 'rejected' &&
+        ordersResult.status === 'rejected' &&
+        favoritesResult.status === 'rejected';
+
+      if (allFailed) {
+        toast.error('Failed to load restaurant overview');
+      }
 
       setStats({
         restaurants: restaurants.length,
@@ -62,7 +110,6 @@ const RestaurantOverview = ({ onOpenTab }) => {
       setFavoriteRestaurants(favorites.slice(0, 3));
     } catch (error) {
       console.error('Error loading restaurant overview:', error);
-      toast.error('Failed to load restaurant overview');
     } finally {
       setLoading(false);
     }
@@ -150,8 +197,8 @@ const RestaurantOverview = ({ onOpenTab }) => {
 
           {topRestaurants.length > 0 ? (
             <div className="space-y-3">
-              {topRestaurants.map((restaurant) => (
-                <div key={restaurant._id} className="bg-gray-50 dark:bg-gray-800 rounded-lg p-3">
+              {topRestaurants.map((restaurant, index) => (
+                <div key={restaurant._id || `restaurant-${index}`} className="bg-gray-50 dark:bg-gray-800 rounded-lg p-3">
                   <p className="font-medium text-gray-900 dark:text-white">{restaurant.shopName}</p>
                   <div className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400 mt-1">
                     <Star className="h-3.5 w-3.5 text-yellow-500" />
@@ -184,8 +231,8 @@ const RestaurantOverview = ({ onOpenTab }) => {
 
           {recentOrders.length > 0 ? (
             <div className="space-y-3">
-              {recentOrders.map((order) => (
-                <div key={order._id} className="bg-gray-50 dark:bg-gray-800 rounded-lg p-3">
+              {recentOrders.map((order, index) => (
+                <div key={order._id || `order-${index}`} className="bg-gray-50 dark:bg-gray-800 rounded-lg p-3">
                   <div className="flex items-start justify-between gap-3">
                     <div>
                       <p className="font-medium text-gray-900 dark:text-white">
@@ -224,8 +271,8 @@ const RestaurantOverview = ({ onOpenTab }) => {
 
           {favoriteRestaurants.length > 0 ? (
             <div className="space-y-3">
-              {favoriteRestaurants.map((favorite) => (
-                <div key={favorite._id} className="bg-gray-50 dark:bg-gray-800 rounded-lg p-3">
+              {favoriteRestaurants.map((favorite, index) => (
+                <div key={favorite._id || `favorite-${index}`} className="bg-gray-50 dark:bg-gray-800 rounded-lg p-3">
                   <p className="font-medium text-gray-900 dark:text-white">
                     {favorite.restaurantId?.shopName || 'Restaurant'}
                   </p>

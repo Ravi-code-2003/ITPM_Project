@@ -2,8 +2,16 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { BookOpen, Home, Store, MapPin, CheckCircle, XCircle, Clock } from 'lucide-react';
 import Button from '../../components/ui/Button';
-import Card, { CardHeader, CardTitle, CardDescription, CardContent } from '../../components/ui/Card';
+import Card, { CardHeader, CardTitle, CardContent } from '../../components/ui/Card';
 import { roomRequestService } from '../../services/accommodationService';
+
+const normalizeRequests = (items) => {
+  if (!Array.isArray(items)) {
+    return [];
+  }
+
+  return items.filter((item) => item && typeof item === 'object');
+};
 
 const StudentDashboard = () => {
   const navigate = useNavigate();
@@ -14,7 +22,7 @@ const StudentDashboard = () => {
     const fetchRequests = async () => {
       try {
         const response = await roomRequestService.getStudentRequests();
-        setRequests(response.data || []);
+        setRequests(normalizeRequests(response.data));
       } catch (error) {
         console.error('Failed to fetch requests:', error);
       } finally {
@@ -112,9 +120,9 @@ const StudentDashboard = () => {
               <p className="text-secondary dark:text-gray-400">Your recent activity and recommendations will appear here.</p>
             ) : (
               <div className="space-y-4">
-                {requests.slice(0, 5).map((request) => (
+                {normalizeRequests(requests).slice(0, 5).map((request, index) => (
                   <div
-                    key={request._id}
+                    key={request._id || `request-${index}`}
                     className="flex items-start gap-4 p-4 rounded-lg border border-secondary/20 dark:border-gray-700 hover:bg-accent/5 transition-colors"
                   >
                     <div className="flex-shrink-0 mt-0.5">
