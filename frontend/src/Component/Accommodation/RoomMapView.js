@@ -44,7 +44,7 @@ const RoomMapView = ({ rooms, onRoomClick }) => {
   };
 
   return (
-    <div className="h-[600px] rounded-lg overflow-hidden border-2 border-secondary/20">
+    <div className="h-[600px] rounded-lg overflow-hidden border-2 border-amber-200 dark:border-gray-700 bg-amber-50/70 dark:bg-gray-900/40">
       <MapContainer
         center={getMapCenter()}
         zoom={12}
@@ -93,7 +93,7 @@ const RoomMapView = ({ rooms, onRoomClick }) => {
       </MapContainer>
 
       {rooms.length === 0 && (
-        <div className="absolute inset-0 flex items-center justify-center bg-white/80 dark:bg-gray-900/80">
+        <div className="absolute inset-0 flex items-center justify-center bg-amber-50/85 dark:bg-gray-900/80">
           <div className="text-center">
             <MapPin className="h-12 w-12 text-secondary dark:text-gray-600 mx-auto mb-2" />
             <p className="text-secondary dark:text-gray-400">No rooms to display on map</p>
