@@ -36,7 +36,6 @@ import StudentDashboard from './pages/dashboards/StudentDashboard';
 import ShopOwnerDashboard from './pages/dashboards/ShopOwnerDashboard';
 import HouseOwnerDashboard from './pages/dashboards/HouseOwnerDashboard';
 import EducationProviderDashboard from './pages/dashboards/EducationProviderDashboard';
-import ExamStudyTrackerPage from './pages/ExamStudyTrackerPage';
 import AIChatPage from './pages/AIChatPage';
 
 // Student Components  
