@@ -7,7 +7,6 @@ import { CartProvider } from './contexts/CartContext';
 import { NotificationProvider } from './contexts/NotificationContext';
 import { ProtectedRoute, PublicRoute, AdminRoute, RoleRoute } from './components/ProtectedRoute';
 import Layout from './components/layout/Layout';
-import FloatingAIChat from './components/chat/FloatingAIChat';
 
 // Public Pages
 import LandingPage from './pages/LandingPage';
@@ -39,7 +38,6 @@ import HouseOwnerDashboard from './pages/dashboards/HouseOwnerDashboard';
 import EducationProviderDashboard from './pages/dashboards/EducationProviderDashboard';
 import ExamStudyTrackerPage from './pages/ExamStudyTrackerPage';
 import StudentTimetablePage from './pages/StudentTimetablePage';
-import AIChatPage from './pages/AIChatPage';
 
 // Student Components  
 import RestaurantDetail from './components/student/RestaurantDetail';
@@ -288,17 +286,6 @@ function App() {
                       </RoleRoute>
                     }
                   />
-                  <Route
-                    path="/ai-chat"
-                    element={
-                      <ProtectedRoute>
-                        <Layout showFooter={false}>
-                          <AIChatPage />
-                        </Layout>
-                      </ProtectedRoute>
-                    }
-                  />
-
                   {/* Status Pages */}
                   <Route
                     path="/pending-approval"
@@ -355,7 +342,6 @@ function App() {
               },
             }}
           />
-          <FloatingAIChat />
           </div>
         </Router>
           </NotificationProvider>
