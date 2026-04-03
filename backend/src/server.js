@@ -4,6 +4,9 @@ const dotenv = require("dotenv");
 const path = require("path");
 const connectDB = require("./config/db");
 
+// Load environment variables before importing modules that read process.env at import time.
+dotenv.config({ path: path.join(__dirname, "../.env") });
+
 // Import routes
 const authRoutes = require("./routes/authRoutes");
 const adminRoutes = require("./routes/adminRoutes");
@@ -17,9 +20,6 @@ const studentRoutes = require("./routes/studentRoutes");
 const shopRoutes = require("./routes/shopRoutes");
 const aiRoutes = require("./routes/aiRoutes");
 const notificationRoutes = require("./routes/notificationRoutes");
-
-// Load environment variables
-dotenv.config();
 
 const app = express();
 
@@ -152,6 +152,7 @@ const server = app.listen(PORT, () => {
   console.log(`🚀 Server running on port ${PORT}`);
   console.log(`📱 Environment: ${process.env.NODE_ENV || "development"}`);
   console.log(`🌐 Frontend URL: ${process.env.FRONTEND_URL || "http://localhost:3000"}`);
+  console.log(`🤖 AI provider: ${process.env.AI_PROVIDER || "ollama"}`);
   console.log(`📧 Email configured: ${process.env.EMAIL_USER ? "✅" : "❌"}`);
   console.log(`☁️  Cloudinary configured: ${process.env.CLOUDINARY_CLOUD_NAME ? "✅" : "❌"}`);
 });

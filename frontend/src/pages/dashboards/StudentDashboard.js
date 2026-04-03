@@ -18,6 +18,7 @@ import {
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import Card, { CardHeader, CardTitle, CardContent } from '../../components/ui/Card';
+import FloatingStudentChatbot from '../../components/student/FloatingStudentChatbot';
 import { stickyNotesService } from '../../services/stickyNotesService';
 import { todoService } from '../../services/todoService';
 
@@ -945,6 +946,7 @@ const StudentDashboard = () => {
                 </Card>
 
       </div>
+      <FloatingStudentChatbot />
     </div>
   );
 };

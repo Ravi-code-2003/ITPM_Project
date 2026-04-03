@@ -1,10 +1,23 @@
+const AI_PROVIDER = String(process.env.AI_PROVIDER || "ollama").toLowerCase();
+
 const OLLAMA_BASE_URL = process.env.OLLAMA_BASE_URL || "http://127.0.0.1:11434";
 const OLLAMA_CHAT_ENDPOINT = process.env.OLLAMA_CHAT_ENDPOINT || "/api/chat";
 const OLLAMA_MODEL = process.env.OLLAMA_MODEL || "hhao/qwen2.5-coder-tools:3b";
-const OLLAMA_TIMEOUT_MS = parseInt(process.env.OLLAMA_TIMEOUT_MS, 10) || 120000;
-const OLLAMA_RETRY_ATTEMPTS = parseInt(process.env.OLLAMA_RETRY_ATTEMPTS, 10) || 1;
-const OLLAMA_CONTEXT_LIMIT = parseInt(process.env.OLLAMA_CONTEXT_LIMIT, 10) || 5;
-const OLLAMA_TEMPERATURE = Number(process.env.OLLAMA_TEMPERATURE || 0.2);
+
+const GROQ_BASE_URL = process.env.GROQ_BASE_URL || "https://api.groq.com/openai/v1";
+const GROQ_CHAT_ENDPOINT = process.env.GROQ_CHAT_ENDPOINT || "/chat/completions";
+const GROQ_MODEL = process.env.GROQ_MODEL || "llama-3.3-70b-versatile";
+const GROQ_API_KEY = process.env.GROQ_API_KEY || "";
+
+const XAI_BASE_URL = process.env.XAI_BASE_URL || "https://api.x.ai/v1";
+const XAI_CHAT_ENDPOINT = process.env.XAI_CHAT_ENDPOINT || "/chat/completions";
+const XAI_MODEL = process.env.XAI_MODEL || "grok-2-latest";
+const XAI_API_KEY = process.env.XAI_API_KEY || "";
+
+const AI_TIMEOUT_MS = parseInt(process.env.AI_TIMEOUT_MS || process.env.OLLAMA_TIMEOUT_MS, 10) || 120000;
+const AI_RETRY_ATTEMPTS = parseInt(process.env.AI_RETRY_ATTEMPTS || process.env.OLLAMA_RETRY_ATTEMPTS, 10) || 1;
+const AI_CONTEXT_LIMIT = parseInt(process.env.AI_CONTEXT_LIMIT || process.env.OLLAMA_CONTEXT_LIMIT, 10) || 5;
+const AI_TEMPERATURE = Number(process.env.AI_TEMPERATURE || process.env.OLLAMA_TEMPERATURE || 0.2);
 
 const SYSTEM_PROMPT = "You are a helpful assistant.";
 
@@ -63,7 +76,7 @@ const buildInternalContext = (user) => {
 const buildMessages = ({ user, contextMessages, userMessage, dbContext }) => {
   const internalContext = buildInternalContext(user);
   const normalizedHistory = (contextMessages || [])
-    .slice(-OLLAMA_CONTEXT_LIMIT)
+    .slice(-AI_CONTEXT_LIMIT)
     .map((msg) => ({
       role: msg.sender === "user" ? "user" : "assistant",
       content: String(msg.content || ""),
@@ -102,6 +115,12 @@ const buildChatUrl = () => {
   return `${base}${endpoint}`;
 };
 
+const buildOpenAiCompatibleUrl = (baseUrl, endpoint) => {
+  const base = String(baseUrl || "").replace(/\/+$/, "");
+  const normalizedEndpoint = endpoint.startsWith("/") ? endpoint : `/${endpoint}`;
+  return `${base}${normalizedEndpoint}`;
+};
+
 const safeParseJson = async (response) => {
   try {
     return await response.json();
@@ -112,7 +131,7 @@ const safeParseJson = async (response) => {
 
 const callOllamaChat = async ({ messages, attempt }) => {
   const controller = new AbortController();
-  const timeout = setTimeout(() => controller.abort(), OLLAMA_TIMEOUT_MS);
+  const timeout = setTimeout(() => controller.abort(), AI_TIMEOUT_MS);
   const startTime = Date.now();
 
   try {
@@ -126,7 +145,7 @@ const callOllamaChat = async ({ messages, attempt }) => {
         messages,
         stream: false,
         options: {
-          temperature: OLLAMA_TEMPERATURE,
+          temperature: AI_TEMPERATURE,
         },
       }),
       signal: controller.signal,
@@ -168,7 +187,7 @@ const callOllamaChat = async ({ messages, attempt }) => {
   } catch (error) {
     if (error.name === "AbortError") {
       throw new AIServiceError("Ollama request timed out", "OLLAMA_TIMEOUT", 504, {
-        timeoutMs: OLLAMA_TIMEOUT_MS,
+        timeoutMs: AI_TIMEOUT_MS,
         attempt,
       });
     }
@@ -186,8 +205,145 @@ const callOllamaChat = async ({ messages, attempt }) => {
   }
 };
 
+const callOpenAiCompatibleChat = async ({
+  providerName,
+  baseUrl,
+  endpoint,
+  apiKey,
+  model,
+  messages,
+  attempt,
+}) => {
+  if (!apiKey) {
+    throw new AIServiceError(
+      `${providerName} API key is missing. Configure ${providerName === "Groq" ? "GROQ_API_KEY" : "XAI_API_KEY"}.`,
+      "PROVIDER_CONFIG_ERROR",
+      500
+    );
+  }
+
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), AI_TIMEOUT_MS);
+  const startTime = Date.now();
+
+  try {
+    const response = await fetch(buildOpenAiCompatibleUrl(baseUrl, endpoint), {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${apiKey}`,
+      },
+      body: JSON.stringify({
+        model,
+        messages,
+        temperature: AI_TEMPERATURE,
+        stream: false,
+      }),
+      signal: controller.signal,
+    });
+
+    const durationMs = Date.now() - startTime;
+    const data = await safeParseJson(response);
+
+    if (!response.ok) {
+      throw new AIServiceError(
+        data?.error?.message || `${providerName} request failed with status ${response.status}`,
+        response.status >= 500 ? "PROVIDER_UPSTREAM_ERROR" : "PROVIDER_BAD_REQUEST",
+        response.status >= 500 ? 502 : 400,
+        {
+          provider: providerName,
+          status: response.status,
+          body: data,
+          attempt,
+        }
+      );
+    }
+
+    const text = data?.choices?.[0]?.message?.content?.trim() || "";
+    if (!text) {
+      throw new AIServiceError("Model returned empty response", "EMPTY_RESPONSE", 502, {
+        provider: providerName,
+        attempt,
+        response: data,
+      });
+    }
+
+    console.log(`[AI] ${providerName} request succeeded in ${durationMs}ms (attempt ${attempt})`);
+    return {
+      text,
+      metrics: {
+        durationMs,
+        attempt,
+      },
+    };
+  } catch (error) {
+    if (error.name === "AbortError") {
+      throw new AIServiceError(`${providerName} request timed out`, "PROVIDER_TIMEOUT", 504, {
+        provider: providerName,
+        timeoutMs: AI_TIMEOUT_MS,
+        attempt,
+      });
+    }
+
+    if (error instanceof AIServiceError) {
+      throw error;
+    }
+
+    throw new AIServiceError(`Failed to reach ${providerName} API`, "PROVIDER_UNREACHABLE", 503, {
+      provider: providerName,
+      cause: error.message,
+      attempt,
+    });
+  } finally {
+    clearTimeout(timeout);
+  }
+};
+
 const shouldRetry = (error) => {
-  return ["OLLAMA_TIMEOUT", "OLLAMA_UNREACHABLE", "OLLAMA_UPSTREAM_ERROR"].includes(error.code);
+  return [
+    "OLLAMA_TIMEOUT",
+    "OLLAMA_UNREACHABLE",
+    "OLLAMA_UPSTREAM_ERROR",
+    "PROVIDER_TIMEOUT",
+    "PROVIDER_UNREACHABLE",
+    "PROVIDER_UPSTREAM_ERROR",
+  ].includes(error.code);
+};
+
+const callProvider = async ({ messages, attempt }) => {
+  if (AI_PROVIDER === "ollama") {
+    return callOllamaChat({ messages, attempt });
+  }
+
+  if (AI_PROVIDER === "groq") {
+    return callOpenAiCompatibleChat({
+      providerName: "Groq",
+      baseUrl: GROQ_BASE_URL,
+      endpoint: GROQ_CHAT_ENDPOINT,
+      apiKey: GROQ_API_KEY,
+      model: GROQ_MODEL,
+      messages,
+      attempt,
+    });
+  }
+
+  if (AI_PROVIDER === "xai" || AI_PROVIDER === "grok") {
+    return callOpenAiCompatibleChat({
+      providerName: "xAI",
+      baseUrl: XAI_BASE_URL,
+      endpoint: XAI_CHAT_ENDPOINT,
+      apiKey: XAI_API_KEY,
+      model: XAI_MODEL,
+      messages,
+      attempt,
+    });
+  }
+
+  throw new AIServiceError(
+    `Unsupported AI_PROVIDER: ${AI_PROVIDER}. Use one of: ollama, groq, xai, grok.`,
+    "PROVIDER_CONFIG_ERROR",
+    500
+  );
 };
 
 const generateResponse = async (
@@ -206,16 +362,16 @@ const generateResponse = async (
     dbContext,
   });
 
-  const totalAttempts = Math.max(1, OLLAMA_RETRY_ATTEMPTS + 1);
+  const totalAttempts = Math.max(1, AI_RETRY_ATTEMPTS + 1);
   let lastError;
 
   for (let attempt = 1; attempt <= totalAttempts; attempt += 1) {
     try {
-      return await callOllamaChat({ messages, attempt });
+      return await callProvider({ messages, attempt });
     } catch (error) {
       lastError = error;
       const willRetry = attempt < totalAttempts && shouldRetry(error);
-      console.error(`[AI] Ollama attempt ${attempt} failed: ${error.code} - ${error.message}`);
+      console.error(`[AI] Provider ${AI_PROVIDER} attempt ${attempt} failed: ${error.code} - ${error.message}`);
 
       if (!willRetry) {
         break;
