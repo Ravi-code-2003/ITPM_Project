@@ -1,12 +1,19 @@
 import React, { useEffect, useState } from "react";
 import {
+  BookOpen,
   Calendar,
+  CheckCircle,
+  Clock,
   Heart,
+  Home,
+  MapPin,
   ShoppingBag,
   DollarSign,
   Star,
-  Utensils,
+  Store,
   ShoppingCart,
+  Utensils,
+  XCircle,
 } from "lucide-react";
 import { useSearchParams, useNavigate } from "react-router-dom";
 import Button from "../../components/ui/Button";
@@ -19,9 +26,7 @@ import Card, {
 import FavoritesPage from "../../components/student/FavoritesPage";
 import OrderHistory from "../../components/student/OrderHistory";
 import CartPage from "../../components/student/CartPage";
-import TodoTable from "../../components/notes/TodoTable";
 import LostFoundSection from "../../components/lostfound/LostFoundSection";
-import AddNoteButton from "../../components/notes/AddNoteButton";
 import BudgetSummary from "../../components/budget/BudgetSummary";
 import MealPlan from "../../components/budget/MealPlan";
 import Suggestions from "../../components/budget/Suggestions";
@@ -29,12 +34,6 @@ import Insights from "../../components/budget/Insights";
 import api, { budgetAPI } from "../../services/api";
 import { useCart } from "../../contexts/CartContext";
 import toast from "react-hot-toast";
-import { BookOpen, Home, Store, MapPin, CheckCircle, XCircle, Clock } from 'lucide-react';
-import React, { useEffect, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { BookOpen, CheckCircle, Clock, Home, MapPin, Store, XCircle } from 'lucide-react';
-import Button from '../../components/ui/Button';
-import Card, { CardHeader, CardTitle, CardContent } from '../../components/ui/Card';
 import { roomRequestService } from '../../services/accommodationService';
 
 const normalizeRequests = (items) => {
@@ -139,7 +138,6 @@ const StudentDashboard = () => {
   }, [activeTab]);
 
   const [requests, setRequests] = useState([]);
-  const [roomLoading, setRoomLoading] = useState(true);
 
   useEffect(() => {
     const fetchRequests = async () => {
@@ -148,8 +146,6 @@ const StudentDashboard = () => {
         setRequests(normalizeRequests(response.data));
       } catch (error) {
         console.error('Failed to fetch requests:', error);
-      } finally {
-        setRoomLoading(false);
       }
     };
     fetchRequests();
@@ -319,7 +315,6 @@ const StudentDashboard = () => {
                 Manage your favorites, shopping cart, budget, and track your food orders
               </p>
             </div>
-            <AddNoteButton />
           </div>
         </div>
 
@@ -361,7 +356,6 @@ const StudentDashboard = () => {
                   </table>
                 </div>
               )}
-              <TodoTable />
             </CardContent>
           </Card>
 
