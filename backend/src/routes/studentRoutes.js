@@ -14,6 +14,8 @@ const {
   voteInPoll,
   getPollResults,
   getBudgetTracker,
+  getStudentFinanceProfile,
+  updateStudentFinanceProfile,
   // New enhanced poll methods
   getRestaurantPolls,
   voteInPollProposal
@@ -65,6 +67,8 @@ router.get("/restaurant/:id/menu", getRestaurantMenu);
 // Smart Features Routes
 router.get("/budget-meals", getBudgetMeals);
 router.get("/budget-tracker", getBudgetTracker);
+router.get("/finance-profile", getStudentFinanceProfile);
+router.put("/finance-profile", updateStudentFinanceProfile);
 
 // Order Routes
 router.route("/orders")

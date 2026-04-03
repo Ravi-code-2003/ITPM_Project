@@ -4,6 +4,7 @@ const RoomOffer = require("../models/RoomOffer");
 const { uploadToCloudinary } = require("../utils/upload");
 const { calculateRoomToCampusDistance } = require("../utils/distanceCalculator");
 const campusLocations = require("../config/campusLocations");
+const { broadcastNotificationToStudents } = require("../services/notificationService");
 const joi = require("joi");
 
 // Validation schema for room creation/update
@@ -379,6 +380,18 @@ const createRoom = async (req, res) => {
       gender: gender || "any",
       rules: rules || "",
     });
+
+    try {
+      const ownerName = req.user?.fullName || 'A house owner';
+      await broadcastNotificationToStudents({
+        type: 'room-added',
+        title: 'New room listing available',
+        message: `${ownerName} added a room in ${area}. Rent: LKR ${monthlyRent}.`,
+        targetPath: '/accommodation'
+      });
+    } catch (notifyError) {
+      console.error('Failed to broadcast room notification:', notifyError.message);
+    }
 
     res.status(201).json({
       success: true,

@@ -6,7 +6,7 @@ const Order = require("../models/Order");
 const Poll = require("../models/Poll");
 const PollProposal = require("../models/PollProposal");
 const User = require("../models/User");
-const { createOrderNotification } = require("../services/notificationService");
+const { createOrderNotification, broadcastNotificationToStudents } = require("../services/notificationService");
 
 const getStudentStatusNotificationContent = (status, orderNumber) => {
   const statusContent = {
@@ -275,6 +275,20 @@ const createOffer = async (req, res) => {
     
     await offer.save();
     await offer.populate('foodItemId', 'name price category');
+
+    try {
+      const foodName = offer.foodItemId?.name || 'a meal';
+      const shopName = restaurant?.shopName || req.user?.shopName || 'A restaurant';
+
+      await broadcastNotificationToStudents({
+        type: 'shop-offer-added',
+        title: 'New food offer available',
+        message: `${shopName} added an offer for ${foodName} (${discountPercent}% off).`,
+        targetPath: '/restaurants'
+      });
+    } catch (notifyError) {
+      console.error('Failed to broadcast offer notification:', notifyError.message);
+    }
     
     res.status(201).json({
       success: true,
