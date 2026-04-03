@@ -39,6 +39,7 @@ import EducationProviderDashboard from './pages/dashboards/EducationProviderDash
 import ExamStudyTrackerPage from './pages/ExamStudyTrackerPage';
 import StudentTimetablePage from './pages/StudentTimetablePage';
 import TodoListPage from './pages/TodoListPage';
+import LostFoundPage from './pages/LostFoundPage';
 
 // Student Components  
 import RestaurantDetail from './components/student/RestaurantDetail';
@@ -263,6 +264,16 @@ function App() {
                       <RoleRoute roles={['student']}>
                         <Layout showFooter={false}>
                           <TodoListPage />
+                        </Layout>
+                      </RoleRoute>
+                    }
+                  />
+                  <Route
+                    path="/student/lost-found"
+                    element={
+                      <RoleRoute roles={['student']}>
+                        <Layout showFooter={false}>
+                          <LostFoundPage />
                         </Layout>
                       </RoleRoute>
                     }

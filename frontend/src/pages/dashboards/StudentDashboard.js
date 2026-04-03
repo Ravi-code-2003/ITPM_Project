@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import {
   ListTodo,
   Pencil,
@@ -45,6 +46,7 @@ const formatDateTime = (value) => {
 };
 
 const StudentDashboard = () => {
+  const navigate = useNavigate();
   const [notesLoading, setNotesLoading] = useState(true);
   const [notes, setNotes] = useState([]);
   const [noteSearch, setNoteSearch] = useState('');
@@ -216,7 +218,7 @@ const StudentDashboard = () => {
         todoSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
       }
     } else if (tool === 'lost-found') {
-      toast.info('Lost & Found coming soon!');
+      navigate('/student/lost-found');
     }
   };
 

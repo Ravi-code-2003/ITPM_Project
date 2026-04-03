@@ -41,6 +41,15 @@ const {
   toggleTodoCompletion,
   deleteTodo,
 } = require("../controllers/todoController");
+const {
+  getLostFoundItems,
+  createLostFoundItem,
+  updateLostFoundItem,
+  deleteLostFoundItem,
+  respondToLostFoundItem,
+  resolveLostFoundItem,
+} = require("../controllers/lostFoundController");
+const { upload } = require("../utils/upload");
 
 const router = express.Router();
 
@@ -118,5 +127,20 @@ router.route("/todos/:id")
 
 router.route("/todos/:id/toggle")
   .patch(toggleTodoCompletion);
+
+// Lost & Found Routes
+router.route("/lost-found")
+  .get(getLostFoundItems)
+  .post(upload.single("image"), createLostFoundItem);
+
+router.route("/lost-found/:id")
+  .patch(upload.single("image"), updateLostFoundItem)
+  .delete(deleteLostFoundItem);
+
+router.route("/lost-found/:id/respond")
+  .post(respondToLostFoundItem);
+
+router.route("/lost-found/:id/resolve/:responseId")
+  .patch(resolveLostFoundItem);
 
 module.exports = router;
