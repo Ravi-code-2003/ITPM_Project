@@ -28,6 +28,19 @@ const {
   updateTimetableItem,
   deleteTimetableItem,
 } = require("../controllers/studyTimetableController");
+const {
+  getStickyNotes,
+  createStickyNote,
+  updateStickyNote,
+  deleteStickyNote,
+} = require("../controllers/stickyNotesController");
+const {
+  getTodos,
+  createTodo,
+  updateTodo,
+  toggleTodoCompletion,
+  deleteTodo,
+} = require("../controllers/todoController");
 
 const router = express.Router();
 
@@ -84,5 +97,26 @@ router.route("/timetable")
 router.route("/timetable/:id")
   .patch(updateTimetableItem)
   .delete(deleteTimetableItem);
+
+// Sticky Notes Routes
+router.route("/sticky-notes")
+  .get(getStickyNotes)
+  .post(createStickyNote);
+
+router.route("/sticky-notes/:id")
+  .patch(updateStickyNote)
+  .delete(deleteStickyNote);
+
+// Todo Routes
+router.route("/todos")
+  .get(getTodos)
+  .post(createTodo);
+
+router.route("/todos/:id")
+  .patch(updateTodo)
+  .delete(deleteTodo);
+
+router.route("/todos/:id/toggle")
+  .patch(toggleTodoCompletion);
 
 module.exports = router;

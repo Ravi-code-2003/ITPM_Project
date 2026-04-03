@@ -38,6 +38,7 @@ import HouseOwnerDashboard from './pages/dashboards/HouseOwnerDashboard';
 import EducationProviderDashboard from './pages/dashboards/EducationProviderDashboard';
 import ExamStudyTrackerPage from './pages/ExamStudyTrackerPage';
 import StudentTimetablePage from './pages/StudentTimetablePage';
+import TodoListPage from './pages/TodoListPage';
 
 // Student Components  
 import RestaurantDetail from './components/student/RestaurantDetail';
@@ -252,6 +253,16 @@ function App() {
                       <RoleRoute roles={['student']}>
                         <Layout showFooter={false}>
                           <StudentTimetablePage />
+                        </Layout>
+                      </RoleRoute>
+                    }
+                  />
+                  <Route
+                    path="/student/todos"
+                    element={
+                      <RoleRoute roles={['student']}>
+                        <Layout showFooter={false}>
+                          <TodoListPage />
                         </Layout>
                       </RoleRoute>
                     }
