@@ -36,6 +36,7 @@ import StudentDashboard from './pages/dashboards/StudentDashboard';
 import ShopOwnerDashboard from './pages/dashboards/ShopOwnerDashboard';
 import HouseOwnerDashboard from './pages/dashboards/HouseOwnerDashboard';
 import EducationProviderDashboard from './pages/dashboards/EducationProviderDashboard';
+import FinancialSupportPage from './pages/FinancialSupportPage';
 import ExamStudyTrackerPage from './pages/ExamStudyTrackerPage';
 import StudentTimetablePage from './pages/StudentTimetablePage';
 import TodoListPage from './pages/TodoListPage';
@@ -274,6 +275,16 @@ function App() {
                       <RoleRoute roles={['student']}>
                         <Layout showFooter={false}>
                           <LostFoundPage />
+                        </Layout>
+                      </RoleRoute>
+                    }
+                  />
+                  <Route
+                    path="/student/financial-support"
+                    element={
+                      <RoleRoute roles={['student']}>
+                        <Layout showFooter={false}>
+                          <FinancialSupportPage />
                         </Layout>
                       </RoleRoute>
                     }
