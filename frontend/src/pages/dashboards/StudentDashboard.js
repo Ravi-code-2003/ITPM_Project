@@ -374,11 +374,11 @@ const StudentDashboard = () => {
           <p className="text-secondary dark:text-gray-400 mt-1 text-sm sm:text-base">Explore services and opportunities</p>
         </div>
 
-        <div className="mb-6 flex flex-wrap items-center gap-2.5">
+        <div className="mb-6 flex flex-wrap items-center justify-end gap-2.5">
           <button
             type="button"
             onClick={() => handleTopToolClick('sticky-notes')}
-            className="inline-flex items-center gap-2 rounded-full px-4 py-2 text-xs sm:text-sm font-semibold border transition-colors bg-amber-500 text-white border-amber-500"
+            className="inline-flex items-center gap-2 rounded-full px-4 py-2 text-xs sm:text-sm font-semibold border shadow-md transition-all duration-200 bg-primary hover:bg-primary-hover text-white border-primary"
           >
             <StickyNote className="h-4 w-4" />
             Sticky Notes
@@ -387,7 +387,7 @@ const StudentDashboard = () => {
           <button
             type="button"
             onClick={() => handleTopToolClick('todo')}
-            className="inline-flex items-center gap-2 rounded-full px-4 py-2 text-xs sm:text-sm font-semibold border transition-colors bg-white dark:bg-slate-900 text-amber-700 dark:text-amber-300 border-amber-300 dark:border-amber-700 hover:bg-amber-50 dark:hover:bg-amber-900/20"
+            className="inline-flex items-center gap-2 rounded-full px-4 py-2 text-xs sm:text-sm font-semibold border shadow-sm transition-all duration-200 bg-amber-100 hover:bg-amber-200 text-amber-800 dark:bg-amber-900/40 dark:hover:bg-amber-900/60 dark:text-amber-200 border-amber-300 dark:border-amber-700"
           >
             <ListTodo className="h-4 w-4" />
             ToDo List
@@ -396,7 +396,7 @@ const StudentDashboard = () => {
           <button
             type="button"
             onClick={() => handleTopToolClick('lost-found')}
-            className="inline-flex items-center gap-2 rounded-full px-4 py-2 text-xs sm:text-sm font-semibold border transition-colors bg-white dark:bg-slate-900 text-amber-700 dark:text-amber-300 border-amber-300 dark:border-amber-700 hover:bg-amber-50 dark:hover:bg-amber-900/20"
+            className="inline-flex items-center gap-2 rounded-full px-4 py-2 text-xs sm:text-sm font-semibold border shadow-sm transition-all duration-200 bg-amber-100 hover:bg-amber-200 text-amber-800 dark:bg-amber-900/40 dark:hover:bg-amber-900/60 dark:text-amber-200 border-amber-300 dark:border-amber-700"
           >
             <Search className="h-4 w-4" />
             Lost &amp; Found
@@ -451,7 +451,7 @@ const StudentDashboard = () => {
                 <button
                   type="submit"
                   disabled={creating}
-                  className="lg:col-span-2 inline-flex items-center justify-center gap-2 rounded-xl bg-amber-500 hover:bg-amber-600 text-white font-semibold px-3 py-1.5 text-xs transition-colors disabled:opacity-60"
+                  className="lg:col-span-2 inline-flex items-center justify-center gap-2 rounded-xl bg-primary hover:bg-primary-hover text-white font-semibold px-3 py-1.5 text-xs shadow-md transition-all duration-200 disabled:opacity-60"
                 >
                   <Plus className="h-4 w-4" />
                   {creating ? 'Adding...' : 'Add Note'}
@@ -623,7 +623,7 @@ const StudentDashboard = () => {
                         <button
                           type="submit"
                           disabled={creatingTodo}
-                          className="lg:col-span-3 inline-flex items-center justify-center gap-2 rounded-xl bg-amber-500 hover:bg-amber-600 text-white font-semibold px-3 py-1.5 text-xs transition-colors disabled:opacity-60"
+                          className="lg:col-span-3 inline-flex items-center justify-center gap-2 rounded-xl bg-primary hover:bg-primary-hover text-white font-semibold px-3 py-1.5 text-xs shadow-md transition-all duration-200 disabled:opacity-60"
                         >
                           <Plus className="h-4 w-4" />
                           {creatingTodo ? 'Adding...' : 'Add Todo'}
