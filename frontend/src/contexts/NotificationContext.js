@@ -6,6 +6,33 @@ import { useAuth } from './AuthContext';
 
 const NotificationContext = createContext(null);
 const POLL_INTERVAL_MS = 10000;
+const READ_ACTIVITY_STORAGE_KEY = 'studentReadActivityIds';
+
+const getStoredReadActivityIds = () => {
+  if (typeof window === 'undefined') {
+    return new Set();
+  }
+
+  try {
+    const raw = window.localStorage.getItem(READ_ACTIVITY_STORAGE_KEY);
+    const parsed = raw ? JSON.parse(raw) : [];
+    return new Set(Array.isArray(parsed) ? parsed : []);
+  } catch {
+    return new Set();
+  }
+};
+
+const persistReadActivityIds = (ids) => {
+  if (typeof window === 'undefined') {
+    return;
+  }
+
+  try {
+    window.localStorage.setItem(READ_ACTIVITY_STORAGE_KEY, JSON.stringify(Array.from(ids)));
+  } catch {
+    // Ignore storage failures (private mode/quota) and keep in-memory state.
+  }
+};
 
 const normalizeNotifications = (items) => {
   if (!Array.isArray(items)) {
@@ -15,8 +42,17 @@ const normalizeNotifications = (items) => {
   return items.filter((item) => item && typeof item === 'object');
 };
 
-const buildStudentActivityNotifications = (requests = []) => {
+const buildActivityVersionId = (request = {}) => {
+  const requestId = request?._id || 'unknown';
+  const status = request?.status || 'PENDING';
+  const versionSource = request?.updatedAt || request?.ownerResponse?.updatedAt || request?.createdAt || status;
+  const version = encodeURIComponent(String(versionSource));
+  return `activity-${requestId}-${status}-${version}`;
+};
+
+const buildStudentActivityNotifications = (requests = [], readActivityIds = new Set()) => {
   return requests.map((request) => {
+    const activityId = buildActivityVersionId(request);
     const roomTitle = request.room?.title || 'Room inquiry';
     const area = request.room?.location?.area;
     const status = request.status || 'PENDING';
@@ -34,11 +70,11 @@ const buildStudentActivityNotifications = (requests = []) => {
     if (request.ownerResponse?.responseMessage) messageParts.push(`Owner: ${request.ownerResponse.responseMessage}`);
 
     return {
-      _id: `activity-${request._id}`,
+      _id: activityId,
       title: `${statusTitleMap[status] || 'Request update'} - ${roomTitle}`,
       message: messageParts.join(' • ') || `Status: ${status}`,
       createdAt: request.updatedAt || request.createdAt || new Date().toISOString(),
-      isRead: true,
+      isRead: readActivityIds.has(activityId),
       activityType: 'room-request',
       status,
       requestId: request._id
@@ -51,6 +87,7 @@ export const NotificationProvider = ({ children }) => {
   const [notifications, setNotifications] = useState([]);
   const [unreadCount, setUnreadCount] = useState(0);
   const [loading, setLoading] = useState(false);
+  const [readActivityIds, setReadActivityIds] = useState(() => getStoredReadActivityIds());
   const previousLatestIdRef = useRef(null);
 
   const isNotificationRole = isAuthenticated && ['student', 'shop-owner'].includes(user?.role);
@@ -70,13 +107,18 @@ export const NotificationProvider = ({ children }) => {
     try {
       const response = await notificationAPI.getMyNotifications(20);
       const list = normalizeNotifications(response.notifications);
-      const unread = response.unreadCount || 0;
+      const serverUnread = typeof response.unreadCount === 'number'
+        ? response.unreadCount
+        : list.filter((item) => !item.isRead).length;
 
       let mergedNotifications = list;
+      let activityUnread = 0;
       if (user?.role === 'student') {
         const studentRequestsResponse = await roomRequestService.getStudentRequests();
         const studentRequests = studentRequestsResponse?.data || [];
-        const activityNotifications = buildStudentActivityNotifications(studentRequests);
+        const activityNotifications = buildStudentActivityNotifications(studentRequests, readActivityIds);
+
+        activityUnread = activityNotifications.filter((item) => !item.isRead).length;
 
         mergedNotifications = [...activityNotifications, ...list]
           .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
@@ -91,7 +133,7 @@ export const NotificationProvider = ({ children }) => {
 
       previousLatestIdRef.current = list[0]?._id || null;
       setNotifications(mergedNotifications);
-      setUnreadCount(unread);
+      setUnreadCount(serverUnread + activityUnread);
     } catch (error) {
       if (!silent) {
         console.error('Failed to fetch notifications:', error);
@@ -101,10 +143,32 @@ export const NotificationProvider = ({ children }) => {
         setLoading(false);
       }
     }
-  }, [isNotificationRole]);
+  }, [isNotificationRole, readActivityIds, user?.role]);
 
   const markAsRead = useCallback(async (notificationId) => {
     if (!notificationId) {
+      return;
+    }
+
+    if (notificationId.startsWith('activity-')) {
+      setNotifications((prev) =>
+        normalizeNotifications(prev).map((item) =>
+          item._id === notificationId ? { ...item, isRead: true, readAt: new Date().toISOString() } : item
+        )
+      );
+
+      setReadActivityIds((prev) => {
+        if (prev.has(notificationId)) {
+          return prev;
+        }
+
+        const next = new Set(prev);
+        next.add(notificationId);
+        persistReadActivityIds(next);
+        return next;
+      });
+
+      setUnreadCount((prev) => Math.max(0, prev - 1));
       return;
     }
 
@@ -125,6 +189,10 @@ export const NotificationProvider = ({ children }) => {
   }, []);
 
   const markAllAsRead = useCallback(async () => {
+    const activityIds = normalizeNotifications(notifications)
+      .map((item) => item?._id)
+      .filter((id) => typeof id === 'string' && id.startsWith('activity-'));
+
     const response = await notificationAPI.markAllAsRead();
 
     setNotifications((prev) =>
@@ -135,12 +203,21 @@ export const NotificationProvider = ({ children }) => {
       }))
     );
 
+    if (activityIds.length > 0) {
+      setReadActivityIds((prev) => {
+        const next = new Set(prev);
+        activityIds.forEach((id) => next.add(id));
+        persistReadActivityIds(next);
+        return next;
+      });
+    }
+
     if (typeof response.unreadCount === 'number') {
-      setUnreadCount(response.unreadCount);
+      setUnreadCount(0);
     } else {
       setUnreadCount(0);
     }
-  }, []);
+  }, [notifications]);
 
   useEffect(() => {
     fetchNotifications();

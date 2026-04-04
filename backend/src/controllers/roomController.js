@@ -1,6 +1,7 @@
 const Room = require("../models/RoomModel");
 const RoomRequest = require("../models/RoomRequest");
 const RoomOffer = require("../models/RoomOffer");
+const User = require("../models/User");
 const { uploadToCloudinary } = require("../utils/upload");
 const { calculateRoomToCampusDistance } = require("../utils/distanceCalculator");
 const campusLocations = require("../config/campusLocations");
@@ -105,6 +106,28 @@ const getRooms = async (req, res) => {
 
     // Build filter query
     const filter = { isActive: true };
+
+    // Only show listings created by approved house owners.
+    const approvedOwnerIds = await User.find({
+      role: "house-owner",
+      isApproved: true,
+    }).distinct("_id");
+
+    if (approvedOwnerIds.length === 0) {
+      return res.status(200).json({
+        success: true,
+        data: [],
+        campus: { id: campusLocations.default.id, name: campusLocations.default.name },
+        pagination: {
+          total: 0,
+          page: parseInt(page),
+          limit: parseInt(limit),
+          pages: 0,
+        },
+      });
+    }
+
+    filter.owner = { $in: approvedOwnerIds };
 
     if (area) {
       filter["location.area"] = { $regex: area, $options: "i" };
@@ -232,9 +255,15 @@ const getRooms = async (req, res) => {
 const getRoomById = async (req, res) => {
   try {
     const room = await Room.findById(req.params.id)
-      .populate("owner", "fullName email address");
+      .populate("owner", "fullName email address role isApproved");
 
-    if (!room) {
+    if (
+      !room ||
+      !room.isActive ||
+      !room.owner ||
+      room.owner.role !== "house-owner" ||
+      !room.owner.isApproved
+    ) {
       return res.status(404).json({ message: "Room not found" });
     }
 
@@ -268,6 +297,12 @@ const getRoomById = async (req, res) => {
 // @access  Private (House Owner only)
 const createRoom = async (req, res) => {
   try {
+    if (!req.user || req.user.role !== "house-owner" || !req.user.isApproved) {
+      return res.status(403).json({
+        message: "Only approved house owners can create room listings",
+      });
+    }
+
     // Parse facilities if it's a JSON string
     if (req.body.facilities && typeof req.body.facilities === 'string') {
       try {
@@ -594,6 +629,12 @@ const deleteRoom = async (req, res) => {
 // @access  Private (House Owner only)
 const getMyRooms = async (req, res) => {
   try {
+    if (!req.user || req.user.role !== "house-owner" || !req.user.isApproved) {
+      return res.status(403).json({
+        message: "Only approved house owners can access room listings",
+      });
+    }
+
     const rooms = await Room.find({ owner: req.user._id, isActive: true })
       .sort({ createdAt: -1 })
       .lean();

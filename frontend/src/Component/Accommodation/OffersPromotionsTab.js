@@ -1,26 +1,124 @@
 import React, { useState, useEffect } from 'react';
 import { Plus, Edit, Trash2, Gift, Calendar, DollarSign, ToggleLeft, ToggleRight } from 'lucide-react';
+import * as yup from 'yup';
 import Button from '../../components/ui/Button';
 import Card, { CardHeader, CardTitle, CardContent } from '../../components/ui/Card';
 import { roomOfferService, roomService } from '../../services/accommodationService';
 import toast from 'react-hot-toast';
 
+const getTodayIsoDate = () => {
+  const now = new Date();
+  const offset = now.getTimezoneOffset() * 60000;
+  return new Date(now.getTime() - offset).toISOString().split('T')[0];
+};
+
+const startOfDay = (dateInput) => {
+  const date = new Date(dateInput);
+  if (Number.isNaN(date.getTime())) return null;
+  date.setHours(0, 0, 0, 0);
+  return date;
+};
+
+const trimFormText = (data) => ({
+  ...data,
+  title: (data.title || '').trim(),
+  description: (data.description || '').trim(),
+});
+
+const createOfferValidationSchema = (roomIds = []) =>
+  yup.object({
+    roomId: yup
+      .string()
+      .required('Select Room is required')
+      .oneOf(roomIds, 'Please select a valid room option'),
+    title: yup
+      .string()
+      .transform((value) => (value || '').trim())
+      .required('Offer Title is required')
+      .min(5, 'Offer Title must be at least 5 characters')
+      .max(100, 'Offer Title cannot exceed 100 characters')
+      .test('has-letter', 'Offer Title must contain at least one letter', (value) => /[A-Za-z]/.test(value || '')),
+    description: yup
+      .string()
+      .transform((value) => (value || '').trim())
+      .test('description-length', 'Description must be at least 10 characters when provided', (value) => {
+        if (!value) return true;
+        return value.length >= 10;
+      })
+      .max(500, 'Description cannot exceed 500 characters'),
+    discountType: yup
+      .string()
+      .required('Discount Type is required')
+      .oneOf(['none', 'percentage', 'fixed'], 'Discount Type must be No Discount, Percentage, or Fixed Amount'),
+    discountAmount: yup
+      .number()
+      .transform((value, originalValue) => (originalValue === '' || originalValue === null || originalValue === undefined ? null : value))
+      .nullable()
+      .when('discountType', {
+        is: 'fixed',
+        then: (schema) =>
+          schema
+            .typeError('Discount Value must be a number')
+            .required('Discount Value is required for Fixed Amount')
+            .moreThan(0, 'Discount Value must be greater than 0')
+            .max(500000, 'Discount Value cannot exceed 500000'),
+        otherwise: (schema) => schema.nullable().notRequired(),
+      }),
+    discountPercent: yup
+      .number()
+      .transform((value, originalValue) => (originalValue === '' || originalValue === null || originalValue === undefined ? null : value))
+      .nullable()
+      .when('discountType', {
+        is: 'percentage',
+        then: (schema) =>
+          schema
+            .typeError('Discount Value must be a number')
+            .required('Discount Value is required for Percentage')
+            .min(1, 'Discount Value must be at least 1')
+            .max(100, 'Discount Value cannot exceed 100'),
+        otherwise: (schema) => schema.nullable().notRequired(),
+      }),
+    validFrom: yup
+      .string()
+      .required('Valid From is required')
+      .test('valid-from-date', 'Valid From must be a valid date', (value) => Boolean(startOfDay(value)))
+      .test('valid-from-not-past', 'Valid From must be today or a future date', (value) => {
+        const selected = startOfDay(value);
+        const today = startOfDay(new Date());
+        if (!selected || !today) return false;
+        return selected >= today;
+      }),
+    validTo: yup
+      .string()
+      .required('Valid To is required')
+      .test('valid-to-date', 'Valid To must be a valid date', (value) => Boolean(startOfDay(value)))
+      .test('valid-to-after-from', 'Valid To must be after Valid From', function validateValidTo(value) {
+        const from = startOfDay(this.parent.validFrom);
+        const to = startOfDay(value);
+        if (!from || !to) return false;
+        return to > from;
+      }),
+  });
+
 const OffersPromotionsTab = ({ onUpdate }) => {
-  const [offers, setOffers] = useState([]);
-  const [rooms, setRooms] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [showForm, setShowForm] = useState(false);
-  const [editingOffer, setEditingOffer] = useState(null);
-  const [formData, setFormData] = useState({
+  const initialFormData = {
     roomId: '',
     title: '',
     description: '',
     discountType: 'none',
     discountAmount: '',
     discountPercent: '',
-    validFrom: new Date().toISOString().split('T')[0],
+    validFrom: getTodayIsoDate(),
     validTo: '',
-  });
+  };
+
+  const [offers, setOffers] = useState([]);
+  const [rooms, setRooms] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [showForm, setShowForm] = useState(false);
+  const [editingOffer, setEditingOffer] = useState(null);
+  const [formData, setFormData] = useState(initialFormData);
+  const [fieldErrors, setFieldErrors] = useState({});
 
   useEffect(() => {
     fetchData();
@@ -46,16 +144,8 @@ const OffersPromotionsTab = ({ onUpdate }) => {
 
   const handleAddOffer = () => {
     setEditingOffer(null);
-    setFormData({
-      roomId: '',
-      title: '',
-      description: '',
-      discountType: 'none',
-      discountAmount: '',
-      discountPercent: '',
-      validFrom: new Date().toISOString().split('T')[0],
-      validTo: '',
-    });
+    setFormData(initialFormData);
+    setFieldErrors({});
     setShowForm(true);
   };
 
@@ -71,7 +161,61 @@ const OffersPromotionsTab = ({ onUpdate }) => {
       validFrom: offer.validFrom ? new Date(offer.validFrom).toISOString().split('T')[0] : '',
       validTo: offer.validTo ? new Date(offer.validTo).toISOString().split('T')[0] : '',
     });
+    setFieldErrors({});
     setShowForm(true);
+  };
+
+  const handleInputChange = (field, value) => {
+    setFormData((prev) => ({ ...prev, [field]: value }));
+    setFieldErrors((prev) => {
+      if (!prev[field]) return prev;
+      const next = { ...prev };
+      delete next[field];
+      return next;
+    });
+  };
+
+  const handleDiscountTypeChange = (discountType) => {
+    setFormData((prev) => ({
+      ...prev,
+      discountType,
+      discountAmount: discountType === 'fixed' ? prev.discountAmount : '',
+      discountPercent: discountType === 'percentage' ? prev.discountPercent : '',
+    }));
+
+    setFieldErrors((prev) => {
+      const next = { ...prev };
+      delete next.discountType;
+      delete next.discountAmount;
+      delete next.discountPercent;
+      return next;
+    });
+  };
+
+  const getInputClassName = (fieldName) => {
+    const baseClass = 'w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-primary dark:bg-surface-dark dark:border-gray-600 dark:text-gray-100';
+    return fieldErrors[fieldName]
+      ? `${baseClass} border-red-500 focus:ring-red-500`
+      : `${baseClass} border-secondary/30`;
+  };
+
+  const hasOverlappingActiveOffer = ({ roomId, validFrom, validTo, excludedOfferId = null }) => {
+    const newStart = startOfDay(validFrom);
+    const newEnd = startOfDay(validTo);
+
+    if (!newStart || !newEnd) return false;
+
+    return offers.some((offer) => {
+      if (!offer?.isActive) return false;
+      if (excludedOfferId && offer._id === excludedOfferId) return false;
+      if ((offer.room?._id || '') !== roomId) return false;
+
+      const offerStart = startOfDay(offer.validFrom);
+      const offerEnd = startOfDay(offer.validTo);
+      if (!offerStart || !offerEnd) return false;
+
+      return offerStart <= newEnd && offerEnd >= newStart;
+    });
   };
 
   const handleDeleteOffer = async (offerId) => {
@@ -99,27 +243,76 @@ const OffersPromotionsTab = ({ onUpdate }) => {
   const handleSubmit = async (e) => {
     e.preventDefault();
 
+    if (formData.description && formData.description.length > 0 && formData.description.trim().length === 0) {
+      setFieldErrors((prev) => ({
+        ...prev,
+        description: 'Description cannot contain only spaces',
+      }));
+      toast.error('Please fix the highlighted fields');
+      return;
+    }
+
+    const sanitizedData = trimFormText(formData);
+    setFormData(sanitizedData);
+
+    try {
+      const schema = createOfferValidationSchema(rooms.map((room) => room._id));
+      await schema.validate(sanitizedData, { abortEarly: false });
+      setFieldErrors({});
+    } catch (validationError) {
+      if (validationError.name === 'ValidationError') {
+        const nextErrors = {};
+        validationError.inner.forEach((err) => {
+          if (err.path && !nextErrors[err.path]) {
+            nextErrors[err.path] = err.message;
+          }
+        });
+        setFieldErrors(nextErrors);
+        toast.error('Please fix the highlighted fields');
+        return;
+      }
+    }
+
+    const overlapDetected = hasOverlappingActiveOffer({
+      roomId: sanitizedData.roomId,
+      validFrom: sanitizedData.validFrom,
+      validTo: sanitizedData.validTo,
+      excludedOfferId: editingOffer?._id || null,
+    });
+
+    if (overlapDetected) {
+      setFieldErrors((prev) => ({
+        ...prev,
+        validFrom: 'An active offer already overlaps with this date range for the selected room',
+        validTo: 'Choose a non-overlapping date range',
+      }));
+      toast.error('Overlapping active offers are not allowed for the same room');
+      return;
+    }
+
     try {
       const submitData = {
-        title: formData.title,
-        description: formData.description,
-        discountType: formData.discountType,
-        discountAmount: parseFloat(formData.discountAmount) || 0,
-        discountPercent: parseFloat(formData.discountPercent) || 0,
-        validFrom: formData.validFrom,
-        validTo: formData.validTo,
+        title: sanitizedData.title,
+        description: sanitizedData.description,
+        discountType: sanitizedData.discountType,
+        discountAmount: sanitizedData.discountType === 'fixed' ? Number(sanitizedData.discountAmount) : 0,
+        discountPercent: sanitizedData.discountType === 'percentage' ? Number(sanitizedData.discountPercent) : 0,
+        validFrom: sanitizedData.validFrom,
+        validTo: sanitizedData.validTo,
       };
 
       if (editingOffer) {
         await roomOfferService.updateOffer(editingOffer._id, submitData);
         toast.success('Offer updated successfully');
       } else {
-        await roomOfferService.createOffer(formData.roomId, submitData);
+        await roomOfferService.createOffer(sanitizedData.roomId, submitData);
         toast.success('Offer created successfully');
       }
 
       setShowForm(false);
       setEditingOffer(null);
+      setFormData(initialFormData);
+      setFieldErrors({});
       fetchData();
     } catch (error) {
       toast.error(error.response?.data?.message || 'Failed to save offer');
@@ -173,9 +366,9 @@ const OffersPromotionsTab = ({ onUpdate }) => {
                   </label>
                   <select
                     value={formData.roomId}
-                    onChange={(e) => setFormData({ ...formData, roomId: e.target.value })}
+                    onChange={(e) => handleInputChange('roomId', e.target.value)}
                     required
-                    className="w-full px-3 py-2 border border-secondary/30 rounded-lg focus:ring-2 focus:ring-primary dark:bg-surface-dark dark:border-gray-600 dark:text-gray-100"
+                    className={getInputClassName('roomId')}
                   >
                     <option value="">Choose a room</option>
                     {rooms.map((room) => (
@@ -184,6 +377,7 @@ const OffersPromotionsTab = ({ onUpdate }) => {
                       </option>
                     ))}
                   </select>
+                  {fieldErrors.roomId && <p className="mt-1 text-xs text-red-600">{fieldErrors.roomId}</p>}
                 </div>
               )}
 
@@ -194,11 +388,12 @@ const OffersPromotionsTab = ({ onUpdate }) => {
                 <input
                   type="text"
                   value={formData.title}
-                  onChange={(e) => setFormData({ ...formData, title: e.target.value })}
+                  onChange={(e) => handleInputChange('title', e.target.value)}
                   required
-                  className="w-full px-3 py-2 border border-secondary/30 rounded-lg focus:ring-2 focus:ring-primary dark:bg-surface-dark dark:border-gray-600 dark:text-gray-100"
+                  className={getInputClassName('title')}
                   placeholder="e.g., Rs. 2000 off first month"
                 />
+                {fieldErrors.title && <p className="mt-1 text-xs text-red-600">{fieldErrors.title}</p>}
               </div>
 
               <div>
@@ -207,59 +402,63 @@ const OffersPromotionsTab = ({ onUpdate }) => {
                 </label>
                 <textarea
                   value={formData.description}
-                  onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                  onChange={(e) => handleInputChange('description', e.target.value)}
                   rows="2"
-                  className="w-full px-3 py-2 border border-secondary/30 rounded-lg focus:ring-2 focus:ring-primary dark:bg-surface-dark dark:border-gray-600 dark:text-gray-100"
+                  className={getInputClassName('description')}
                   placeholder="Offer details..."
                 />
+                {fieldErrors.description && <p className="mt-1 text-xs text-red-600">{fieldErrors.description}</p>}
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <div>
                   <label className="block text-sm font-medium text-primary dark:text-gray-300 mb-1">
-                    Discount Type
+                    Discount Type *
                   </label>
                   <select
                     value={formData.discountType}
-                    onChange={(e) => setFormData({ ...formData, discountType: e.target.value })}
-                    className="w-full px-3 py-2 border border-secondary/30 rounded-lg focus:ring-2 focus:ring-primary dark:bg-surface-dark dark:border-gray-600 dark:text-gray-100"
+                    onChange={(e) => handleDiscountTypeChange(e.target.value)}
+                    className={getInputClassName('discountType')}
                   >
                     <option value="none">No Discount</option>
                     <option value="fixed">Fixed Amount</option>
                     <option value="percentage">Percentage</option>
                   </select>
+                  {fieldErrors.discountType && <p className="mt-1 text-xs text-red-600">{fieldErrors.discountType}</p>}
                 </div>
 
                 {formData.discountType === 'fixed' && (
                   <div>
                     <label className="block text-sm font-medium text-primary dark:text-gray-300 mb-1">
-                      Discount Amount (Rs.)
+                      Discount Value (Rs.) *
                     </label>
                     <input
                       type="number"
                       value={formData.discountAmount}
-                      onChange={(e) => setFormData({ ...formData, discountAmount: e.target.value })}
-                      min="0"
-                      className="w-full px-3 py-2 border border-secondary/30 rounded-lg focus:ring-2 focus:ring-primary dark:bg-surface-dark dark:border-gray-600 dark:text-gray-100"
+                      onChange={(e) => handleInputChange('discountAmount', e.target.value)}
+                      min="1"
+                      className={getInputClassName('discountAmount')}
                       placeholder="2000"
                     />
+                    {fieldErrors.discountAmount && <p className="mt-1 text-xs text-red-600">{fieldErrors.discountAmount}</p>}
                   </div>
                 )}
 
                 {formData.discountType === 'percentage' && (
                   <div>
                     <label className="block text-sm font-medium text-primary dark:text-gray-300 mb-1">
-                      Discount Percentage (%)
+                      Discount Value (%) *
                     </label>
                     <input
                       type="number"
                       value={formData.discountPercent}
-                      onChange={(e) => setFormData({ ...formData, discountPercent: e.target.value })}
-                      min="0"
+                      onChange={(e) => handleInputChange('discountPercent', e.target.value)}
+                      min="1"
                       max="100"
-                      className="w-full px-3 py-2 border border-secondary/30 rounded-lg focus:ring-2 focus:ring-primary dark:bg-surface-dark dark:border-gray-600 dark:text-gray-100"
+                      className={getInputClassName('discountPercent')}
                       placeholder="10"
                     />
+                    {fieldErrors.discountPercent && <p className="mt-1 text-xs text-red-600">{fieldErrors.discountPercent}</p>}
                   </div>
                 )}
               </div>
@@ -272,10 +471,11 @@ const OffersPromotionsTab = ({ onUpdate }) => {
                   <input
                     type="date"
                     value={formData.validFrom}
-                    onChange={(e) => setFormData({ ...formData, validFrom: e.target.value })}
+                    onChange={(e) => handleInputChange('validFrom', e.target.value)}
                     required
-                    className="w-full px-3 py-2 border border-secondary/30 rounded-lg focus:ring-2 focus:ring-primary dark:bg-surface-dark dark:border-gray-600 dark:text-gray-100"
+                    className={getInputClassName('validFrom')}
                   />
+                  {fieldErrors.validFrom && <p className="mt-1 text-xs text-red-600">{fieldErrors.validFrom}</p>}
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-primary dark:text-gray-300 mb-1">
@@ -284,11 +484,12 @@ const OffersPromotionsTab = ({ onUpdate }) => {
                   <input
                     type="date"
                     value={formData.validTo}
-                    onChange={(e) => setFormData({ ...formData, validTo: e.target.value })}
+                    onChange={(e) => handleInputChange('validTo', e.target.value)}
                     required
                     min={formData.validFrom}
-                    className="w-full px-3 py-2 border border-secondary/30 rounded-lg focus:ring-2 focus:ring-primary dark:bg-surface-dark dark:border-gray-600 dark:text-gray-100"
+                    className={getInputClassName('validTo')}
                   />
+                  {fieldErrors.validTo && <p className="mt-1 text-xs text-red-600">{fieldErrors.validTo}</p>}
                 </div>
               </div>
 
@@ -299,6 +500,7 @@ const OffersPromotionsTab = ({ onUpdate }) => {
                   onClick={() => {
                     setShowForm(false);
                     setEditingOffer(null);
+                    setFieldErrors({});
                   }}
                 >
                   Cancel

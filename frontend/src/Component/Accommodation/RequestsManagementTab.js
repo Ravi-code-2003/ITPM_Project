@@ -201,7 +201,7 @@ const RequestsManagementTab = ({ onUpdate }) => {
   return (
     <div>
       {/* Header with Filter */}
-      <div className="flex justify-between items-center mb-6">
+      <div className="flex flex-col lg:flex-row lg:justify-between lg:items-center gap-4 mb-6">
         <div>
           <h2 className="text-xl font-semibold text-primary dark:text-gray-100">
             Booking Requests
@@ -210,7 +210,7 @@ const RequestsManagementTab = ({ onUpdate }) => {
             Manage student booking requests for your rooms
           </p>
         </div>
-        <div className="flex gap-2">
+        <div className="flex flex-wrap gap-2">
           {['ALL', 'PENDING', 'ACCEPTED', 'REJECTED', 'REQUEST_MORE_INFO'].map((status) => (
             <Button
               key={status}
@@ -240,13 +240,13 @@ const RequestsManagementTab = ({ onUpdate }) => {
           </CardContent>
         </Card>
       ) : (
-        <div className="space-y-4">
+        <div className="space-y-5">
           {requests.map((request) => (
-            <Card key={request._id}>
+            <Card key={request._id} className="border border-gray-200 dark:border-gray-700 shadow-sm hover:shadow-md transition-shadow">
               <CardContent className="p-6">
-                <div className="flex justify-between items-start mb-4">
+                <div className="flex flex-col md:flex-row md:justify-between md:items-start gap-3 mb-5">
                   <div className="flex-1">
-                    <div className="flex items-center gap-3 mb-2">
+                    <div className="flex flex-wrap items-center gap-3 mb-2">
                       <h3 className="font-semibold text-lg text-primary dark:text-gray-100">
                         {request.room?.title}
                       </h3>
@@ -263,59 +263,58 @@ const RequestsManagementTab = ({ onUpdate }) => {
                 </div>
 
                 {/* Student Info */}
-                <div className="bg-background dark:bg-background-dark rounded-lg p-4 mb-4">
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div>
-                      <p className="text-sm font-medium text-primary dark:text-gray-300 mb-1">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mb-4">
+                    <div className="rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900/20 p-4">
+                      <p className="text-xs font-semibold uppercase tracking-wide text-secondary dark:text-gray-400 mb-1">
                         Student Name
                       </p>
-                      <p className="text-sm text-secondary dark:text-gray-400">
+                      <p className="text-sm text-primary dark:text-gray-200">
                         {request.student?.fullName}
                       </p>
                     </div>
-                    <div>
-                      <p className="text-sm font-medium text-primary dark:text-gray-300 mb-1">
+                    <div className="rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900/20 p-4">
+                      <p className="text-xs font-semibold uppercase tracking-wide text-secondary dark:text-gray-400 mb-1">
                         Email
                       </p>
-                      <p className="text-sm text-secondary dark:text-gray-400">
+                      <p className="text-sm text-primary dark:text-gray-200 break-all">
                         {request.student?.email}
                       </p>
                     </div>
-                    <div>
-                      <p className="text-sm font-medium text-primary dark:text-gray-300 mb-1">
+                    <div className="rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900/20 p-4">
+                      <p className="text-xs font-semibold uppercase tracking-wide text-secondary dark:text-gray-400 mb-1">
                         Phone
                       </p>
-                      <p className="text-sm text-secondary dark:text-gray-400">
+                      <p className="text-sm text-primary dark:text-gray-200">
                         {request.studentContact?.phone}
                       </p>
                     </div>
                     {request.studentContact?.whatsapp && (
-                      <div>
-                        <p className="text-sm font-medium text-primary dark:text-gray-300 mb-1">
+                      <div className="rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900/20 p-4">
+                        <p className="text-xs font-semibold uppercase tracking-wide text-secondary dark:text-gray-400 mb-1">
                           WhatsApp
                         </p>
-                        <p className="text-sm text-secondary dark:text-gray-400">
+                        <p className="text-sm text-primary dark:text-gray-200">
                           {request.studentContact.whatsapp}
                         </p>
                       </div>
                     )}
-                  </div>
+                </div>
+
                   {request.message && (
-                    <div className="mt-4">
-                      <p className="text-sm font-medium text-primary dark:text-gray-300 mb-1">
+                    <div className="rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900/20 p-4 mb-4">
+                      <p className="text-xs font-semibold uppercase tracking-wide text-secondary dark:text-gray-400 mb-1">
                         Message
                       </p>
-                      <p className="text-sm text-secondary dark:text-gray-400">
+                      <p className="text-sm text-primary dark:text-gray-200 whitespace-pre-wrap">
                         {request.message}
                       </p>
                     </div>
                   )}
-                </div>
 
                 {/* Owner Response (if exists) */}
                 {request.ownerResponse && request.ownerResponse.respondedAt && (
-                  <div className="bg-accent/10 rounded-lg p-4 mb-4">
-                    <p className="text-sm font-medium text-primary dark:text-gray-300 mb-2">
+                  <div className="rounded-xl border border-green-200 dark:border-green-900/40 bg-green-50/60 dark:bg-green-900/10 p-4 mb-4">
+                    <p className="text-sm font-semibold text-primary dark:text-gray-300 mb-2">
                       Your Response
                     </p>
                     <div className="space-y-2 text-sm">

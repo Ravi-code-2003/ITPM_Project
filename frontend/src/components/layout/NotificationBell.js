@@ -202,15 +202,16 @@ const NotificationBell = () => {
                       <p className="font-medium text-sm text-gray-900 dark:text-gray-100">
                         {notification.title}
                       </p>
-                      {notification.activityType === 'room-request' && notification.status ? (
-                        <span
-                          className={`text-[10px] font-semibold px-2 py-1 rounded-full ${getActivityStatusBadgeClass(notification.status)}`}
-                        >
-                          {notification.status}
-                        </span>
-                      ) : !notification.isRead && (
-                        <span className="mt-1 h-2 w-2 rounded-full bg-blue-500"></span>
-                      )}
+                      <div className="mt-1 flex items-center gap-2">
+                        {notification.activityType === 'room-request' && notification.status && (
+                          <span
+                            className={`text-[10px] font-semibold px-2 py-1 rounded-full ${getActivityStatusBadgeClass(notification.status)}`}
+                          >
+                            {notification.status}
+                          </span>
+                        )}
+                        {!notification.isRead && <span className="h-2 w-2 rounded-full bg-blue-500"></span>}
+                      </div>
                     </div>
                     <p className="text-sm text-gray-600 dark:text-gray-300 mt-1">{notification.message}</p>
                     <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
