@@ -18,8 +18,6 @@ const api = axios.create({
   timeout: 10000, // 10 second timeout
 });
 
-const AI_REQUEST_TIMEOUT_MS = parseInt(process.env.REACT_APP_AI_TIMEOUT_MS, 10) || 120000;
-
 // Debug logging
 if (DEBUG) {
   console.log('🔧 API Service Initialized');
@@ -227,19 +225,6 @@ export const adminAPI = {
   // Delete user
   deleteUser: async (id) => {
     const response = await api.delete(`/admin/delete-user/${id}`);
-    return response.data;
-  },
-};
-
-// AI Chat API calls
-export const aiAPI = {
-  getChatHistory: async () => {
-    const response = await api.get("/ai/chat");
-    return response.data;
-  },
-
-  sendMessage: async (message) => {
-    const response = await api.post("/ai/chat", { message }, { timeout: AI_REQUEST_TIMEOUT_MS });
     return response.data;
   },
 };

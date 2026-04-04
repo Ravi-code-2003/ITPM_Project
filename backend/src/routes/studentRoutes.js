@@ -14,6 +14,8 @@ const {
   voteInPoll,
   getPollResults,
   getBudgetTracker,
+  getStudentFinanceProfile,
+  updateStudentFinanceProfile,
   // New enhanced poll methods
   getRestaurantPolls,
   voteInPollProposal
@@ -28,6 +30,28 @@ const {
   updateTimetableItem,
   deleteTimetableItem,
 } = require("../controllers/studyTimetableController");
+const {
+  getStickyNotes,
+  createStickyNote,
+  updateStickyNote,
+  deleteStickyNote,
+} = require("../controllers/stickyNotesController");
+const {
+  getTodos,
+  createTodo,
+  updateTodo,
+  toggleTodoCompletion,
+  deleteTodo,
+} = require("../controllers/todoController");
+const {
+  getLostFoundItems,
+  createLostFoundItem,
+  updateLostFoundItem,
+  deleteLostFoundItem,
+  respondToLostFoundItem,
+  resolveLostFoundItem,
+} = require("../controllers/lostFoundController");
+const { upload } = require("../utils/upload");
 
 const router = express.Router();
 
@@ -43,6 +67,8 @@ router.get("/restaurant/:id/menu", getRestaurantMenu);
 // Smart Features Routes
 router.get("/budget-meals", getBudgetMeals);
 router.get("/budget-tracker", getBudgetTracker);
+router.get("/finance-profile", getStudentFinanceProfile);
+router.put("/finance-profile", updateStudentFinanceProfile);
 
 // Order Routes
 router.route("/orders")
@@ -84,5 +110,41 @@ router.route("/timetable")
 router.route("/timetable/:id")
   .patch(updateTimetableItem)
   .delete(deleteTimetableItem);
+
+// Sticky Notes Routes
+router.route("/sticky-notes")
+  .get(getStickyNotes)
+  .post(createStickyNote);
+
+router.route("/sticky-notes/:id")
+  .patch(updateStickyNote)
+  .delete(deleteStickyNote);
+
+// Todo Routes
+router.route("/todos")
+  .get(getTodos)
+  .post(createTodo);
+
+router.route("/todos/:id")
+  .patch(updateTodo)
+  .delete(deleteTodo);
+
+router.route("/todos/:id/toggle")
+  .patch(toggleTodoCompletion);
+
+// Lost & Found Routes
+router.route("/lost-found")
+  .get(getLostFoundItems)
+  .post(upload.single("image"), createLostFoundItem);
+
+router.route("/lost-found/:id")
+  .patch(upload.single("image"), updateLostFoundItem)
+  .delete(deleteLostFoundItem);
+
+router.route("/lost-found/:id/respond")
+  .post(respondToLostFoundItem);
+
+router.route("/lost-found/:id/resolve/:responseId")
+  .patch(resolveLostFoundItem);
 
 module.exports = router;

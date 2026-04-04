@@ -7,7 +7,6 @@ import { CartProvider } from './contexts/CartContext';
 import { NotificationProvider } from './contexts/NotificationContext';
 import { ProtectedRoute, PublicRoute, AdminRoute, RoleRoute } from './components/ProtectedRoute';
 import Layout from './components/layout/Layout';
-import FloatingAIChat from './components/chat/FloatingAIChat';
 
 // Public Pages
 import LandingPage from './pages/LandingPage';
@@ -37,9 +36,11 @@ import StudentDashboard from './pages/dashboards/StudentDashboard';
 import ShopOwnerDashboard from './pages/dashboards/ShopOwnerDashboard';
 import HouseOwnerDashboard from './pages/dashboards/HouseOwnerDashboard';
 import EducationProviderDashboard from './pages/dashboards/EducationProviderDashboard';
+import FinancialSupportPage from './pages/FinancialSupportPage';
 import ExamStudyTrackerPage from './pages/ExamStudyTrackerPage';
 import StudentTimetablePage from './pages/StudentTimetablePage';
-import AIChatPage from './pages/AIChatPage';
+import TodoListPage from './pages/TodoListPage';
+import LostFoundPage from './pages/LostFoundPage';
 
 // Student Components  
 import RestaurantDetail from './components/student/RestaurantDetail';
@@ -259,6 +260,36 @@ function App() {
                     }
                   />
                   <Route
+                    path="/student/todos"
+                    element={
+                      <RoleRoute roles={['student']}>
+                        <Layout showFooter={false}>
+                          <TodoListPage />
+                        </Layout>
+                      </RoleRoute>
+                    }
+                  />
+                  <Route
+                    path="/student/lost-found"
+                    element={
+                      <RoleRoute roles={['student']}>
+                        <Layout showFooter={false}>
+                          <LostFoundPage />
+                        </Layout>
+                      </RoleRoute>
+                    }
+                  />
+                  <Route
+                    path="/student/financial-support"
+                    element={
+                      <RoleRoute roles={['student']}>
+                        <Layout showFooter={false}>
+                          <FinancialSupportPage />
+                        </Layout>
+                      </RoleRoute>
+                    }
+                  />
+                  <Route
                     path="/shop-owner/dashboard"
                     element={
                       <RoleRoute roles={['shop-owner']} requireApproval={true}>
@@ -288,17 +319,6 @@ function App() {
                       </RoleRoute>
                     }
                   />
-                  <Route
-                    path="/ai-chat"
-                    element={
-                      <ProtectedRoute>
-                        <Layout showFooter={false}>
-                          <AIChatPage />
-                        </Layout>
-                      </ProtectedRoute>
-                    }
-                  />
-
                   {/* Status Pages */}
                   <Route
                     path="/pending-approval"
@@ -355,7 +375,6 @@ function App() {
               },
             }}
           />
-          <FloatingAIChat />
           </div>
         </Router>
           </NotificationProvider>

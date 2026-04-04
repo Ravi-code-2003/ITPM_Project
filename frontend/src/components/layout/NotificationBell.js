@@ -51,6 +51,10 @@ const getNotificationTargetPath = (notification, userRole) => {
     return buildStudentActivityPath(notification);
   }
 
+  if (notification?.targetPath) {
+    return notification.targetPath;
+  }
+
   const rawOrderId = notification?.orderId;
   const orderId = typeof rawOrderId === 'string' ? rawOrderId : rawOrderId?._id;
   const orderQuery = orderId ? `&orderId=${encodeURIComponent(orderId)}` : '';

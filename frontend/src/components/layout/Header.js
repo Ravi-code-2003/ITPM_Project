@@ -49,7 +49,7 @@ const Header = () => {
   };
 
   const publicNavItems = [
-    { name: 'Home', href: '/', icon: Home },
+    { name: 'Dashboard', href: isAuthenticated ? getDashboardLink() : '/', icon: Home },
     { name: 'About', href: '/about', icon: Info },
     { name: 'Education', href: '/education-programs', icon: BookOpen },
     { name: 'Restaurants', href: '/restaurants', icon: UtensilsCrossed },

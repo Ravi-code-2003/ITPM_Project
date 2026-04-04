@@ -9,18 +9,24 @@ const notificationSchema = new mongoose.Schema({
   },
   recipientRole: {
     type: String,
-    enum: ["student", "shop-owner"],
+    enum: ["student", "shop-owner", "house-owner", "education-path", "admin"],
     required: true
   },
   orderId: {
     type: mongoose.Schema.Types.ObjectId,
     ref: "Order",
-    required: true,
+    required: false,
     index: true
   },
   type: {
     type: String,
-    enum: ["new-order", "order-status"],
+    enum: [
+      "new-order",
+      "order-status",
+      "education-material-added",
+      "room-added",
+      "shop-offer-added"
+    ],
     required: true
   },
   title: {
@@ -32,6 +38,11 @@ const notificationSchema = new mongoose.Schema({
     type: String,
     required: true,
     trim: true
+  },
+  targetPath: {
+    type: String,
+    trim: true,
+    default: ""
   },
   isRead: {
     type: Boolean,

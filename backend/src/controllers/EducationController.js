@@ -2,6 +2,7 @@ const LectureMaterial = require('../models/EducationModel');
 const User = require('../models/User');
 const path = require('path');
 const fs = require('fs');
+const { broadcastNotificationToStudents } = require('../services/notificationService');
 
 const FILE_TYPES = ['pdf', 'tute', 'pastpaper'];
 const LINK_TYPES = ['youtube', 'drive'];
@@ -44,6 +45,21 @@ const addMaterial = async (req, res) => {
     }
 
     const material = await LectureMaterial.create(materialData);
+
+    try {
+      const providerName = req.user?.organizationName || req.user?.fullName || 'Education provider';
+      const courseInfo = material.course ? ` (${material.course})` : '';
+
+      await broadcastNotificationToStudents({
+        type: 'education-material-added',
+        title: 'New lecture material added',
+        message: `${providerName} added "${material.title}"${courseInfo}.`,
+        targetPath: '/education-programs'
+      });
+    } catch (notifyError) {
+      console.error('Failed to broadcast education material notification:', notifyError.message);
+    }
+
     res.status(201).json({ success: true, material });
   } catch (error) {
     console.error('addMaterial error:', error);

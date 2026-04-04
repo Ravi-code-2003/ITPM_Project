@@ -92,7 +92,7 @@ const chatWithAI = async (req, res) => {
 
     let dbContext = null;
     try {
-      dbContext = await buildDatabaseContext(sanitizedMessage);
+      dbContext = await buildDatabaseContext(sanitizedMessage, req.user);
     } catch (contextError) {
       // Context enrichment is optional; core chat should still work.
       console.error("AI DB context build error:", contextError);

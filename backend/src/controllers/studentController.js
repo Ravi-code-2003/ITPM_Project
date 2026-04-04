@@ -7,7 +7,41 @@ const FavoriteRestaurant = require("../models/FavoriteRestaurant");
 const Rating = require("../models/Rating");
 const Poll = require("../models/Poll");
 const PollProposal = require("../models/PollProposal");
+const StudentFinanceProfile = require("../models/StudentFinanceProfile");
 const { createOrderNotification } = require("../services/notificationService");
+
+const DEFAULT_EXPENSE_CATEGORIES = [
+  { key: "food", label: "Food", percent: 35 },
+  { key: "housing", label: "Housing", percent: 30 },
+  { key: "transport", label: "Transport", percent: 10 },
+  { key: "study", label: "Study", percent: 12 },
+  { key: "savings", label: "Savings", percent: 8 },
+  { key: "flex", label: "Flexible", percent: 5 },
+];
+
+const sanitizeExpenseCategories = (categories) => {
+  if (!Array.isArray(categories)) {
+    return DEFAULT_EXPENSE_CATEGORIES;
+  }
+
+  const sanitized = categories
+    .filter((item) => item && typeof item === "object")
+    .map((item) => ({
+      key: String(item.key || "").trim(),
+      label: String(item.label || "").trim(),
+      percent: Number(item.percent || 0),
+    }))
+    .filter((item) => item.key && item.label && Number.isFinite(item.percent));
+
+  if (sanitized.length === 0) {
+    return DEFAULT_EXPENSE_CATEGORIES;
+  }
+
+  return sanitized.map((item) => ({
+    ...item,
+    percent: Math.max(0, Math.min(100, Number(item.percent.toFixed(2)))),
+  }));
+};
 
 /**
  * GET /api/student/restaurants
@@ -719,6 +753,7 @@ const getBudgetTracker = async (req, res) => {
   try {
     const { monthlyBudget } = req.query;
     const studentId = req.user.id;
+    const financeProfile = await StudentFinanceProfile.findOne({ studentId }).lean();
     
     // Get current month orders
     const now = new Date();
@@ -734,7 +769,10 @@ const getBudgetTracker = async (req, res) => {
       .sort({ createdAt: -1 });
     
     const totalSpent = monthlyOrders.reduce((sum, order) => sum + order.totalAmount, 0);
-    const budget = parseFloat(monthlyBudget) || 0;
+    const providedBudget = parseFloat(monthlyBudget);
+    const budget = Number.isFinite(providedBudget)
+      ? providedBudget
+      : Number(financeProfile?.monthlyBudget || 0);
     const remaining = budget - totalSpent;
     
     // Daily spending breakdown
@@ -760,6 +798,84 @@ const getBudgetTracker = async (req, res) => {
     res.status(500).json({
       success: false,
       message: error.message
+    });
+  }
+};
+
+/**
+ * GET /api/student/finance-profile
+ * Get student finance planner profile
+ */
+const getStudentFinanceProfile = async (req, res) => {
+  try {
+    const studentId = req.user.id;
+    const profile = await StudentFinanceProfile.findOne({ studentId }).lean();
+
+    res.json({
+      success: true,
+      profile: {
+        monthlyBudget: Number(profile?.monthlyBudget || 0),
+        expenseCategories: sanitizeExpenseCategories(profile?.expenseCategories),
+      },
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: error.message,
+    });
+  }
+};
+
+/**
+ * PUT /api/student/finance-profile
+ * Update student finance planner profile
+ */
+const updateStudentFinanceProfile = async (req, res) => {
+  try {
+    const studentId = req.user.id;
+    const { monthlyBudget, expenseCategories } = req.body;
+
+    if (monthlyBudget != null) {
+      const parsedBudget = Number(monthlyBudget);
+      if (!Number.isFinite(parsedBudget) || parsedBudget < 0) {
+        return res.status(400).json({
+          success: false,
+          message: "Monthly budget must be a valid non-negative number",
+        });
+      }
+    }
+
+    const updatePayload = {};
+    if (monthlyBudget != null) {
+      updatePayload.monthlyBudget = Number(monthlyBudget);
+    }
+    if (expenseCategories != null) {
+      updatePayload.expenseCategories = sanitizeExpenseCategories(expenseCategories);
+    }
+
+    const profile = await StudentFinanceProfile.findOneAndUpdate(
+      { studentId },
+      { $set: updatePayload },
+      {
+        upsert: true,
+        new: true,
+        runValidators: true,
+        setDefaultsOnInsert: true,
+      }
+    ).lean();
+
+    res.json({
+      success: true,
+      profile: {
+        monthlyBudget: Number(profile?.monthlyBudget || 0),
+        expenseCategories: sanitizeExpenseCategories(profile?.expenseCategories),
+      },
+      message: "Finance profile updated successfully",
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: error.message,
     });
   }
 };
@@ -899,6 +1015,8 @@ module.exports = {
   voteInPoll,
   getPollResults,
   getBudgetTracker,
+  getStudentFinanceProfile,
+  updateStudentFinanceProfile,
   // New enhanced poll methods
   getRestaurantPolls,
   voteInPollProposal
