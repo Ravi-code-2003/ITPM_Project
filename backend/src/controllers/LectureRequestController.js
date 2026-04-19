@@ -1,5 +1,7 @@
 const LectureRequest = require('../models/LectureRequest');
 
+const getLetterCount = (value) => (value.match(/[A-Za-z]/g) || []).length;
+
 // POST /api/education/requests  — student creates a request
 const createRequest = async (req, res) => {
   try {
@@ -9,11 +11,24 @@ const createRequest = async (req, res) => {
       return res.status(400).json({ message: 'Title is required' });
     }
 
+    const courseValue = typeof course === 'string' ? course.trim() : '';
+    if (courseValue && !/^[A-Za-z\s]+$/.test(courseValue)) {
+      return res.status(400).json({ message: 'Course can contain only letters and spaces.' });
+    }
+
+    const descriptionValue = typeof description === 'string' ? description.trim() : '';
+    if (descriptionValue) {
+      const letterCount = getLetterCount(descriptionValue);
+      if (letterCount < 10 || letterCount > 100) {
+        return res.status(400).json({ message: 'Additional Details must be between 10 and 100 letters.' });
+      }
+    }
+
     const request = await LectureRequest.create({
       student: req.user._id,
       title: title.trim(),
-      description: description?.trim() || '',
-      course: course?.trim() || '',
+      description: descriptionValue,
+      course: courseValue,
       materialType: materialType || 'lecture-notes',
     });
 
@@ -45,6 +60,19 @@ const updateMyRequest = async (req, res) => {
       return res.status(400).json({ message: 'Title is required' });
     }
 
+    const courseValue = typeof course === 'string' ? course.trim() : '';
+    if (courseValue && !/^[A-Za-z\s]+$/.test(courseValue)) {
+      return res.status(400).json({ message: 'Course can contain only letters and spaces.' });
+    }
+
+    const descriptionValue = typeof description === 'string' ? description.trim() : '';
+    if (descriptionValue) {
+      const letterCount = getLetterCount(descriptionValue);
+      if (letterCount < 10 || letterCount > 100) {
+        return res.status(400).json({ message: 'Additional Details must be between 10 and 100 letters.' });
+      }
+    }
+
     const request = await LectureRequest.findOne({
       _id: req.params.id,
       student: req.user._id,
@@ -59,8 +87,8 @@ const updateMyRequest = async (req, res) => {
     }
 
     request.title = title.trim();
-    request.description = description?.trim() || '';
-    request.course = course?.trim() || '';
+    request.description = descriptionValue;
+    request.course = courseValue;
     request.materialType = materialType || request.materialType;
 
     await request.save();
