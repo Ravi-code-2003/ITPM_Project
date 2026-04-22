@@ -79,6 +79,20 @@ const Header = () => {
             </Link>
           </div>
 
+          {/* Desktop Navigation */}
+          <nav className="hidden md:flex items-center space-x-6 lg:space-x-8">
+            {visibleNavItems.map((item) => (
+              <Link
+                key={item.name}
+                to={item.href}
+                className="flex items-center space-x-1 text-white/95 hover:text-white transition-colors duration-200 font-medium"
+              >
+                <item.icon className="h-4 w-4" />
+                <span>{item.name}</span>
+              </Link>
+            ))}
+          </nav>
+
 
 
           {/* Auth Buttons / User Menu */}
@@ -203,6 +217,19 @@ const Header = () => {
         {isMenuOpen && (
           <div className="md:hidden border-t border-secondary/20 dark:border-secondary/10 py-4">
             <div className="flex flex-col space-y-3">
+              {/* Navigation Items */}
+              {visibleNavItems.map((item) => (
+                <Link
+                  key={item.name}
+                  to={item.href}
+                  className="flex items-center space-x-2 text-white/95 hover:text-white px-2 py-2 rounded-md hover:bg-white/10 transition-colors duration-200 font-medium"
+                  onClick={() => setIsMenuOpen(false)}
+                >
+                  <item.icon className="h-4 w-4" />
+                  <span>{item.name}</span>
+                </Link>
+              ))}
+
               {/* User Section */}
               {isAuthenticated ? (
                 <div className="border-t border-secondary/20 dark:border-secondary/10 pt-3 mt-3">
