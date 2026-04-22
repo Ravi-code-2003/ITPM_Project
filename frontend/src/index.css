@@ -18,3 +18,28 @@
   box-shadow: 0 4px 12px rgba(0,0,0,0.25) !important;
   z-index: 1000;
 }
+
+/* Themed scrollbar to match the primary header color */
+.dashboard-scrollbar {
+  scrollbar-width: thin;
+  scrollbar-color: #3B4261 #E8E9ED;
+}
+
+.dashboard-scrollbar::-webkit-scrollbar {
+  width: 10px;
+}
+
+.dashboard-scrollbar::-webkit-scrollbar-track {
+  background: #E8E9ED;
+  border-radius: 9999px;
+}
+
+.dashboard-scrollbar::-webkit-scrollbar-thumb {
+  background: #3B4261;
+  border-radius: 9999px;
+  border: 2px solid #E8E9ED;
+}
+
+.dashboard-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: #2F354F;
+}
