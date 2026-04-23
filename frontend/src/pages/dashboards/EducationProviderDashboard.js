@@ -21,7 +21,6 @@ import {
   MessageSquare,
   ChevronDown,
   Star,
-  Bell,
   Pencil,
 } from 'lucide-react';
 import Card, { CardHeader, CardTitle, CardContent } from '../../components/ui/Card';
@@ -130,7 +129,6 @@ const EducationProviderDashboard = () => {
 
   const materialsSectionRef = useRef(null);
   const requestsSectionRef = useRef(null);
-  const noticesSectionRef = useRef(null);
 
   const isFileType = ['pdf', 'tute', 'pastpaper'].includes(form.type);
   const isLinkType = ['youtube', 'drive'].includes(form.type);
@@ -378,7 +376,7 @@ const EducationProviderDashboard = () => {
 
   /* ── render ─────────────────────────────────────────────────────────── */
   return (
-    <div className="min-h-screen bg-white dark:bg-background-dark py-8">
+    <div className="min-h-screen bg-gray-50 dark:bg-background-dark py-8">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
 
         {/* ── Header ─────────────────────────────────────────────────── */}
@@ -419,17 +417,6 @@ const EducationProviderDashboard = () => {
                 >
                   <Inbox className="h-4 w-4" />
                   Student Requests
-                </button>
-                <button
-                  onClick={() => goToSection('notices', noticesSectionRef)}
-                  className={`inline-flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-semibold transition-colors ${
-                    activeNav === 'notices'
-                      ? 'bg-primary text-white'
-                      : 'bg-gray-100 dark:bg-gray-700 text-blue-700 dark:text-blue-300 hover:bg-gray-200 dark:hover:bg-gray-600'
-                  }`}
-                >
-                  <Bell className="h-4 w-4" />
-                  Notices
                 </button>
               </div>
 
@@ -493,7 +480,7 @@ const EducationProviderDashboard = () => {
             </div>
           </CardHeader>
 
-          <CardContent>
+          <CardContent className="dashboard-scrollbar max-h-[560px] overflow-y-auto pr-1">
             {loading ? (
               /* loader */
               <div className="flex items-center justify-center py-16">
@@ -652,7 +639,7 @@ const EducationProviderDashboard = () => {
            
           </CardHeader>
 
-          <CardContent>
+          <CardContent className="dashboard-scrollbar max-h-[560px] overflow-y-auto pr-1">
             {loadingReq ? (
               <div className="flex items-center justify-center py-12">
                 <div className="animate-spin h-8 w-8 border-4 border-accent border-t-transparent rounded-full" />
@@ -728,35 +715,6 @@ const EducationProviderDashboard = () => {
           </Card>
         </div>
 
-        {/* ── Notices ───────────────────────────────────────────────── */}
-        <div ref={noticesSectionRef} className="mt-8">
-          <Card>
-            <CardHeader>
-              <div>
-                <div className="flex items-center gap-2.5">
-                  <Bell className="h-5 w-5 text-blue-600 dark:text-blue-400" />
-                  <CardTitle className="text-blue-700 dark:text-blue-300">Notices</CardTitle>
-                </div>
-                <p className="text-xs text-blue-700 dark:text-blue-300 mt-1">
-                  Share important announcements for students, such as deadlines, updates, and resources.
-                </p>
-              </div>
-            </CardHeader>
-            <CardContent>
-              <div className="rounded-xl border border-dashed border-gray-300 dark:border-gray-700 p-5 text-center lg:text-left">
-                <p className="text-sm font-semibold text-primary dark:text-gray-100">No notices published yet</p>
-                <p className="text-xs text-secondary dark:text-gray-400 mt-1">Create notices here to keep students informed about important updates.</p>
-                <button
-                  type="button"
-                  className="mt-3 inline-flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-semibold bg-primary text-white hover:bg-primary-hover transition-colors"
-                >
-                  <Bell className="h-3.5 w-3.5" />
-                  Create Notice
-                </button>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
       </div>
 
       {/* ── Status Update Modal ─────────────────────────────────────────── */}

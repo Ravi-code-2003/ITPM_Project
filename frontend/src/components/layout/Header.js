@@ -64,34 +64,36 @@ const Header = () => {
   });
 
   return (
-    <header className="bg-surface dark:bg-surface-dark shadow-soft border-b border-secondary/20 dark:border-secondary/10 sticky top-0 z-50 transition-colors duration-200">
+    <header className="bg-primary dark:bg-primary/90 shadow-soft border-b border-primary/20 dark:border-primary/10 sticky top-0 z-50 transition-colors duration-200">
       <div className="max-w-screen-2xl mx-auto px-4 sm:px-6 lg:px-8 xl:px-12">
         <div className="flex justify-between items-center h-16">
           {/* Logo */}
           <div className="flex items-center">
             <Link to="/" className="flex items-center space-x-2">
-              <div className="bg-primary text-white p-2 rounded-lg">
+              <div className="bg-white text-primary p-2 rounded-lg">
                 <BookOpen className="h-6 w-6" />
               </div>
               <div>
-                <span className="text-xl font-bold text-primary dark:text-gray-100">UniCore</span>
+                <span className="text-xl font-bold text-white dark:text-white">UniCore</span>
               </div>
             </Link>
           </div>
 
           {/* Desktop Navigation */}
-          <nav className="hidden md:flex items-center space-x-8">
+          <nav className="hidden md:flex items-center space-x-6 lg:space-x-8">
             {visibleNavItems.map((item) => (
               <Link
                 key={item.name}
                 to={item.href}
-                className="flex items-center space-x-1 text-gray-700 dark:text-gray-300 hover:text-primary dark:hover:text-accent transition-colors duration-200 font-medium"
+                className="flex items-center space-x-1 text-white/95 hover:text-white transition-colors duration-200 font-medium"
               >
                 <item.icon className="h-4 w-4" />
                 <span>{item.name}</span>
               </Link>
             ))}
           </nav>
+
+
 
           {/* Auth Buttons / User Menu */}
           <div className="hidden md:flex items-center space-x-4">
@@ -101,14 +103,14 @@ const Header = () => {
                 <div className="relative">
                   <button
                     onClick={() => setIsUserMenuOpen(!isUserMenuOpen)}
-                    className="flex items-center space-x-2 text-primary dark:text-gray-200 hover:text-primary-hover dark:hover:text-accent focus:outline-none p-2 rounded-lg hover:bg-primary/10 dark:hover:bg-primary/20 transition-colors duration-200"
+                    className="flex items-center space-x-2 text-white dark:text-white hover:text-gray-100 dark:hover:text-gray-100 focus:outline-none p-2 rounded-lg hover:bg-white/10 dark:hover:bg-white/10 transition-colors duration-200"
                   >
-                    <div className="bg-accent/20 p-2 rounded-full">
-                      <User className="h-5 w-5 text-primary dark:text-accent" />
+                    <div className="bg-white/20 p-2 rounded-full">
+                      <User className="h-5 w-5 text-white dark:text-white" />
                     </div>
                     <div className="text-left">
-                      <div className="font-medium">{user?.fullName}</div>
-                      <div className="text-xs text-secondary dark:text-gray-400 capitalize">
+                      <div className="font-medium text-white">{user?.fullName}</div>
+                      <div className="text-xs text-white/80 capitalize">
                         {user?.role?.replace('-', ' ')}
                       </div>
                     </div>
@@ -150,7 +152,7 @@ const Header = () => {
                 {user?.role === 'student' && (
                   <Link
                     to="/student/cart"
-                    className="relative flex items-center justify-center text-gray-700 dark:text-gray-300 hover:text-primary dark:hover:text-accent transition-all duration-200 p-2 rounded-lg hover:bg-primary/10 dark:hover:bg-primary/20 group"
+                    className="relative flex items-center justify-center text-white dark:text-white hover:text-gray-100 dark:hover:text-gray-100 transition-all duration-200 p-2 rounded-lg hover:bg-white/10 dark:hover:bg-white/10 group"
                     title="Shopping Cart"
                   >
                     <ShoppingCart className="h-5 w-5 group-hover:scale-110 transition-transform" />
@@ -166,7 +168,7 @@ const Header = () => {
               <div className="flex items-center space-x-4">
                 <Link
                   to="/login"
-                  className="text-gray-700 dark:text-gray-300 hover:text-primary dark:hover:text-accent font-semibold transition-colors duration-200"
+                  className="text-white dark:text-white hover:text-gray-100 dark:hover:text-gray-100 font-semibold transition-colors duration-200"
                 >
                   Login
                 </Link>
@@ -185,7 +187,7 @@ const Header = () => {
             {isAuthenticated && user?.role === 'student' && (
               <Link
                 to="/student/cart"
-                className="relative flex items-center justify-center text-gray-700 dark:text-gray-300 hover:text-primary dark:hover:text-accent transition-all duration-200 p-2 rounded-lg hover:bg-primary/10"
+                className="relative flex items-center justify-center text-white dark:text-white hover:text-gray-100 dark:hover:text-gray-100 transition-all duration-200 p-2 rounded-lg hover:bg-white/10"
                 title="Shopping Cart"
               >
                 <ShoppingCart className="h-5 w-5" />
@@ -200,7 +202,7 @@ const Header = () => {
             <ThemeToggle />
             <button
               onClick={() => setIsMenuOpen(!isMenuOpen)}
-              className="text-secondary dark:text-gray-300 hover:text-primary dark:hover:text-accent focus:outline-none transition-colors duration-200"
+              className="text-white dark:text-white hover:text-gray-100 dark:hover:text-gray-100 focus:outline-none transition-colors duration-200"
             >
               {isMenuOpen ? (
                 <X className="h-6 w-6" />
@@ -220,14 +222,14 @@ const Header = () => {
                 <Link
                   key={item.name}
                   to={item.href}
-                  className="flex items-center space-x-2 text-gray-700 dark:text-gray-300 hover:text-primary dark:hover:text-accent px-2 py-2 rounded-md transition-colors duration-200 font-medium"
+                  className="flex items-center space-x-2 text-white/95 hover:text-white px-2 py-2 rounded-md hover:bg-white/10 transition-colors duration-200 font-medium"
                   onClick={() => setIsMenuOpen(false)}
                 >
                   <item.icon className="h-4 w-4" />
                   <span>{item.name}</span>
                 </Link>
               ))}
-              
+
               {/* User Section */}
               {isAuthenticated ? (
                 <div className="border-t border-secondary/20 dark:border-secondary/10 pt-3 mt-3">

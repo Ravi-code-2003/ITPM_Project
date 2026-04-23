@@ -32,6 +32,8 @@ const StatusBadge = ({ status }) => {
 
 const EMPTY_FORM = { title: '', description: '', course: '', materialType: 'lecture-notes' };
 
+const getLetterCount = (value) => (value.match(/[A-Za-z]/g) || []).length;
+
 const EMPTY_MODULE = { module: '', date: '' };
 
 const MAT_TYPES = [
@@ -318,6 +320,21 @@ const EducationProgramsPage = () => {
       return;
     }
     if (!form.title.trim()) { toast.error('Please enter a title'); return; }
+    const courseValue = form.course.trim();
+    if (courseValue && !/^[A-Za-z\s]+$/.test(courseValue)) {
+      toast.error('Course can contain only letters and spaces.');
+      return;
+    }
+
+    const detailsValue = form.description.trim();
+    if (detailsValue) {
+      const letterCount = getLetterCount(detailsValue);
+      if (letterCount < 10 || letterCount > 100) {
+        toast.error('Additional Details must be between 10 and 100 letters.');
+        return;
+      }
+    }
+
     setSubmitting(true);
     try {
       if (editingRequestId) {
@@ -1022,10 +1039,11 @@ const EducationProgramsPage = () => {
               <input
                 type="text"
                 value={form.course}
-                onChange={(e) => setForm(f => ({ ...f, course: e.target.value }))}
+                onChange={(e) => setForm(f => ({ ...f, course: e.target.value.replace(/[0-9]/g, '') }))}
                 placeholder="e.g. CS301 – Database Systems"
                 className="w-full px-4 py-2.5 rounded-xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-primary dark:text-gray-100 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary transition"
               />
+              <p className="mt-1 text-xs text-gray-400">Letters and spaces only.</p>
             </div>
 
             {/* Description */}
@@ -1040,6 +1058,7 @@ const EducationProgramsPage = () => {
                 rows={3}
                 className="w-full px-4 py-2.5 rounded-xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-primary dark:text-gray-100 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary transition resize-none"
               />
+              <p className="mt-1 text-xs text-gray-400">Optional. If provided, enter 10 to 100 letters.</p>
             </div>
 
             {/* Actions */}
