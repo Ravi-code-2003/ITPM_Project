@@ -850,8 +850,40 @@ const createPoll = async (req, res) => {
       });
     }
 
+    const normalizedProposals = proposals.map((proposal) => ({
+      ...proposal,
+      proposedDiscount: Number(proposal.proposedDiscount)
+    }));
+
+    const hasInvalidProposal = normalizedProposals.some(
+      (proposal) =>
+        !proposal.foodItemId ||
+        Number.isNaN(proposal.proposedDiscount) ||
+        proposal.proposedDiscount < 0 ||
+        proposal.proposedDiscount > 100
+    );
+
+    if (hasInvalidProposal) {
+      return res.status(400).json({
+        success: false,
+        message: 'Each proposal must include a valid food item and discount between 0 and 100'
+      });
+    }
+
+    const totalProposedDiscount = normalizedProposals.reduce(
+      (total, proposal) => total + proposal.proposedDiscount,
+      0
+    );
+
+    if (totalProposedDiscount > 100) {
+      return res.status(400).json({
+        success: false,
+        message: 'Total proposed discount cannot exceed 100%'
+      });
+    }
+
     // Validate all food items belong to this restaurant
-    const foodItemIds = proposals.map(p => p.foodItemId);
+    const foodItemIds = normalizedProposals.map((p) => p.foodItemId);
     const validFoodItems = await FoodItem.find({
       _id: { $in: foodItemIds },
       restaurantId: restaurant._id,
@@ -876,7 +908,7 @@ const createPoll = async (req, res) => {
 
     // Create poll proposals
     const pollProposals = await Promise.all(
-      proposals.map(async (proposal) => {
+      normalizedProposals.map(async (proposal) => {
         return new PollProposal({
           pollId: poll._id,
           foodItemId: proposal.foodItemId,

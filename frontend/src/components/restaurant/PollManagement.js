@@ -85,7 +85,20 @@ const PollManagement = () => {
       return;
     }
 
-    const validProposals = formData.proposals.filter(p => p.foodItemId && p.proposedDiscount);
+    const validProposals = formData.proposals.filter(
+      (p) => p.foodItemId && p.proposedDiscount !== '' && !Number.isNaN(Number(p.proposedDiscount))
+    );
+
+    const totalProposedDiscount = validProposals.reduce(
+      (total, proposal) => total + Number(proposal.proposedDiscount),
+      0
+    );
+
+    if (totalProposedDiscount > 100) {
+      toast.error('Total proposed discount cannot exceed 100%');
+      return;
+    }
+
     if (validProposals.length < 2) {
       toast.error('Please add at least 2 valid proposals');
       return;
@@ -94,7 +107,10 @@ const PollManagement = () => {
     try {
       await api.post('/shop/polls-new', {
         ...formData,
-        proposals: validProposals
+        proposals: validProposals.map((proposal) => ({
+          ...proposal,
+          proposedDiscount: Number(proposal.proposedDiscount)
+        }))
       });
       
       toast.success('Poll created successfully!');
@@ -176,6 +192,11 @@ const PollManagement = () => {
     );
   }
 
+  const totalDiscountPreview = formData.proposals.reduce((total, proposal) => {
+    const discount = Number(proposal.proposedDiscount);
+    return Number.isNaN(discount) ? total : total + discount;
+  }, 0);
+
   return (
     <div className="space-y-6">
       {/* Header */}
@@ -234,6 +255,10 @@ const PollManagement = () => {
                   </Button>
                 )}
               </div>
+
+              <p className={`mb-3 text-sm ${totalDiscountPreview > 100 ? 'text-red-600' : 'text-gray-600 dark:text-gray-400'}`}>
+                Total proposal discounts: {totalDiscountPreview}% / 100%
+              </p>
               
               <div className="space-y-3">
                 {formData.proposals.map((proposal, index) => (
