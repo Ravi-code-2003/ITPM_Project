@@ -50,11 +50,11 @@ const Header = () => {
 
   const publicNavItems = [
     { name: 'Dashboard', href: isAuthenticated ? getDashboardLink() : '/', icon: Home },
-    { name: 'About', href: '/about', icon: Info },
     { name: 'Education', href: '/education-programs', icon: BookOpen },
     { name: 'Restaurants', href: '/restaurants', icon: UtensilsCrossed },
     { name: 'Accommodation', href: '/accommodation', icon: Building2 },
     { name: 'Contact', href: '/contact', icon: Phone },
+    { name: 'About', href: '/about', icon: Info },
   ];
 
   const visibleNavItems = publicNavItems.filter((item) => {

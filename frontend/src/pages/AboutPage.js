@@ -4,16 +4,42 @@ import Card, { CardHeader, CardTitle, CardDescription, CardContent } from '../co
 
 const AboutPage = () => {
   return (
-    <div className="min-h-screen bg-background dark:bg-background-dark py-12">
+    <div className="min-h-screen py-8 bg-gradient-to-b from-amber-50 via-white to-white dark:bg-background-dark">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        {/* Hero Section */}
-        <div className="text-center mb-16">
-          <h1 className="text-4xl md:text-5xl font-bold text-primary dark:text-gray-100 mb-4">
-            About UniCore
-          </h1>
-          <p className="text-xl text-gray-600 dark:text-gray-400 max-w-3xl mx-auto">
-            Connecting students with essential campus services and opportunities to enhance their university experience.
-          </p>
+        <div className="mb-8 rounded-3xl border border-amber-200/80 dark:border-amber-900/50 bg-white/90 dark:bg-surface-dark/90 shadow-xl overflow-hidden">
+          <div className="p-5 sm:p-7 bg-[radial-gradient(circle_at_top_left,_rgba(251,191,36,0.18),_transparent_45%),radial-gradient(circle_at_bottom_right,_rgba(14,165,233,0.16),_transparent_42%)]">
+            <div className="flex flex-col xl:flex-row xl:items-start xl:justify-between gap-6">
+              <div className="max-w-2xl">
+                <h1 className="text-2xl sm:text-3xl font-bold text-primary dark:text-gray-100">About UniCore</h1>
+                <p className="text-secondary dark:text-gray-400 mt-1 text-sm sm:text-base">
+                  Connecting students with trusted services, housing options, and education resources around campus.
+                </p>
+
+                <div className="mt-5 grid grid-cols-1 sm:grid-cols-3 gap-3">
+                  <div className="rounded-2xl border border-amber-200 dark:border-amber-800 bg-white/80 dark:bg-slate-900/40 p-3">
+                    <p className="text-[11px] uppercase tracking-[0.12em] text-secondary dark:text-gray-400">Core Values</p>
+                    <p className="mt-1 text-2xl font-extrabold text-primary dark:text-gray-100">3</p>
+                  </div>
+                  <div className="rounded-2xl border border-amber-200 dark:border-amber-800 bg-white/80 dark:bg-slate-900/40 p-3">
+                    <p className="text-[11px] uppercase tracking-[0.12em] text-secondary dark:text-gray-400">Mission Focus</p>
+                    <p className="mt-1 text-2xl font-extrabold text-emerald-700 dark:text-emerald-300">Students</p>
+                  </div>
+                  <div className="rounded-2xl border border-amber-200 dark:border-amber-800 bg-white/80 dark:bg-slate-900/40 p-3">
+                    <p className="text-[11px] uppercase tracking-[0.12em] text-secondary dark:text-gray-400">Platform Scope</p>
+                    <p className="mt-1 text-2xl font-extrabold text-sky-700 dark:text-sky-300">Campus</p>
+                  </div>
+                </div>
+              </div>
+
+              <div className="xl:w-[360px] rounded-2xl border border-amber-200 dark:border-amber-800 bg-white/90 dark:bg-slate-900/40 p-4 sm:p-5 shadow-sm">
+                <p className="text-[11px] uppercase tracking-[0.12em] text-secondary dark:text-gray-400">What drives us</p>
+                <h3 className="mt-2 font-semibold text-primary dark:text-gray-100 leading-snug">Student-first, quality-first</h3>
+                <p className="text-xs text-secondary dark:text-gray-300 mt-2">
+                  Every feature is designed to remove friction from student life and make support services easier to reach.
+                </p>
+              </div>
+            </div>
+          </div>
         </div>
 
         {/* Mission Section */}
