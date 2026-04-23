@@ -344,14 +344,40 @@ const AccommodationPage = () => {
   return (
     <div className="min-h-screen py-8 bg-gradient-to-b from-amber-50 via-white to-white dark:bg-background-dark">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        {/* Header */}
-        <div className="mb-6">
-          <h1 className="text-3xl font-bold text-primary dark:text-gray-100 mb-2">
-            Find Your Perfect Room
-          </h1>
-          <p className="text-secondary dark:text-gray-400 mt-2">
-            Browse available accommodations near your campus
-          </p>
+        <div className="mb-8 rounded-3xl border border-amber-200/80 dark:border-amber-900/50 bg-white/90 dark:bg-surface-dark/90 shadow-xl overflow-hidden">
+          <div className="p-5 sm:p-7 bg-[radial-gradient(circle_at_top_left,_rgba(251,191,36,0.18),_transparent_45%),radial-gradient(circle_at_bottom_right,_rgba(14,165,233,0.16),_transparent_42%)]">
+            <div className="flex flex-col xl:flex-row xl:items-start xl:justify-between gap-6">
+              <div className="max-w-2xl">
+                <h1 className="text-2xl sm:text-3xl font-bold text-primary dark:text-gray-100">Find Your Perfect Room</h1>
+                <p className="text-secondary dark:text-gray-400 mt-1 text-sm sm:text-base">
+                  Browse nearby accommodations, filter by your needs, and shortlist rooms with better confidence.
+                </p>
+
+                <div className="mt-5 grid grid-cols-1 sm:grid-cols-3 gap-3">
+                  <div className="rounded-2xl border border-amber-200 dark:border-amber-800 bg-white/80 dark:bg-slate-900/40 p-3">
+                    <p className="text-[11px] uppercase tracking-[0.12em] text-secondary dark:text-gray-400">Rooms Found</p>
+                    <p className="mt-1 text-2xl font-extrabold text-primary dark:text-gray-100">{filteredRooms.length}</p>
+                  </div>
+                  <div className="rounded-2xl border border-amber-200 dark:border-amber-800 bg-white/80 dark:bg-slate-900/40 p-3">
+                    <p className="text-[11px] uppercase tracking-[0.12em] text-secondary dark:text-gray-400">Campuses</p>
+                    <p className="mt-1 text-2xl font-extrabold text-emerald-700 dark:text-emerald-300">{campuses.length}</p>
+                  </div>
+                  <div className="rounded-2xl border border-amber-200 dark:border-amber-800 bg-white/80 dark:bg-slate-900/40 p-3">
+                    <p className="text-[11px] uppercase tracking-[0.12em] text-secondary dark:text-gray-400">Filters Active</p>
+                    <p className="mt-1 text-2xl font-extrabold text-sky-700 dark:text-sky-300">{isAnyFilterApplied ? 'Yes' : 'No'}</p>
+                  </div>
+                </div>
+              </div>
+
+              <div className="xl:w-[360px] rounded-2xl border border-amber-200 dark:border-amber-800 bg-white/90 dark:bg-slate-900/40 p-4 sm:p-5 shadow-sm">
+                <p className="text-[11px] uppercase tracking-[0.12em] text-secondary dark:text-gray-400">Best next step</p>
+                <h3 className="mt-2 font-semibold text-primary dark:text-gray-100 leading-snug">Start with area and budget filters</h3>
+                <p className="text-xs text-secondary dark:text-gray-300 mt-2">
+                  Use Match My Needs and date filters to narrow options before checking map or room details.
+                </p>
+              </div>
+            </div>
+          </div>
         </div>
 
         {/* Search & Filter Bar */}
