@@ -159,7 +159,7 @@ const NotificationBell = () => {
       <button
         type="button"
         onClick={toggleDropdown}
-        className="relative flex items-center justify-center text-gray-700 dark:text-gray-300 hover:text-primary dark:hover:text-accent transition-all duration-200 p-2 rounded-lg hover:bg-primary/10 dark:hover:bg-primary/20"
+        className="relative flex items-center justify-center text-white dark:text-white hover:text-gray-100 dark:hover:text-gray-100 transition-all duration-200 p-2 rounded-lg hover:bg-white/10 dark:hover:bg-white/10"
         title="Notifications"
       >
         <Bell className="h-5 w-5" />

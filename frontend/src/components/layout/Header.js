@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
 import { useCart } from '../../contexts/CartContext';
 import Button from '../ui/Button';
@@ -27,6 +27,7 @@ const Header = () => {
   const { isAuthenticated, user, logout } = useAuth();
   const { getCartCount } = useCart();
   const navigate = useNavigate();
+  const location = useLocation();
 
   const handleLogout = () => {
     logout();
@@ -58,6 +59,9 @@ const Header = () => {
   ];
 
   const visibleNavItems = publicNavItems.filter((item) => {
+    if (user?.role === 'shop-owner') {
+      return ['Dashboard', 'Contact', 'About'].includes(item.name);
+    }
     if (item.href !== '/restaurants') return true;
     if (!isAuthenticated) return true;
     return user?.role === 'student';
@@ -81,16 +85,23 @@ const Header = () => {
 
           {/* Desktop Navigation */}
           <nav className="hidden md:flex items-center space-x-6 lg:space-x-8">
-            {visibleNavItems.map((item) => (
+            {visibleNavItems.map((item) => {
+              const isActive = location.pathname === item.href || (item.href !== '/' && location.pathname.startsWith(item.href));
+              return (
               <Link
                 key={item.name}
                 to={item.href}
-                className="flex items-center space-x-1 text-white/95 hover:text-white transition-colors duration-200 font-medium"
+                className={`flex items-center space-x-1 transition-colors duration-200 font-medium ${
+                  isActive
+                    ? 'text-white font-bold'
+                    : 'text-white/75 hover:text-white'
+                }`}
               >
                 <item.icon className="h-4 w-4" />
                 <span>{item.name}</span>
               </Link>
-            ))}
+            );
+            })}
           </nav>
 
 
@@ -165,15 +176,15 @@ const Header = () => {
                 )}
               </div>
             ) : (
-              <div className="flex items-center space-x-4">
+              <div className="flex items-center space-x-3">
                 <Link
                   to="/login"
-                  className="text-white dark:text-white hover:text-gray-100 dark:hover:text-gray-100 font-semibold transition-colors duration-200"
+                  className="inline-flex items-center justify-center px-4 py-2 rounded-lg border border-white text-white hover:bg-white hover:text-primary text-sm font-semibold transition-all duration-200"
                 >
                   Login
                 </Link>
                 <Link to="/register">
-                  <Button>
+                  <Button variant="secondary" size="sm" className="!px-4 !py-2 !text-sm">
                     Register
                   </Button>
                 </Link>

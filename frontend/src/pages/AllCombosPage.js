@@ -159,7 +159,7 @@ const AllCombosPage = () => {
 
   return (
     <div className="space-y-6">
-      <div className="bg-gradient-to-r from-teal-500 via-cyan-500 to-blue-500 rounded-2xl p-6 text-white relative overflow-hidden">
+      <div className="bg-gradient-to-r from-primary via-primary-600 to-primary-700 rounded-2xl p-6 text-white relative overflow-hidden">
         <div className="absolute right-4 top-1/2 -translate-y-1/2 text-8xl opacity-20 pointer-events-none select-none">🍱</div>
         <div className="relative">
           <div className="flex items-center gap-2 mb-1">
@@ -181,7 +181,7 @@ const AllCombosPage = () => {
         </div>
       </div>
 
-      <div className="bg-surface dark:bg-surface-dark rounded-xl border border-gray-200 dark:border-gray-700 p-4 shadow-sm">
+      <div className="bg-background dark:bg-surface-dark rounded-xl border border-accent/50 dark:border-gray-700 p-4 shadow-soft">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
           <div className="relative">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
@@ -190,14 +190,14 @@ const AllCombosPage = () => {
               placeholder="Search combo, restaurant, or item..."
               value={searchQuery}
               onChange={(event) => setSearchQuery(event.target.value)}
-              className="w-full pl-9 pr-4 py-2.5 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-600 rounded-lg text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent text-sm"
+              className="w-full pl-9 pr-4 py-2.5 bg-white dark:bg-gray-800 border border-accent/60 dark:border-gray-600 rounded-lg text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent text-sm"
             />
           </div>
 
           <select
             value={selectedRestaurant}
             onChange={(event) => setSelectedRestaurant(event.target.value)}
-            className="w-full px-3 py-2.5 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-600 rounded-lg text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent text-sm"
+            className="w-full px-3 py-2.5 bg-white dark:bg-gray-800 border border-accent/60 dark:border-gray-600 rounded-lg text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent text-sm"
           >
             <option value="all">All Restaurants</option>
             {restaurantOptions.map((restaurant) => (
@@ -210,7 +210,7 @@ const AllCombosPage = () => {
       </div>
 
       {filteredCombos.length === 0 ? (
-        <div className="text-center py-16 bg-surface dark:bg-surface-dark rounded-xl border border-gray-200 dark:border-gray-700">
+        <div className="text-center py-16 bg-background dark:bg-surface-dark rounded-xl border border-accent/50 dark:border-gray-700">
           <div className="text-6xl mb-4">🍽️</div>
           <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-2">No Combo Meals Found</h3>
           <p className="text-secondary dark:text-gray-400 mb-6 max-w-sm mx-auto">
@@ -235,9 +235,10 @@ const AllCombosPage = () => {
             return (
               <div
                 key={combo._id}
-                className="bg-surface dark:bg-surface-dark rounded-xl border border-gray-200 dark:border-gray-700 shadow-sm hover:shadow-lg hover:-translate-y-0.5 transition-all duration-200 overflow-hidden flex flex-col"
+                className="bg-surface dark:bg-surface-dark rounded-xl border border-accent/40 dark:border-gray-700 shadow-soft hover:shadow-soft-lg hover:-translate-y-0.5 transition-all duration-200 overflow-hidden flex flex-col"
               >
-                <div className="bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-800 dark:to-gray-700 p-5">
+                <div className="h-1.5 bg-gradient-to-r from-primary via-accent to-primary/60" />
+                <div className="bg-gradient-to-br from-background to-accent/20 dark:from-gray-800 dark:to-gray-700 p-5">
                   <h3 className="font-bold text-gray-900 dark:text-white text-lg leading-tight line-clamp-2">
                     {combo.name}
                   </h3>
@@ -269,7 +270,7 @@ const AllCombosPage = () => {
                     )}
                   </div>
 
-                  <div className="bg-gray-50 dark:bg-gray-800 rounded-lg p-3">
+                  <div className="bg-background dark:bg-gray-800 rounded-lg p-3">
                     <p className="text-xs font-semibold text-gray-600 dark:text-gray-300 mb-2">
                       Includes ({combo.items?.length || 0} items)
                     </p>
