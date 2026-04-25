@@ -59,7 +59,7 @@ const Header = () => {
   ];
 
   const visibleNavItems = publicNavItems.filter((item) => {
-    if (user?.role === 'shop-owner') {
+    if (user?.role === 'shop-owner' || user?.role === 'house-owner') {
       return ['Dashboard', 'Contact', 'About'].includes(item.name);
     }
     if (item.href !== '/restaurants') return true;
