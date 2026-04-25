@@ -1,4 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react';
+import * as XLSX from 'xlsx';
 import {
   ArrowLeft,
   BarChart3,
@@ -406,44 +407,54 @@ const ExamStudyTrackerPage = () => {
 
   const downloadWeeklyReport = () => {
     const createdAt = new Date();
-    const lines = [
-      'Exam Study Tracker - Weekly Analysis Report',
-      `Generated at: ${createdAt.toLocaleString()}`,
-      '',
-      `Total focused time (7 days): ${formatDuration(weeklyAnalytics.weeklyTotalMs)}`,
-      `Average per day: ${formatDuration(weeklyAnalytics.averagePerDayMs)}`,
-      `Completed sessions: ${weeklyAnalytics.completedSessions}`,
-      `Today study time: ${formatDuration(weeklyAnalytics.todayTotalMs)}`,
-      '',
-      'Daily totals',
-      '-----------',
-      ...weeklyAnalytics.rows.map(
-        (row) => `${row.dayLabel} (${row.dateLabel}): ${formatDuration(row.totalMs)}`
-      ),
-      '',
-      'Recent sessions',
-      '--------------',
-      ...(sessions.slice(0, 10).length > 0
-        ? sessions.slice(0, 10).map(
-            (session) =>
-              `${formatDateTime(session.startedAt)} -> ${formatDateTime(session.endedAt)} | ${formatDuration(session.durationMs)} | pauses: ${session.pauseCount || 0}`
-          )
-        : ['No completed sessions yet.']),
+    const wb = XLSX.utils.book_new();
+
+    // ── Sheet 1: Summary ──────────────────────────────────────────────
+    const summaryData = [
+      ['Exam Study Tracker – Weekly Analysis Report'],
+      ['Generated at', createdAt.toLocaleString()],
+      [],
+      ['Metric', 'Value'],
+      ['Total focused time (7 days)', formatDuration(weeklyAnalytics.weeklyTotalMs)],
+      ['Average per day', formatDuration(weeklyAnalytics.averagePerDayMs)],
+      ['Completed sessions', weeklyAnalytics.completedSessions],
+      ['Today study time', formatDuration(weeklyAnalytics.todayTotalMs)],
+      ['Today sessions count', weeklyAnalytics.todaySessionsCount],
     ];
+    const wsSummary = XLSX.utils.aoa_to_sheet(summaryData);
+    wsSummary['!cols'] = [{ wch: 30 }, { wch: 20 }];
+    XLSX.utils.book_append_sheet(wb, wsSummary, 'Summary');
 
-    const report = lines.join('\n');
-    const blob = new Blob([report], { type: 'text/plain;charset=utf-8' });
-    const url = URL.createObjectURL(blob);
+    // ── Sheet 2: Daily Totals ─────────────────────────────────────────
+    const dailyHeader = [['Day', 'Date', 'Duration (hh:mm:ss)', 'Total Minutes']];
+    const dailyRows = weeklyAnalytics.rows.map((row) => [
+      row.dayLabel,
+      row.dateLabel,
+      formatDuration(row.totalMs),
+      Math.floor(row.totalMs / 60000),
+    ]);
+    const wsDaily = XLSX.utils.aoa_to_sheet([...dailyHeader, ...dailyRows]);
+    wsDaily['!cols'] = [{ wch: 10 }, { wch: 14 }, { wch: 20 }, { wch: 16 }];
+    XLSX.utils.book_append_sheet(wb, wsDaily, 'Daily Totals');
 
-    const anchor = document.createElement('a');
-    anchor.href = url;
-    anchor.download = `study-report-${toDayKey(createdAt)}.txt`;
-    document.body.appendChild(anchor);
-    anchor.click();
-    document.body.removeChild(anchor);
+    // ── Sheet 3: Session Log ──────────────────────────────────────────
+    const sessionHeader = [['#', 'Started At', 'Ended At', 'Duration (hh:mm:ss)', 'Duration (min)', 'Pauses']];
+    const sessionRows = sessions.map((s, i) => [
+      i + 1,
+      formatDateTime(s.startedAt),
+      formatDateTime(s.endedAt),
+      formatDuration(s.durationMs),
+      Math.floor((s.durationMs || 0) / 60000),
+      s.pauseCount || 0,
+    ]);
+    const wsSessions = XLSX.utils.aoa_to_sheet(
+      sessionRows.length > 0 ? [...sessionHeader, ...sessionRows] : [...sessionHeader, ['No sessions recorded yet.']]
+    );
+    wsSessions['!cols'] = [{ wch: 4 }, { wch: 22 }, { wch: 22 }, { wch: 20 }, { wch: 14 }, { wch: 8 }];
+    XLSX.utils.book_append_sheet(wb, wsSessions, 'Session Log');
 
-    URL.revokeObjectURL(url);
-    toast.success('Weekly report generated.');
+    XLSX.writeFile(wb, `study-report-${toDayKey(createdAt)}.xlsx`);
+    toast.success('Excel report downloaded.');
   };
 
   return (
